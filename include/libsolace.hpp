@@ -14,10 +14,14 @@ namespace Solace {
 
     class Qubit {
         public:
-            Qubit(const std::complex<double>& c0, const std::complex<double>& c1) : stateVector({c0, c1}) {}
-            Qubit(const QubitStateVector& sv) : stateVector(sv) {}
+            Qubit(const std::complex<double>& c0, const std::complex<double>& c1) : stateVector({c0, c1}) { normalizeStateVector(); }
+            Qubit(const QubitStateVector& sv) : stateVector(sv) { normalizeStateVector(); }
 
             ObservedQubitState observe();
+
+#if defined(BE_A_QUANTUM_CHEATER)
+            QubitStateVector viewStateVector() const { return stateVector; }
+#endif
             
         private:
             QubitStateVector stateVector;

@@ -36,6 +36,7 @@
 *.exe
 *.out
 *.app
+tests/unittest
 
 # debug information files
 *.dwo

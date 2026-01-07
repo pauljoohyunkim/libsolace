@@ -1,6 +1,7 @@
 #include "libsolace.hpp"
 
 namespace Solace {
+
 ObservedQubitState Qubit::observe() {
     return ObservedQubitState::ZERO;
 }
@@ -10,4 +11,5 @@ void Qubit::normalizeStateVector() {
     QubitStateVector sv { stateVector.first / len, stateVector.second / len };
     stateVector = sv;
 }
+
 }
