@@ -21,6 +21,8 @@ namespace Solace {
             
         private:
             QubitStateVector stateVector;
+
+            void normalizeStateVector();
     };
 }
 
