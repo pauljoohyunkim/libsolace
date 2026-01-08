@@ -6,7 +6,7 @@ OBJ=obj
 BIN=bin
 TESTS=tests
 
-.PHONY: unittest
+.PHONY: unittest lib
 
 OBJS=$(OBJ)/libsolace.o
 
@@ -43,6 +43,8 @@ $(TESTS)/unittest: $(DBG_OBJS)
 	$(CXX) $(CXXFLAGS) $^ -o $@ `pkg-config --libs gtest`
 
 unittest: $(TESTS)/unittest
+
+lib: $(BIN)/libsolace.so
 
 clean:
 	$(RM) $(OBJ)/*.o $(TESTS)/unittest $(BIN)/*.o $(BIN)/*.so
