@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "solace/solace.hpp"
+#include "solace/common_gates.hpp"
 
 TEST(QuantumGate, ValidityOK) {
     Solace::QubitStateVector q1 { 2/3, std::complex<double>(2,1)/3.0 };
