@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "libsolace.hpp"
+#include "solace.hpp"
 
 TEST(Qubit, Normalization) {
     Solace::Qubit q { {3, 2},

@@ -13,7 +13,7 @@ DBG_OBJS=$(OBJ)/unittest.o \
 objs: $(OBJS)
 
 $(OBJ)/%_dbg.o: CXXFLAGS += -DBE_A_QUANTUM_CHEATER `pkg-config --cflags gtest`
-$(OBJ)/%_dbg.o: $(SRC)/%.cpp $(INCLUDE)/%.hpp
+$(OBJ)/%_dbg.o: $(SRC)/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ)/unittest_%.o: CXXFLAGS += -DBE_A_QUANTUM_CHEATER `pkg-config --cflags gtest`
@@ -24,7 +24,7 @@ $(OBJ)/unittest.o: CXXFLAGS += -DBE_A_QUANTUM_CHEATER `pkg-config --cflags gtest
 $(OBJ)/unittest.o: $(TESTS)/unittest.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJ)/%.o: $(SRC)/%.cpp $(INCLUDE)/%.hpp
+$(OBJ)/%.o: $(SRC)/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 

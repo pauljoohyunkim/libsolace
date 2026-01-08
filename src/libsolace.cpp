@@ -1,7 +1,7 @@
 #include <random>
 #include <numbers>
 #include <cmath>
-#include "libsolace.hpp"
+#include "solace.hpp"
 
 namespace Solace {
 

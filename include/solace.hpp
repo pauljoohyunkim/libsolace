@@ -1,5 +1,5 @@
-#ifndef __LIBSOLACE_HPP__
-#define __LIBSOLACE_HPP__
+#ifndef __SOLACE_HPP__
+#define __SOLACE_HPP__
 
 #include <complex>
 #include <utility>
@@ -30,4 +30,4 @@ namespace Solace {
     };
 }
 
-#endif
+#endif  // __SOLACE_HPP__
