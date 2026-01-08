@@ -9,6 +9,21 @@ namespace Solace::Gate {
             Identity() : Solace::QuantumGate({1, 0}, {0, 1}) {}
     };
 
+    class PauliX : public Solace::QuantumGate {
+        public:
+            PauliX() : Solace::QuantumGate({0, 1}, {1, 0}) {}
+    };
+
+    class PauliY : public Solace::QuantumGate {
+        public:
+            PauliY() : Solace::QuantumGate({0, std::complex<double>(0, 1)}, {std::complex<double>(0, -1), 0}) {}
+    };
+
+    class PauliZ : public Solace::QuantumGate {
+        public:
+            PauliZ() : Solace::QuantumGate({1, 0}, {0, -1}) {}
+    };
+
     // Hadamard Gate is defined by
     // 1/sqrt(2) * 
     // 1  1
