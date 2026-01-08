@@ -17,7 +17,7 @@ namespace Solace {
             Qubit(const std::complex<double>& c0, const std::complex<double>& c1) : stateVector({c0, c1}) { normalizeStateVector(); }
             Qubit(const QubitStateVector& sv) : stateVector(sv) { normalizeStateVector(); }
 
-            ObservedQubitState observe();
+            ObservedQubitState observe(const bool cheat=false);
 
 #if defined(BE_A_QUANTUM_CHEATER)
             QubitStateVector viewStateVector() const { return stateVector; }

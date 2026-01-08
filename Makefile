@@ -8,7 +8,7 @@ TESTS=tests
 OBJS=$(OBJ)/libsolace.o
 DBG_OBJS=$(OBJ)/unittest.o \
 		 $(OBJ)/libsolace_dbg.o \
-		 $(OBJ)/unittest_normalization.o
+		 $(OBJ)/unittest_qubit.o
 
 objs: $(OBJS)
 
