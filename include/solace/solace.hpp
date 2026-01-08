@@ -5,6 +5,10 @@
 #include <utility>
 
 namespace Solace {
+    // Forward Declaration
+    class Qubit;
+    class QuantumGate;
+    
     enum ObservedQubitState {
         ZERO = 0,
         ONE = 1
@@ -24,9 +28,21 @@ namespace Solace {
 #endif
             
         private:
+            friend class QuantumGate;
             QubitStateVector stateVector;
 
             void normalizeStateVector();
+    };
+
+    class QuantumGate {
+        public:
+            QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1);
+        protected:
+            const double tolerance { 0.0000000001 };
+            QubitStateVector transformation[2];
+
+            void apply(Qubit& q);
+
     };
 }
 
