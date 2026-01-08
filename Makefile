@@ -1,6 +1,7 @@
 CXX=g++
 INCLUDE=include
-CXXFLAGS=-g -Wall -I$(INCLUDE)
+EIGEN=C:/msys64/mingw64/include
+CXXFLAGS=-g -Wall -I$(INCLUDE) -I$(EIGEN)
 SRC=src
 OBJ=obj
 BIN=bin
@@ -13,8 +14,8 @@ OBJS=$(OBJ)/libsolace.o
 DBG_OBJS=$(OBJ)/unittest.o \
 		 $(OBJ)/libsolace_dbg.o \
 		 $(OBJ)/unittest_qubit.o \
-		 $(OBJ)/unittest_gate.o \
-		 $(OBJ)/unittest_common_gates.o
+		 #$(OBJ)/unittest_gate.o \
+		 #$(OBJ)/unittest_common_gates.o
 
 objs: $(OBJS)
 

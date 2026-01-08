@@ -8,24 +8,18 @@ namespace Solace {
 // Normalizes the vector to length 1.
 // Fails if v is zero vector.
 static inline void normalizeVector(QubitStateVector& v) {
-    const auto len { std::sqrt(std::norm(v.first) + std::norm(v.second)) };
-    if (len == 0) {
-        throw std::runtime_error("Zero vector cannot be normalized.");
-    }
-    QubitStateVector sv { v.first / len, v.second / len };
-    v = sv;
+    v.normalize();
 }
 
 // Computes the generalized inner product of two vectors.
 static inline std::complex<double> innerProduct(const QubitStateVector& u, const QubitStateVector& v) {
-    const QubitStateVector uconj { std::conj(u.first), std::conj(u.second) };
-    return uconj.first * v.first + uconj.second * v.second;
+    return u.dot(v);
 }
 
 ObservedQubitState Qubit::observe(const bool cheat) {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::vector<double> weights { std::norm(stateVector.first), std::norm(stateVector.second) };
+    std::vector<double> weights { std::norm(stateVector[0]), std::norm(stateVector[1]) };
     std::discrete_distribution<> dist (weights.begin(), weights.end());
 
     const auto observedState { (ObservedQubitState) dist(gen) };
@@ -35,12 +29,13 @@ ObservedQubitState Qubit::observe(const bool cheat) {
         const auto phase { phaseDist(gen) };
         const auto nonzero { std::exp(std::complex<double>(0, phase)) };
         const auto complexzero { std::complex<double>(0, 0) };
+        stateVector = Eigen::VectorXcd(2);
         switch (observedState) {
             case ObservedQubitState::ZERO:
-                stateVector = { nonzero, complexzero };
+                stateVector << nonzero, complexzero;
                 break;
             case ObservedQubitState::ONE:
-                stateVector = { complexzero, nonzero };
+                stateVector << complexzero, nonzero;
                 break;
             default:
                 throw std::runtime_error("Unexpected state!");
@@ -68,10 +63,10 @@ QuantumGate::QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1)
 
 void QuantumGate::apply(Qubit& q) {
     // Multiply the 2x2 matrix within the class.
-    const auto state0 { q.stateVector.first * transformation[0].first + q.stateVector.second * transformation[1].first };
-    const auto state1 { q.stateVector.first * transformation[0].second + q.stateVector.second * transformation[1].second };
-    q.stateVector = { state0, state1 };
-    normalizeVector(q.stateVector);
+    //const auto state0 { q.stateVector.first * transformation[0].first + q.stateVector.second * transformation[1].first };
+    //const auto state1 { q.stateVector.first * transformation[0].second + q.stateVector.second * transformation[1].second };
+    //q.stateVector = { state0, state1 };
+    //normalizeVector(q.stateVector);
 }
 
 }

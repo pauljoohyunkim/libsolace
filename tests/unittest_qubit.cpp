@@ -6,7 +6,7 @@ TEST(Qubit, Normalization) {
                       {1, -2.2} };
     const auto sv { q.viewStateVector() };
 
-    ASSERT_TRUE(std::abs(std::norm(sv.first) + std::norm(sv.second) - 1) < 0.000001);
+    ASSERT_TRUE(std::abs(std::norm(sv[0]) + std::norm(sv[1]) - 1) < 0.000001);
 }
 
 TEST(Qubit, ObservationWithCheat) {
@@ -16,7 +16,7 @@ TEST(Qubit, ObservationWithCheat) {
         {-3,1}
     };
     const auto sv { q.viewStateVector() };
-    std::vector<double> dist { std::norm(sv.first), std::norm(sv.second) };
+    std::vector<double> dist { std::norm(sv[0]), std::norm(sv[1]) };
     std::vector<int> observedCount { 0, 0 };
 
     for (auto i = 0U; i < testN; i++) {
@@ -44,11 +44,11 @@ TEST(Qubit, ObservationCollapse) {
     const auto ret { q.observe(false) };
     const auto sv { q.viewStateVector() };
     if (ret == Solace::ObservedQubitState::ZERO) {
-        ASSERT_EQ(sv.second, std::complex<double>(0,0));
+        ASSERT_EQ(sv[1], std::complex<double>(0,0));
     }
     if (ret == Solace::ObservedQubitState::ONE) {
-        ASSERT_EQ(sv.first, std::complex<double>(0,0));
+        ASSERT_EQ(sv[0], std::complex<double>(0,0));
     }
 
-    ASSERT_TRUE(std::abs(std::norm(sv.first) + std::norm(sv.second) - 1) < 0.000001);
+    ASSERT_TRUE(std::abs(std::norm(sv[0]) + std::norm(sv[1]) - 1) < 0.000001);
 }
