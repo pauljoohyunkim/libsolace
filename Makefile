@@ -5,10 +5,15 @@ SRC=src
 OBJ=obj
 TESTS=tests
 
+.PHONY: unittest
+
 OBJS=$(OBJ)/libsolace.o
+
 DBG_OBJS=$(OBJ)/unittest.o \
 		 $(OBJ)/libsolace_dbg.o \
-		 $(OBJ)/unittest_qubit.o
+		 $(OBJ)/unittest_qubit.o \
+		 $(OBJ)/unittest_gate.o \
+		 $(OBJ)/unittest_common_gates.o
 
 objs: $(OBJS)
 
@@ -32,6 +37,8 @@ $(OBJ)/%.o: $(SRC)/%.cpp
 $(TESTS)/unittest: CXXFLAGS += -DBE_A_QUANTUM_CHEATER `pkg-config --cflags gtest`
 $(TESTS)/unittest: $(DBG_OBJS)
 	$(CXX) $(CXXFLAGS) $^ -o $@ `pkg-config --libs gtest`
+
+unittest: $(TESTS)/unittest
 
 clean:
 	$(RM) $(OBJ)/*.o $(TESTS)/unittest
