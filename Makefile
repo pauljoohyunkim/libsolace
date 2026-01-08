@@ -18,7 +18,7 @@ DBG_OBJS=$(OBJ)/unittest.o \
 
 objs: $(OBJS)
 
-$(BIN)/libsolace.so: $(SRC)/libsolace.cpp
+$(BIN)/libsolace.so: $(OBJS)
 	$(CXX) $(CXXFLAGS) -fPIC -shared $^ -o $@
 
 $(OBJ)/%_dbg.o: CXXFLAGS += -DBE_A_QUANTUM_CHEATER `pkg-config --cflags gtest`
@@ -34,7 +34,7 @@ $(OBJ)/unittest.o: $(TESTS)/unittest.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ)/%.o: $(SRC)/%.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -fPIC -shared -c $< -o $@
 
 
 
