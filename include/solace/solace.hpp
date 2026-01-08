@@ -18,6 +18,7 @@ namespace Solace {
 
     class Qubit {
         public:
+            Qubit() : stateVector({1, 0}) {}
             Qubit(const std::complex<double>& c0, const std::complex<double>& c1) : stateVector({c0, c1}) { normalizeStateVector(); }
             Qubit(const QubitStateVector& sv) : stateVector(sv) { normalizeStateVector(); }
 
@@ -37,11 +38,12 @@ namespace Solace {
     class QuantumGate {
         public:
             QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1);
+
+            void apply(Qubit& q);
         protected:
             const double tolerance { 0.0000000001 };
             QubitStateVector transformation[2];
 
-            void apply(Qubit& q);
 
     };
 }

@@ -67,7 +67,11 @@ QuantumGate::QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1)
 }
 
 void QuantumGate::apply(Qubit& q) {
-
+    // Multiply the 2x2 matrix within the class.
+    const auto state0 { q.stateVector.first * transformation[0].first + q.stateVector.second * transformation[1].first };
+    const auto state1 { q.stateVector.first * transformation[0].second + q.stateVector.second * transformation[1].second };
+    q.stateVector = { state0, state1 };
+    normalizeVector(q.stateVector);
 }
 
 }
