@@ -3,9 +3,10 @@ INCLUDE=include
 CXXFLAGS=-g -Wall -I$(INCLUDE)
 SRC=src
 OBJ=obj
+BIN=bin
 TESTS=tests
 
-.PHONY: unittest
+.PHONY: unittest lib
 
 OBJS=$(OBJ)/libsolace.o
 
@@ -16,6 +17,9 @@ DBG_OBJS=$(OBJ)/unittest.o \
 		 $(OBJ)/unittest_common_gates.o
 
 objs: $(OBJS)
+
+$(BIN)/libsolace.so: $(OBJS)
+	$(CXX) $(CXXFLAGS) -fPIC -shared $^ -o $@
 
 $(OBJ)/%_dbg.o: CXXFLAGS += -DBE_A_QUANTUM_CHEATER `pkg-config --cflags gtest`
 $(OBJ)/%_dbg.o: $(SRC)/%.cpp
@@ -30,7 +34,7 @@ $(OBJ)/unittest.o: $(TESTS)/unittest.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ)/%.o: $(SRC)/%.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -fPIC -shared -c $< -o $@
 
 
 
@@ -40,6 +44,8 @@ $(TESTS)/unittest: $(DBG_OBJS)
 
 unittest: $(TESTS)/unittest
 
+lib: $(BIN)/libsolace.so
+
 clean:
-	$(RM) $(OBJ)/*.o $(TESTS)/unittest
+	$(RM) $(OBJ)/*.o $(TESTS)/unittest $(BIN)/*.o $(BIN)/*.so
 
