@@ -2,7 +2,7 @@
 #define __SOLACE_HPP__
 
 #include <complex>
-#include <utility>
+#include <eigen3/Eigen/Dense>
 
 namespace Solace {
     // Forward Declaration
@@ -14,7 +14,9 @@ namespace Solace {
         ONE = 1
     };
 
-    using QubitStateVector = std::pair<std::complex<double>, std::complex<double>>;
+    //using QubitStateVector = std::pair<std::complex<double>, std::complex<double>>;
+    //using QubitStateVector = Eigen::Vector<std::complex<double>, 2>;
+    using QubitStateVector = Eigen::VectorXcd;
 
     class Qubit {
         public:
