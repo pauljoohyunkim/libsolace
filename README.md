@@ -61,7 +61,7 @@ Then you can compile by:
 g++ -g -Wall -I /usr/include/eigen3 -I /home/user/Documents/libsolace/include /home/user/Documents/libsolace/src/libsolace.cpp ./hadamard.cpp -o hadamard
 ```
 
-## Development Engaagement
+## Development Engagement
 
 I welcome constructive feedbacks and contributions (which hopefully aligns with the goal of this project).
 I, in fact, highly welcome fixes for bugs that *arise from my erroneous understanding of quantum computing*;
