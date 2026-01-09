@@ -61,6 +61,12 @@ Then you can compile by:
 g++ -g -Wall -I /usr/include/eigen3 -I /home/user/Documents/libsolace/include /home/user/Documents/libsolace/src/libsolace.cpp ./hadamard.cpp -o hadamard
 ```
 
+### Build Options
+Note that viewing state vector is not allowed if it were a real quantum computer.
+However, since we do not want to pull our hair out every single time we research,
+you can enable the getter functions for state vectors by setting
+`-DBE_A_QUANTUM_CHEATER` flag during compilation.
+
 ## Development Engagement
 
 I welcome constructive feedbacks and contributions (which hopefully aligns with the goal of this project).
