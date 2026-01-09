@@ -14,13 +14,12 @@ namespace Solace {
         ONE = 1
     };
 
-    //using QubitStateVector = std::pair<std::complex<double>, std::complex<double>>;
-    //using QubitStateVector = Eigen::Vector<std::complex<double>, 2>;
     using QubitStateVector = Eigen::VectorXcd;
+    using QuantumGateTransformer = Eigen::MatrixXcd;
 
     class Qubit {
         public:
-            Qubit(const int n=2) : stateVector(Eigen::VectorXcd(n)) { stateVector << 1, 0; }
+            Qubit(const int n=2) : stateVector(QubitStateVector(n)) { stateVector << 1, 0; }
             Qubit(const std::complex<double>& c0, const std::complex<double>& c1) : stateVector(2) { stateVector << c0, c1; normalizeStateVector(); }
             Qubit(const QubitStateVector& sv) : stateVector(sv) { normalizeStateVector(); }
 
@@ -42,8 +41,12 @@ namespace Solace {
             QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1);
 
             void apply(Qubit& q);
+#if defined(BE_A_QUANTUM_CHEATER)
+            QuantumGateTransformer viewTransformer() const { return transformer; }
+#endif
         protected:
             const double tolerance { 0.0000000001 };
+            QuantumGateTransformer transformer;
             QubitStateVector transformation[2];
 
 

@@ -1,6 +1,7 @@
 #include <random>
 #include <numbers>
 #include <cmath>
+#include <iostream>
 #include "solace/solace.hpp"
 
 namespace Solace {
@@ -38,9 +39,18 @@ ObservedQubitState Qubit::observe(const bool cheat) {
     return observedState;
 }
 
-QuantumGate::QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1) : transformation{q0, q1} {
+QuantumGate::QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1) : transformer(QuantumGateTransformer(2, 2)), transformation{q0, q1} {
     transformation[0].normalize();
     transformation[1].normalize();
+
+    std::cout << transformation[0] << std::endl;
+    std::cout << transformation[1] << std::endl;
+
+    QubitStateVector q0_cpy = q0;
+    QubitStateVector q1_cpy = q1;
+    q0_cpy.normalize();
+    q1_cpy.normalize();
+    transformer << q0_cpy, q1_cpy;
 
     // Check if [q0, q1] is actually a unitary matrix.
     // Note that within the class, q0 and q1 are already normalized.
@@ -52,11 +62,10 @@ QuantumGate::QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1)
 }
 
 void QuantumGate::apply(Qubit& q) {
-    // Multiply the 2x2 matrix within the class.
-    //const auto state0 { q.stateVector.first * transformation[0].first + q.stateVector.second * transformation[1].first };
-    //const auto state1 { q.stateVector.first * transformation[0].second + q.stateVector.second * transformation[1].second };
-    //q.stateVector = { state0, state1 };
-    //normalizeVector(q.stateVector);
+    // Multiply the transformer matrix within the class.
+    QubitStateVector qTemp { transformer * q.stateVector };
+    q.stateVector = qTemp;
+    q.stateVector.normalize();
 }
 
 }
