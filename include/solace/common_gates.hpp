@@ -3,25 +3,47 @@
 
 #include "solace.hpp"
 
+constexpr static std::complex<double> i { 0.0, 1.0 };
+
 namespace Solace::Gate {
     class Identity : public Solace::QuantumGate {
         public:
-            Identity() : Solace::QuantumGate({1, 0}, {0, 1}) {}
+            Identity() : Solace::QuantumGate() {
+                transformer = QuantumGateTransformer(2,2);
+                transformer << 1.0, 0.0,
+                               0.0, 1.0;
+                validate();
+            }
     };
 
     class PauliX : public Solace::QuantumGate {
         public:
-            PauliX() : Solace::QuantumGate({0, 1}, {1, 0}) {}
+            PauliX() : Solace::QuantumGate() {
+                transformer = QuantumGateTransformer(2,2);
+                transformer << 0.0, 1.0,
+                               1.0, 0.0;
+                validate();
+            }
     };
 
     class PauliY : public Solace::QuantumGate {
         public:
-            PauliY() : Solace::QuantumGate({0, std::complex<double>(0, 1)}, {std::complex<double>(0, -1), 0}) {}
+            PauliY() : Solace::QuantumGate() {
+                transformer = QuantumGateTransformer(2,2);
+                transformer << 0.0, -i,
+                               i, 0.0;
+                validate();
+            }
     };
 
     class PauliZ : public Solace::QuantumGate {
         public:
-            PauliZ() : Solace::QuantumGate({1, 0}, {0, -1}) {}
+            PauliZ() : Solace::QuantumGate() {
+                transformer = QuantumGateTransformer(2,2);
+                transformer << 1.0, 0.0,
+                               0.0, -1.0;
+                validate();
+            }
     };
 
     // Hadamard Gate is defined by
@@ -30,7 +52,19 @@ namespace Solace::Gate {
     // 1 -1
     class Hadamard : public Solace::QuantumGate {
         public:
-            Hadamard() : Solace::QuantumGate({1, 1},{1, -1}) {}
+            Hadamard() : Solace::QuantumGate() {
+                transformer = QuantumGateTransformer(2,2);
+                Solace::QubitStateVector q1(2);
+                q1 << 1, 1;
+                Solace::QubitStateVector q2(2);
+                q2 << 1, -1;
+
+                q1.normalize();
+                q2.normalize();
+
+                transformer << q1, q2;
+                validate();
+            }
     };
 }
 

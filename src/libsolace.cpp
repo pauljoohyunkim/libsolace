@@ -49,13 +49,27 @@ QuantumGate::QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1)
     if (!transformer.isUnitary()) {
         throw std::runtime_error("Invalid quantum gate.");
     }
+
+    isValidated = true;
 }
 
 void QuantumGate::apply(Qubit& q) {
+    if (!isValidated) {
+        throw std::runtime_error("Attempt to use invalid quantum gate.");
+    }
+
     // Multiply the transformer matrix within the class.
     QubitStateVector qTemp { transformer * q.stateVector };
     q.stateVector = qTemp;
     q.stateVector.normalize();
+}
+
+void QuantumGate::validate() {
+    if (transformer.isUnitary()) {
+        isValidated = true;
+    } else {
+        throw std::runtime_error("Invalid quantum gate.");
+    }
 }
 
 }

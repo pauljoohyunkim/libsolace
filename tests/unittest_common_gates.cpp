@@ -8,10 +8,9 @@ TEST(CommonGate, Identity) {
 
     const auto sv { q.viewStateVector() };
 
-    ASSERT_TRUE(std::abs(std::norm(sv.first) - 0.25) < 0.0001);
-    ASSERT_TRUE(std::abs(std::norm(sv.second) - 0.75) < 0.0001);
+    ASSERT_TRUE(std::abs(std::norm(sv[0]) - 0.25) < 0.0001);
+    ASSERT_TRUE(std::abs(std::norm(sv[1]) - 0.75) < 0.0001);
 }
-
 TEST(CommonGate, PauliX) {
     Solace::Qubit q { 1, 0 };
     Solace::Gate::PauliX H;
@@ -19,8 +18,8 @@ TEST(CommonGate, PauliX) {
 
     const auto sv { q.viewStateVector() };
 
-    ASSERT_TRUE(std::abs(std::norm(sv.first) - 0.0) < 0.0001);
-    ASSERT_TRUE(std::abs(std::norm(sv.second) - 1.0) < 0.0001);
+    ASSERT_TRUE(std::abs(std::norm(sv[0]) - 0.0) < 0.0001);
+    ASSERT_TRUE(std::abs(std::norm(sv[1]) - 1.0) < 0.0001);
 }
 
 TEST(CommonGate, PauliY) {
@@ -30,8 +29,8 @@ TEST(CommonGate, PauliY) {
 
     const auto sv { q.viewStateVector() };
 
-    ASSERT_TRUE(std::abs(std::norm(sv.first) - 0.0) < 0.0001);
-    ASSERT_TRUE(std::abs(std::norm(sv.second) - 1.0) < 0.0001);
+    ASSERT_TRUE(std::abs(std::norm(sv[0]) - 0.0) < 0.0001);
+    ASSERT_TRUE(std::abs(std::norm(sv[1]) - 1.0) < 0.0001);
 }
 
 TEST(CommonGate, PauliZ) {
@@ -41,8 +40,8 @@ TEST(CommonGate, PauliZ) {
 
     const auto sv { q.viewStateVector() };
 
-    ASSERT_TRUE(std::abs(std::norm(sv.first) - 1.0) < 0.0001);
-    ASSERT_TRUE(std::abs(std::norm(sv.second) - 0.0) < 0.0001);
+    ASSERT_TRUE(std::abs(std::norm(sv[0]) - 1.0) < 0.0001);
+    ASSERT_TRUE(std::abs(std::norm(sv[1]) - 0.0) < 0.0001);
 }
 
 TEST(CommonGate, Hadamard) {
@@ -52,6 +51,6 @@ TEST(CommonGate, Hadamard) {
 
     const auto sv { q.viewStateVector() };
 
-    ASSERT_TRUE(std::abs(std::norm(sv.first) - 0.5) < 0.0001);
-    ASSERT_TRUE(std::abs(std::norm(sv.second) - 0.5) < 0.0001);
+    ASSERT_TRUE(std::abs(std::norm(sv[0]) - 0.5) < 0.0001);
+    ASSERT_TRUE(std::abs(std::norm(sv[1]) - 0.5) < 0.0001);
 }

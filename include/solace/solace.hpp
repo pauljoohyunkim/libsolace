@@ -38,6 +38,7 @@ namespace Solace {
 
     class QuantumGate {
         public:
+            QuantumGate() = default;
             QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1);
 
             void apply(Qubit& q);
@@ -45,7 +46,10 @@ namespace Solace {
             QuantumGateTransformer viewTransformer() const { return transformer; }
 #endif
         protected:
+            bool isValidated { false };
             QuantumGateTransformer transformer;
+
+            void validate();
 
 
     };

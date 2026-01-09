@@ -16,7 +16,7 @@ DBG_OBJS=$(OBJ)/unittest.o \
 		 $(OBJ)/libsolace_dbg.o \
 		 $(OBJ)/unittest_qubit.o \
 		 $(OBJ)/unittest_gate.o \
-		 #$(OBJ)/unittest_common_gates.o
+		 $(OBJ)/unittest_common_gates.o
 
 objs: $(OBJS)
 
