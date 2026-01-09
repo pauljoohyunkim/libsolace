@@ -2,7 +2,7 @@
 #include "solace/solace.hpp"
 
 TEST(Qubit, Normalization) {
-    Solace::Qubit q { {3, 2},
+    Solace::Qubits q { {3, 2},
                       {1, -2.2} };
     const auto sv { q.viewStateVector() };
 
@@ -11,7 +11,7 @@ TEST(Qubit, Normalization) {
 
 TEST(Qubit, ObservationWithCheat) {
     const unsigned int testN { 10000 };
-    Solace::Qubit q {
+    Solace::Qubits q {
         {1,2},
         {-3,1}
     };
@@ -37,7 +37,7 @@ TEST(Qubit, ObservationWithCheat) {
 }
 
 TEST(Qubit, ObservationCollapse) {
-    Solace::Qubit q {
+    Solace::Qubits q {
         {1,2},
         {-3,1}
     };

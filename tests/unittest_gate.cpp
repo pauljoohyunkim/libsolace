@@ -4,18 +4,18 @@
 //#include "solace/common_gates.hpp"
 
 TEST(QuantumGate, ValidityOK) {
-    Solace::QubitStateVector q1(2);
+    Solace::StateVector q1(2);
     q1 << 2.0/3.0, std::complex<double>(2,1)/3.0;
-    Solace::QubitStateVector q2(2);
+    Solace::StateVector q2(2);
     q2 << std::complex<double>(-2,1)/3.0, 2.0/3.0;
 
     Solace::QuantumGate H { q1, q2 };
 }
 
 TEST(QuantumGate, ValidityFail) {
-    Solace::QubitStateVector q1(2);
+    Solace::StateVector q1(2);
     q1 << 1, 2;
-    Solace::QubitStateVector q2(2);
+    Solace::StateVector q2(2);
     q2 << 3, 4;
 
     ASSERT_ANY_THROW(Solace::QuantumGate H ( q1, q2 ));
@@ -23,11 +23,11 @@ TEST(QuantumGate, ValidityFail) {
 
 TEST(QuantumGate, Application_x) {
     // q with (1, 0) as state vector
-    Solace::Qubit q;
+    Solace::Qubits q;
 
-    Solace::QubitStateVector q1(2); 
+    Solace::StateVector q1(2); 
     q1 << 2.0/3.0, std::complex<double>(2,1)/3.0;
-    Solace::QubitStateVector q2(2);
+    Solace::StateVector q2(2);
     q2 << std::complex<double>(-2,1)/3.0, 2.0/3.0;
 
     Solace::QuantumGate H { q1, q2 };
@@ -42,11 +42,11 @@ TEST(QuantumGate, Application_x) {
 
 TEST(QuantumGate, Application_y) {
     // q with (0, 1) as state vector
-    Solace::Qubit q { 0, 1 };
+    Solace::Qubits q { 0, 1 };
 
-    Solace::QubitStateVector q1(2);
+    Solace::StateVector q1(2);
     q1 << 2.0/3.0, std::complex<double>(2,1)/3.0;
-    Solace::QubitStateVector q2(2);
+    Solace::StateVector q2(2);
     q2 << std::complex<double>(-2,1)/3.0, 2.0/3.0;
 
     Solace::QuantumGate H { q1, q2 };

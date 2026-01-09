@@ -2,7 +2,7 @@
 #include "solace/common_gates.hpp"
 
 TEST(CommonGate, Identity) {
-    Solace::Qubit q { 0.5, std::sqrt(3)/2 };
+    Solace::Qubits q { 0.5, std::sqrt(3)/2 };
     Solace::Gate::Identity H;
     H.apply(q);
 
@@ -12,7 +12,7 @@ TEST(CommonGate, Identity) {
     ASSERT_TRUE(std::abs(std::norm(sv[1]) - 0.75) < 0.0001);
 }
 TEST(CommonGate, PauliX) {
-    Solace::Qubit q { 1, 0 };
+    Solace::Qubits q { 1, 0 };
     Solace::Gate::PauliX H;
     H.apply(q);
 
@@ -23,7 +23,7 @@ TEST(CommonGate, PauliX) {
 }
 
 TEST(CommonGate, PauliY) {
-    Solace::Qubit q { 1, 0 };
+    Solace::Qubits q { 1, 0 };
     Solace::Gate::PauliY H;
     H.apply(q);
 
@@ -34,7 +34,7 @@ TEST(CommonGate, PauliY) {
 }
 
 TEST(CommonGate, PauliZ) {
-    Solace::Qubit q { 1, 0 };
+    Solace::Qubits q { 1, 0 };
     Solace::Gate::PauliZ H;
     H.apply(q);
 
@@ -45,7 +45,7 @@ TEST(CommonGate, PauliZ) {
 }
 
 TEST(CommonGate, Hadamard) {
-    Solace::Qubit q { 1, 0 };
+    Solace::Qubits q { 1, 0 };
     Solace::Gate::Hadamard H;
     H.apply(q);
 

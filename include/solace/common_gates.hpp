@@ -54,9 +54,9 @@ namespace Solace::Gate {
         public:
             Hadamard() : Solace::QuantumGate() {
                 transformer = QuantumGateTransformer(2,2);
-                Solace::QubitStateVector q1(2);
+                Solace::StateVector q1(2);
                 q1 << 1, 1;
-                Solace::QubitStateVector q2(2);
+                Solace::StateVector q2(2);
                 q2 << 1, -1;
 
                 q1.normalize();

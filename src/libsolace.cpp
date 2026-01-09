@@ -6,11 +6,11 @@
 namespace Solace {
 
 // Computes the generalized inner product of two vectors.
-static inline std::complex<double> innerProduct(const QubitStateVector& u, const QubitStateVector& v) {
+static inline std::complex<double> innerProduct(const StateVector& u, const StateVector& v) {
     return u.dot(v);
 }
 
-ObservedQubitState Qubit::observe(const bool cheat) {
+ObservedQubitState Qubits::observe(const bool cheat) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::vector<double> weights { std::norm(stateVector[0]), std::norm(stateVector[1]) };
@@ -38,9 +38,9 @@ ObservedQubitState Qubit::observe(const bool cheat) {
     return observedState;
 }
 
-QuantumGate::QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1) : transformer(QuantumGateTransformer(2, 2)) {
-    QubitStateVector q0_cpy = q0;
-    QubitStateVector q1_cpy = q1;
+QuantumGate::QuantumGate(const StateVector& q0, const StateVector& q1) : transformer(QuantumGateTransformer(2, 2)) {
+    StateVector q0_cpy = q0;
+    StateVector q1_cpy = q1;
     q0_cpy.normalize();
     q1_cpy.normalize();
     transformer << q0_cpy, q1_cpy;
@@ -53,13 +53,13 @@ QuantumGate::QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1)
     isValidated = true;
 }
 
-void QuantumGate::apply(Qubit& q) {
+void QuantumGate::apply(Qubits& q) {
     if (!isValidated) {
         throw std::runtime_error("Attempt to use invalid quantum gate.");
     }
 
     // Multiply the transformer matrix within the class.
-    QubitStateVector qTemp { transformer * q.stateVector };
+    StateVector qTemp { transformer * q.stateVector };
     q.stateVector = qTemp;
     q.stateVector.normalize();
 }
