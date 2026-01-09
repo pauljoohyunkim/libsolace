@@ -5,12 +5,6 @@
 
 namespace Solace {
 
-// Normalizes the vector to length 1.
-// Fails if v is zero vector.
-static inline void normalizeVector(QubitStateVector& v) {
-    v.normalize();
-}
-
 // Computes the generalized inner product of two vectors.
 static inline std::complex<double> innerProduct(const QubitStateVector& u, const QubitStateVector& v) {
     return u.dot(v);
@@ -44,13 +38,9 @@ ObservedQubitState Qubit::observe(const bool cheat) {
     return observedState;
 }
 
-void Qubit::normalizeStateVector() {
-    normalizeVector(stateVector);
-}
-
 QuantumGate::QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1) : transformation{q0, q1} {
-    normalizeVector(transformation[0]);
-    normalizeVector(transformation[1]);
+    transformation[0].normalize();
+    transformation[1].normalize();
 
     // Check if [q0, q1] is actually a unitary matrix.
     // Note that within the class, q0 and q1 are already normalized.

@@ -20,7 +20,7 @@ namespace Solace {
 
     class Qubit {
         public:
-            Qubit(const int n=2) : stateVector(Eigen::VectorXcd(n)) { stateVector << 1; }
+            Qubit(const int n=2) : stateVector(Eigen::VectorXcd(n)) { stateVector << 1, 0; }
             Qubit(const std::complex<double>& c0, const std::complex<double>& c1) : stateVector(2) { stateVector << c0, c1; normalizeStateVector(); }
             Qubit(const QubitStateVector& sv) : stateVector(sv) { normalizeStateVector(); }
 
@@ -34,7 +34,7 @@ namespace Solace {
             friend class QuantumGate;
             QubitStateVector stateVector;
 
-            void normalizeStateVector();
+            void normalizeStateVector() { stateVector.normalize(); }
     };
 
     class QuantumGate {
