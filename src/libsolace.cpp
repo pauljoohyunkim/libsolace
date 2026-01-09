@@ -1,7 +1,6 @@
 #include <random>
 #include <numbers>
 #include <cmath>
-#include <iostream>
 #include "solace/solace.hpp"
 
 namespace Solace {
@@ -39,13 +38,7 @@ ObservedQubitState Qubit::observe(const bool cheat) {
     return observedState;
 }
 
-QuantumGate::QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1) : transformer(QuantumGateTransformer(2, 2)), transformation{q0, q1} {
-    transformation[0].normalize();
-    transformation[1].normalize();
-
-    std::cout << transformation[0] << std::endl;
-    std::cout << transformation[1] << std::endl;
-
+QuantumGate::QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1) : transformer(QuantumGateTransformer(2, 2)) {
     QubitStateVector q0_cpy = q0;
     QubitStateVector q1_cpy = q1;
     q0_cpy.normalize();
@@ -53,10 +46,7 @@ QuantumGate::QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1)
     transformer << q0_cpy, q1_cpy;
 
     // Check if [q0, q1] is actually a unitary matrix.
-    // Note that within the class, q0 and q1 are already normalized.
-    // Only need to check if "orthogonal"
-    const auto dot { innerProduct(transformation[0], transformation[1]) };
-    if (dot != 0.0 || std::abs(dot-1.0) < tolerance) {
+    if (!transformer.isUnitary()) {
         throw std::runtime_error("Invalid quantum gate.");
     }
 }

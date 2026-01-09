@@ -45,9 +45,7 @@ namespace Solace {
             QuantumGateTransformer viewTransformer() const { return transformer; }
 #endif
         protected:
-            const double tolerance { 0.0000000001 };
             QuantumGateTransformer transformer;
-            QubitStateVector transformation[2];
 
 
     };
