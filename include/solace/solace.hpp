@@ -19,7 +19,7 @@ namespace Solace {
 
     class Qubit {
         public:
-            Qubit(const int n=2) : stateVector(QubitStateVector(n)) { stateVector << 1, 0; }
+            Qubit(const int n=1) : stateVector(QubitStateVector::Zero(1<<n)) { stateVector(0) = 1.0; }
             Qubit(const std::complex<double>& c0, const std::complex<double>& c1) : stateVector(2) { stateVector << c0, c1; normalizeStateVector(); }
             Qubit(const QubitStateVector& sv) : stateVector(sv) { normalizeStateVector(); }
 
