@@ -2,7 +2,7 @@
 #define __SOLACE_HPP__
 
 #include <complex>
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 namespace Solace {
     // Forward Declaration

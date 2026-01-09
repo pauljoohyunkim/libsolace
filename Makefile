@@ -1,6 +1,7 @@
 CXX=g++
 INCLUDE=include
-EIGEN=C:/msys64/mingw64/include
+EIGEN=/usr/include/eigen3
+#EIGEN=C:/msys64/mingw64/include/eigen3
 CXXFLAGS=-g -Wall -I$(INCLUDE) -I$(EIGEN)
 SRC=src
 OBJ=obj
