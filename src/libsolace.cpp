@@ -10,6 +10,12 @@ static inline std::complex<double> innerProduct(const StateVector& u, const Stat
     return u.dot(v);
 }
 
+Qubits::Qubits(const std::vector<std::complex<double>>& cs) : stateVector(cs.size()) {
+    for (size_t i = 0; i < cs.size(); i++) {
+        stateVector(i) = cs[i];
+    }
+}
+
 ObservedQubitState Qubits::observe(const bool cheat) {
     std::random_device rd;
     std::mt19937 gen(rd());
