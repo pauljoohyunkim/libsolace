@@ -23,8 +23,8 @@ Qubits Qubits::operator^(const Qubits& q) const {
 #else
     // Implementing tensor product manually.
     StateVector sv { StateVector::Zero(stateVector.size() * q.stateVector.size()) };
-    for (size_t i = 0; i < stateVector.size(); i++) {
-        for (size_t j = 0; j < q.stateVector.size(); j++) {
+    for (auto i = 0; i < stateVector.size(); i++) {
+        for (auto j = 0; j < q.stateVector.size(); j++) {
             sv(q.stateVector.size() * i + j) = stateVector(i) * q.stateVector(j);
         }
     }
@@ -89,7 +89,20 @@ QuantumGate::QuantumGate(const StateVector& q0, const StateVector& q1) : transfo
 }
 
 QuantumGate QuantumGate::operator^(const QuantumGate& gate) const {
+#if !defined(AVOID_UNSUPPORTED_EIGEN)
     const QuantumGateTransformer t { Eigen::KroneckerProduct(transformer, gate.transformer) };
+#else
+    QuantumGateTransformer t(transformer.rows() * gate.transformer.rows(), transformer.cols() * gate.transformer.cols());
+    for (auto i = 0; i < transformer.rows(); i++) {
+        for (auto j = 0; j < transformer.cols(); j++) {
+            t.block(i * gate.transformer.rows(),
+                    j * gate.transformer.cols(),
+                    gate.transformer.rows(),
+                    gate.transformer.cols())
+                    = transformer(i,j) * gate.transformer;
+        }
+    }
+#endif
 
     return QuantumGate(t);
 }
