@@ -10,6 +10,12 @@ TEST(QuantumGate, ValidityOK) {
     q2 << std::complex<double>(-2,1)/3.0, 2.0/3.0;
 
     Solace::QuantumGate H { q1, q2 };
+
+    q1.normalize();
+    q2.normalize();
+    Solace::QuantumGateTransformer H_transformer(2,2);
+    H_transformer << q1, q2;
+    Solace::QuantumGate H2 { H_transformer };
 }
 
 TEST(QuantumGate, ValidityFail) {

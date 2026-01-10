@@ -46,7 +46,9 @@ namespace Solace {
     class QuantumGate {
         public:
             QuantumGate() = default;
+            // 2x2
             QuantumGate(const StateVector& q0, const StateVector& q1);
+            QuantumGate(const QuantumGateTransformer& transformer) : transformer(transformer) { validate(); }
 
             void apply(Qubits& q);
 #if defined(BE_A_QUANTUM_CHEATER)

@@ -57,6 +57,9 @@ void Qubits::validateLength() const {
 }
 
 QuantumGate::QuantumGate(const StateVector& q0, const StateVector& q1) : transformer(QuantumGateTransformer(2, 2)) {
+    if (q0.size() != 2 || q1.size() != 2) {
+        throw std::runtime_error("Invalid quantum gate.");
+    }
     StateVector q0_cpy = q0;
     StateVector q1_cpy = q1;
     q0_cpy.normalize();
