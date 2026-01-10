@@ -16,14 +16,20 @@ Qubits::Qubits(const std::vector<std::complex<double>>& cs) : stateVector(cs.siz
     }
 }
 
+#if defined(BE_A_QUANTUM_CHEATER)
 ObservedQubitState Qubits::observe(const bool cheat) {
+#else
+ObservedQubitState Qubits::observe() {
+#endif
     std::random_device rd;
     std::mt19937 gen(rd());
     std::vector<double> weights { std::norm(stateVector[0]), std::norm(stateVector[1]) };
     std::discrete_distribution<> dist (weights.begin(), weights.end());
 
     const auto observedState { (ObservedQubitState) dist(gen) };
+#if defined(BE_A_QUANTUM_CHEATER)
     if (cheat == false) {
+#endif    
         // State collapse
         std::uniform_real_distribution<double> phaseDist(0, M_PI);
         const auto phase { phaseDist(gen) };
@@ -40,7 +46,9 @@ ObservedQubitState Qubits::observe(const bool cheat) {
             default:
                 throw std::runtime_error("Unexpected state!");
         }
+#if defined(BE_A_QUANTUM_CHEATER)
     }
+#endif
     return observedState;
 }
 
