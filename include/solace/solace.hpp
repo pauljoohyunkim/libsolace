@@ -53,6 +53,9 @@ namespace Solace {
             QuantumGate(const StateVector& q0, const StateVector& q1);
             QuantumGate(const QuantumGateTransformer& transformer) : transformer(transformer) { validate(); }
 
+            // Entanglement (Tensor Product of Quantum Gate Matrices)
+            QuantumGate operator^(const QuantumGate& gate) const;
+
             void apply(Qubits& q);
 #if defined(BE_A_QUANTUM_CHEATER)
             QuantumGateTransformer viewTransformer() const { return transformer; }

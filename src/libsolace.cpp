@@ -19,7 +19,7 @@ Qubits::Qubits(const std::vector<std::complex<double>>& cs) : stateVector(cs.siz
 Qubits Qubits::operator^(const Qubits& q) const {
 #if !defined(AVOID_UNSUPPORTED_EIGEN)
     // Note that this uses tensor product from "unsupported" Eigen library.
-    StateVector sv { Eigen::KroneckerProduct(stateVector, q.stateVector) };
+    const StateVector sv { Eigen::KroneckerProduct(stateVector, q.stateVector) };
 #else
     // Implementing tensor product manually.
     StateVector sv { StateVector::Zero(stateVector.size() * q.stateVector.size()) };
@@ -94,7 +94,14 @@ QuantumGate::QuantumGate(const StateVector& q0, const StateVector& q1) : transfo
     isValidated = true;
 }
 
+QuantumGate QuantumGate::operator^(const QuantumGate& gate) const {
+    const QuantumGateTransformer t { Eigen::KroneckerProduct(transformer, gate.transformer) };
+
+    return QuantumGate(t);
+}
+
 void QuantumGate::apply(Qubits& q) {
+    // TODO: Check the lengths.
     if (!isValidated) {
         throw std::runtime_error("Attempt to use invalid quantum gate.");
     }
