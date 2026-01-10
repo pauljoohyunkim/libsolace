@@ -1,77 +1,123 @@
 #include <random>
 #include <numbers>
 #include <cmath>
+#if !defined(AVOID_UNSUPPORTED_EIGEN)
+#include <unsupported/Eigen/KroneckerProduct>
+#endif
 #include "solace/solace.hpp"
 
 namespace Solace {
 
-// Normalizes the vector to length 1.
-// Fails if v is zero vector.
-static inline void normalizeVector(QubitStateVector& v) {
-    const auto len { std::sqrt(std::norm(v.first) + std::norm(v.second)) };
-    if (len == 0) {
-        throw std::runtime_error("Zero vector cannot be normalized.");
+Qubits::Qubits(const std::vector<std::complex<double>>& cs) : stateVector(cs.size()) {
+    validateLength();
+    for (size_t i = 0; i < cs.size(); i++) {
+        stateVector(i) = cs[i];
     }
-    QubitStateVector sv { v.first / len, v.second / len };
-    v = sv;
+    normalizeStateVector();
 }
 
-// Computes the generalized inner product of two vectors.
-static inline std::complex<double> innerProduct(const QubitStateVector& u, const QubitStateVector& v) {
-    const QubitStateVector uconj { std::conj(u.first), std::conj(u.second) };
-    return uconj.first * v.first + uconj.second * v.second;
+Qubits Qubits::operator^(const Qubits& q) const {
+#if !defined(AVOID_UNSUPPORTED_EIGEN)
+    // Note that this uses tensor product from "unsupported" Eigen library.
+    const StateVector sv { Eigen::KroneckerProduct(stateVector, q.stateVector) };
+#else
+    // Implementing tensor product manually.
+    StateVector sv { StateVector::Zero(stateVector.size() * q.stateVector.size()) };
+    for (size_t i = 0; i < stateVector.size(); i++) {
+        for (size_t j = 0; j < q.stateVector.size(); j++) {
+            sv(q.stateVector.size() * i + j) = stateVector(i) * q.stateVector(j);
+        }
+    }
+
+#endif
+    return Qubits(sv);
 }
 
-ObservedQubitState Qubit::observe(const bool cheat) {
+#if defined(BE_A_QUANTUM_CHEATER)
+ObservedQubitState Qubits::observe(const bool cheat) {
+#else
+ObservedQubitState Qubits::observe() {
+#endif
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::vector<double> weights { std::norm(stateVector.first), std::norm(stateVector.second) };
+    std::vector<double> weights {};
+    for (const auto v : stateVector) {
+        weights.push_back(std::norm(v));
+    }
     std::discrete_distribution<> dist (weights.begin(), weights.end());
 
     const auto observedState { (ObservedQubitState) dist(gen) };
+#if defined(BE_A_QUANTUM_CHEATER)
     if (cheat == false) {
+#endif    
         // State collapse
         std::uniform_real_distribution<double> phaseDist(0, M_PI);
         const auto phase { phaseDist(gen) };
         const auto nonzero { std::exp(std::complex<double>(0, phase)) };
-        const auto complexzero { std::complex<double>(0, 0) };
-        switch (observedState) {
-            case ObservedQubitState::ZERO:
-                stateVector = { nonzero, complexzero };
-                break;
-            case ObservedQubitState::ONE:
-                stateVector = { complexzero, nonzero };
-                break;
-            default:
-                throw std::runtime_error("Unexpected state!");
-        }
+        stateVector = StateVector::Zero(stateVector.size());
+        stateVector(observedState) = nonzero;
+        
+#if defined(BE_A_QUANTUM_CHEATER)
     }
+#endif
     return observedState;
 }
 
-void Qubit::normalizeStateVector() {
-    normalizeVector(stateVector);
-}
-
-QuantumGate::QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1) : transformation{q0, q1} {
-    normalizeVector(transformation[0]);
-    normalizeVector(transformation[1]);
-
-    // Check if [q0, q1] is actually a unitary matrix.
-    // Note that within the class, q0 and q1 are already normalized.
-    // Only need to check if "orthogonal"
-    const auto dot { innerProduct(transformation[0], transformation[1]) };
-    if (dot != 0.0 || std::abs(dot-1.0) < tolerance) {
-        throw std::runtime_error("Invalid quantum gate.");
+void Qubits::validateLength() const {
+    const auto n { stateVector.size() };
+    if (n == 0 || ((n & (n-1)) != 0)) {
+        throw std::runtime_error("State vector must be of length 2^N");
     }
 }
 
-void QuantumGate::apply(Qubit& q) {
-    // Multiply the 2x2 matrix within the class.
-    const auto state0 { q.stateVector.first * transformation[0].first + q.stateVector.second * transformation[1].first };
-    const auto state1 { q.stateVector.first * transformation[0].second + q.stateVector.second * transformation[1].second };
-    q.stateVector = { state0, state1 };
-    normalizeVector(q.stateVector);
+QuantumGate::QuantumGate(const StateVector& q0, const StateVector& q1) : transformer(QuantumGateTransformer(2, 2)) {
+    if (q0.size() != 2 || q1.size() != 2) {
+        throw std::runtime_error("Invalid quantum gate.");
+    }
+    StateVector q0_cpy = q0;
+    StateVector q1_cpy = q1;
+    q0_cpy.normalize();
+    q1_cpy.normalize();
+    transformer << q0_cpy, q1_cpy;
+
+    // Check if [q0, q1] is actually a unitary matrix.
+    if (!transformer.isUnitary()) {
+        throw std::runtime_error("Invalid quantum gate.");
+    }
+
+    isValidated = true;
+}
+
+QuantumGate QuantumGate::operator^(const QuantumGate& gate) const {
+    const QuantumGateTransformer t { Eigen::KroneckerProduct(transformer, gate.transformer) };
+
+    return QuantumGate(t);
+}
+
+void QuantumGate::apply(Qubits& q) {
+    // TODO: Check the lengths.
+    if (!isValidated) {
+        throw std::runtime_error("Attempt to use invalid quantum gate.");
+    }
+
+    // Multiply the transformer matrix within the class.
+    StateVector qTemp { transformer * q.stateVector };
+    q.stateVector = qTemp;
+    q.stateVector.normalize();
+}
+
+void QuantumGate::validate() {
+    if (transformer.isUnitary()) {
+        isValidated = true;
+    } else {
+        throw std::runtime_error("Invalid quantum gate.");
+    }
+
+    const auto m { transformer.rows() };
+    const auto n { transformer.cols() };
+    if (m == 0 || m != n || ((m & (m-1)) != 0)) {
+        throw std::runtime_error("Invalid quantum gate.");
+    }
 }
 
 }

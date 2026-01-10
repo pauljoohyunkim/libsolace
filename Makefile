@@ -1,6 +1,9 @@
 CXX=g++
+AR=ar
 INCLUDE=include
-CXXFLAGS=-g -Wall -I$(INCLUDE)
+EIGEN=/usr/include/eigen3
+#EIGEN=C:/msys64/mingw64/include/eigen3
+override CXXFLAGS+=-g -Wall -I$(INCLUDE) -I$(EIGEN)
 SRC=src
 OBJ=obj
 BIN=bin
@@ -20,6 +23,9 @@ objs: $(OBJS)
 
 $(BIN)/libsolace.so: $(OBJS)
 	$(CXX) $(CXXFLAGS) -fPIC -shared $^ -o $@
+
+$(BIN)/libsolace.a: $(OBJS)
+	$(AR) rcs $@ $^
 
 $(OBJ)/%_dbg.o: CXXFLAGS += -DBE_A_QUANTUM_CHEATER `pkg-config --cflags gtest`
 $(OBJ)/%_dbg.o: $(SRC)/%.cpp
@@ -44,7 +50,7 @@ $(TESTS)/unittest: $(DBG_OBJS)
 
 unittest: $(TESTS)/unittest
 
-lib: $(BIN)/libsolace.so
+lib: $(BIN)/libsolace.so $(BIN)/libsolace.a
 
 clean:
 	$(RM) $(OBJ)/*.o $(TESTS)/unittest $(BIN)/*.o $(BIN)/*.so

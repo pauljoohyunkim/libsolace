@@ -2,47 +2,65 @@
 #define __SOLACE_HPP__
 
 #include <complex>
-#include <utility>
+#include <vector>
+#include <Eigen/Dense>
 
 namespace Solace {
     // Forward Declaration
-    class Qubit;
+    class Qubits;
     class QuantumGate;
     
-    enum ObservedQubitState {
-        ZERO = 0,
-        ONE = 1
-    };
+    using ObservedQubitState = unsigned int;
+    using StateVector = Eigen::VectorXcd;
+    using QuantumGateTransformer = Eigen::MatrixXcd;
 
-    using QubitStateVector = std::pair<std::complex<double>, std::complex<double>>;
-
-    class Qubit {
+    class Qubits {
         public:
-            Qubit() : stateVector({1, 0}) {}
-            Qubit(const std::complex<double>& c0, const std::complex<double>& c1) : stateVector({c0, c1}) { normalizeStateVector(); }
-            Qubit(const QubitStateVector& sv) : stateVector(sv) { normalizeStateVector(); }
+            Qubits(const int n=1) : stateVector(StateVector::Zero(1<<n)) { validateLength(); stateVector(0) = 1.0; }
+            Qubits(const std::vector<std::complex<double>>& cs);
+            Qubits(const std::complex<double>& c0, const std::complex<double>& c1) : stateVector(2) { validateLength(); stateVector << c0, c1; normalizeStateVector(); }
+            Qubits(const StateVector& sv) : stateVector(sv) { validateLength(); normalizeStateVector(); }
 
-            ObservedQubitState observe(const bool cheat=false);
+            // Entanglement (Tensor Product of State Vectors)
+            Qubits operator^(const Qubits& q) const;
 
 #if defined(BE_A_QUANTUM_CHEATER)
-            QubitStateVector viewStateVector() const { return stateVector; }
+            ObservedQubitState observe(const bool cheat=false);
+#else
+            ObservedQubitState observe();
+#endif
+
+#if defined(BE_A_QUANTUM_CHEATER)
+            StateVector viewStateVector() const { return stateVector; }
 #endif
             
         private:
             friend class QuantumGate;
-            QubitStateVector stateVector;
+            StateVector stateVector;
 
-            void normalizeStateVector();
+            void validateLength() const;
+            void normalizeStateVector() { stateVector.normalize(); }
     };
 
     class QuantumGate {
         public:
-            QuantumGate(const QubitStateVector& q0, const QubitStateVector& q1);
+            QuantumGate() = default;
+            // 2x2
+            QuantumGate(const StateVector& q0, const StateVector& q1);
+            QuantumGate(const QuantumGateTransformer& transformer) : transformer(transformer) { validate(); }
 
-            void apply(Qubit& q);
+            // Entanglement (Tensor Product of Quantum Gate Matrices)
+            QuantumGate operator^(const QuantumGate& gate) const;
+
+            void apply(Qubits& q);
+#if defined(BE_A_QUANTUM_CHEATER)
+            QuantumGateTransformer viewTransformer() const { return transformer; }
+#endif
         protected:
-            const double tolerance { 0.0000000001 };
-            QubitStateVector transformation[2];
+            bool isValidated { false };
+            QuantumGateTransformer transformer;
+
+            void validate();
 
 
     };
