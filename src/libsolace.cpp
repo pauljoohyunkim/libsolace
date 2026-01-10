@@ -1,6 +1,9 @@
 #include <random>
 #include <numbers>
 #include <cmath>
+#if !defined(AVOID_UNSUPPORTED_EIGEN)
+#include <unsupported/Eigen/KroneckerProduct>
+#endif
 #include "solace/solace.hpp"
 
 namespace Solace {
@@ -14,11 +17,14 @@ Qubits::Qubits(const std::vector<std::complex<double>>& cs) : stateVector(cs.siz
 }
 
 Qubits Qubits::operator*(const Qubits& q) const {
+#if !defined(AVOID_UNSUPPORTED_EIGEN)
+    // Note that this uses tensor product from "unsupported" Eigen library.
+    StateVector sv { Eigen::KroneckerProduct(stateVector, q.stateVector) };
+#else
+    // Implementing tensor product manually.
+
+#endif
     //StateVector sv { StateVector::Zero(stateVector.size() * q.stateVector.size()) };
-    StateVector sv(stateVector.size() * q.stateVector.size());
-    for (const auto c : stateVector) {
-        sv << sv, c * q.stateVector;
-    }
 
     return Qubits(sv);
 }
