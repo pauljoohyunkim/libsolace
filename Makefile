@@ -7,9 +7,10 @@ override CXXFLAGS+=-g -Wall -I$(INCLUDE) -I$(EIGEN)
 SRC=src
 OBJ=obj
 BIN=bin
+DOCS=docs
 TESTS=tests
 
-.PHONY: unittest lib
+.PHONY: unittest lib docs
 
 OBJS=$(OBJ)/libsolace.o
 
@@ -52,6 +53,10 @@ unittest: $(TESTS)/unittest
 
 lib: $(BIN)/libsolace.so $(BIN)/libsolace.a
 
+docs: Doxyfile
+	doxygen $<
+
 clean:
 	$(RM) $(OBJ)/*.o $(TESTS)/unittest $(BIN)/*.o $(BIN)/*.so
+	$(RM) -r $(DOCS)/html
 
