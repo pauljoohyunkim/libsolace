@@ -10,11 +10,7 @@ namespace Solace {
     class Qubits;
     class QuantumGate;
     
-    enum ObservedQubitState {
-        ZERO = 0,
-        ONE = 1
-    };
-
+    using ObservedQubitState = unsigned int;
     using StateVector = Eigen::VectorXcd;
     using QuantumGateTransformer = Eigen::MatrixXcd;
 
