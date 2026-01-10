@@ -46,9 +46,9 @@ To build a dynamic library, simply run:
 make clean
 make lib
 ```
-You will see that `libsolace.so` was created at `bin` directory.
+You will see that `libsolace.so` and `libsolace.a` were created at `bin` directory.
 You can install the libsolace header at `/usr/include` (or other system path that you want),
-then link your `./hadamard.cpp` with `libsolace.so`.
+then link your `./hadamard.cpp` with `libsolace.so` or `libsolace.a`.
 
 ### Option 2: Create standalone binary with your code
 Maybe you do not want to compile the library. Maybe you just want emulation for your specific program.
@@ -66,6 +66,13 @@ Note that viewing state vector is not allowed if it were a real quantum computer
 However, since we do not want to pull our hair out every single time we research,
 you can enable the getter functions for state vectors by setting
 `-DBE_A_QUANTUM_CHEATER` flag during compilation.
+(It ain't cheating if you are cheating at quantum level!)
+
+For example, if you are using Option 1, and you want to be a quantum cheater, you can run the following instead:
+```
+make lib CXXFLAGS=-DBE_A_QUANTUM_CHEATER
+```
+Rest of the CXXFLAGS will be added.
 
 ## Development Engagement
 
