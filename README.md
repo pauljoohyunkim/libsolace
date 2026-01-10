@@ -9,6 +9,15 @@ I want to stress the fact that this project is not meant to be the winner of "Wh
 most efficient quantum emulator"; Microsoft's QDK seems to be already far ahead in the race at the moment.
 Rather this is a **demonstrative tool** with maximum liberty in terms of licenses for education and research.
 
+## Documentation
+You can build your documentation using Make and Doxygen.
+```
+make clean
+make docs
+```
+You should see a new directory called `docs/html` where you can access the Doxygen documentation at `index.html`.
+
+
 ## Quickstart and Build Guide
 First of all, here are the things you need:
 * GCC

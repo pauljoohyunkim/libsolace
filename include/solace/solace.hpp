@@ -90,24 +90,57 @@ namespace Solace {
             void normalizeStateVector() { stateVector.normalize(); }
     };
 
+    /**
+     * @class QuantumGate
+     * @brief Represents a quantum gate. Is a wrapper around unitary matrix.
+     */
     class QuantumGate {
         public:
+            /**
+             * @brief Empty quantum gate constructor. Used for defining custom quantum gate. Otherwise, other constructors are recommended.
+             */
             QuantumGate() = default;
-            // 2x2
+            
+            /**
+             * @brief 2x2 quantum gate constructor. Each of the state vector will be normalized. Fails if the two are not "orthogonal" in generalized inner product.
+             * @param[in] q0 the state vector that |0> is mapped to.
+             * @param[in] q1 the state vector that |1> is mapped to.
+             */
             QuantumGate(const StateVector& q0, const StateVector& q1);
+
+            /**
+             * @brief Quantum gate constructor for any number of qubits. 
+             * @param[in] transformer the unitary matrix that defines the gate. Must be a unitary matrix of N x N where N is a power of 2.
+             */
             QuantumGate(const QuantumGateTransformer& transformer) : transformer(transformer) { validate(); }
 
             // Entanglement (Tensor Product of Quantum Gate Matrices)
+            /**
+             * @brief create a new quantum gate that is the tensor product of two quantum gates (hence acts on larger set of qubits)
+             * @param[in] gate a quantum gate
+             * @param[out] QuantumGate a quantum gate that is the tensor product of the two.
+             */
             QuantumGate operator^(const QuantumGate& gate) const;
 
+            /**
+             * @brief apply the quantum gate to a set of qubits
+             * @param[in] q the set of qubits to apply the quantum gate on
+             */
             void apply(Qubits& q);
 #if defined(BE_A_QUANTUM_CHEATER)
+            /**
+             * @brief get the transformer matrix of the quantum gate for debugging purposes.
+             * @param[out] transformer the unitary matrix that defines the gate.
+             */
             QuantumGateTransformer viewTransformer() const { return transformer; }
 #endif
         protected:
             bool isValidated { false };
             QuantumGateTransformer transformer;
 
+            /**
+             * @brief validates the quantum gate at initialization.
+             */
             void validate();
 
 

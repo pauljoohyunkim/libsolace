@@ -26,7 +26,7 @@ TEST(Qubit, ObservationWithCheat) {
 
     for (auto i = 0U; i < testN; i++) {
         const auto observation { q.observe(true) };
-        if (observation == Solace::ObservedQubitState::ZERO) {
+        if (observation == 0) {
             observedCount[0]++;
         } else {
             observedCount[1]++;
@@ -48,10 +48,10 @@ TEST(Qubit, ObservationCollapse) {
     };
     const auto ret { q.observe(false) };
     const auto sv { q.viewStateVector() };
-    if (ret == Solace::ObservedQubitState::ZERO) {
+    if (ret == 0) {
         ASSERT_EQ(sv[1], std::complex<double>(0,0));
     }
-    if (ret == Solace::ObservedQubitState::ONE) {
+    if (ret == 1) {
         ASSERT_EQ(sv[0], std::complex<double>(0,0));
     }
 

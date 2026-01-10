@@ -6,8 +6,15 @@
 constexpr static std::complex<double> i { 0.0, 1.0 };
 
 namespace Solace::Gate {
+    /**
+     * @class identity gate. Acts on a set of qubit to do nothing.
+     */
     class Identity : public Solace::QuantumGate {
         public:
+            /**
+             * @brief Constructor for identity gate.
+             * @param[in] n The number of qubits to act on.
+             */
             Identity(const int n=1) : Solace::QuantumGate() {
                 const auto dim { 1 << n };
                 transformer = QuantumGateTransformer::Identity(dim, dim);
@@ -15,8 +22,14 @@ namespace Solace::Gate {
             }
     };
 
+    /**
+     * @class Pauli-X gate. Acts on a qubit.
+     */
     class PauliX : public Solace::QuantumGate {
         public:
+            /**
+             * @brief Constructor for Pauli-X gate.
+             */
             PauliX() : Solace::QuantumGate() {
                 transformer = QuantumGateTransformer(2,2);
                 transformer << 0.0, 1.0,
@@ -25,8 +38,14 @@ namespace Solace::Gate {
             }
     };
 
+    /**
+     * @class Pauli-Y gate. Acts on a qubit.
+     */
     class PauliY : public Solace::QuantumGate {
         public:
+            /**
+             * @brief Constructor for Pauli-Y gate.
+             */
             PauliY() : Solace::QuantumGate() {
                 transformer = QuantumGateTransformer(2,2);
                 transformer << 0.0, -i,
@@ -35,8 +54,14 @@ namespace Solace::Gate {
             }
     };
 
+    /**
+     * @class Pauli-Z gate. Acts on a qubit.
+     */
     class PauliZ : public Solace::QuantumGate {
         public:
+            /**
+             * @brief Constructor for Pauli-Z gate.
+             */
             PauliZ() : Solace::QuantumGate() {
                 transformer = QuantumGateTransformer(2,2);
                 transformer << 1.0, 0.0,
@@ -49,8 +74,14 @@ namespace Solace::Gate {
     // 1/sqrt(2) * 
     // 1  1
     // 1 -1
+    /**
+     * @class Hadamard gate. Acts on a qubit.
+     */
     class Hadamard : public Solace::QuantumGate {
         public:
+            /**
+             * @brief Constructor for Hadamard gate.
+             */
             Hadamard() : Solace::QuantumGate() {
                 transformer = QuantumGateTransformer(2,2);
                 Solace::StateVector q1(2);
