@@ -13,6 +13,16 @@ Qubits::Qubits(const std::vector<std::complex<double>>& cs) : stateVector(cs.siz
     normalizeStateVector();
 }
 
+Qubits Qubits::operator*(const Qubits& q) const {
+    //StateVector sv { StateVector::Zero(stateVector.size() * q.stateVector.size()) };
+    StateVector sv(stateVector.size() * q.stateVector.size());
+    for (const auto c : stateVector) {
+        sv << sv, c * q.stateVector;
+    }
+
+    return Qubits(sv);
+}
+
 #if defined(BE_A_QUANTUM_CHEATER)
 ObservedQubitState Qubits::observe(const bool cheat) {
 #else

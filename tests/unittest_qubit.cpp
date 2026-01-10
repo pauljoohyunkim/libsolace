@@ -57,3 +57,10 @@ TEST(Qubit, ObservationCollapse) {
 
     ASSERT_TRUE(std::abs(std::norm(sv[0]) + std::norm(sv[1]) - 1) < 0.000001);
 }
+
+TEST(Qubit, EntangledQubits) {
+    Solace::Qubits q1 { 1 };
+    Solace::Qubits q2 { {3, 2},
+                      {1, -2.2} };
+    Solace::Qubits q1xq2 { q1 * q2 };
+}

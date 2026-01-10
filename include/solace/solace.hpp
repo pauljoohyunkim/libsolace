@@ -25,6 +25,9 @@ namespace Solace {
             Qubits(const std::complex<double>& c0, const std::complex<double>& c1) : stateVector(2) { validateLength(); stateVector << c0, c1; normalizeStateVector(); }
             Qubits(const StateVector& sv) : stateVector(sv) { validateLength(); normalizeStateVector(); }
 
+            // Entanglement (Tensor Product of State Vectors)
+            Qubits operator*(const Qubits& q) const;
+
 #if defined(BE_A_QUANTUM_CHEATER)
             ObservedQubitState observe(const bool cheat=false);
 #else
