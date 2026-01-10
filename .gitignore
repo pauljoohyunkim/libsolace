@@ -40,3 +40,6 @@ tests/unittest
 
 # debug information files
 *.dwo
+
+# Documentation
+docs/html
