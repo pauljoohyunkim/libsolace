@@ -62,5 +62,5 @@ TEST(Qubit, EntangledQubits) {
     Solace::Qubits q1 { 1 };
     Solace::Qubits q2 { {3, 2},
                       {1, -2.2} };
-    Solace::Qubits q1xq2 { q1 * q2 };
+    Solace::Qubits q1xq2 { q1 ^ q2 };
 }

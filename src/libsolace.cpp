@@ -16,16 +16,20 @@ Qubits::Qubits(const std::vector<std::complex<double>>& cs) : stateVector(cs.siz
     normalizeStateVector();
 }
 
-Qubits Qubits::operator*(const Qubits& q) const {
+Qubits Qubits::operator^(const Qubits& q) const {
 #if !defined(AVOID_UNSUPPORTED_EIGEN)
     // Note that this uses tensor product from "unsupported" Eigen library.
     StateVector sv { Eigen::KroneckerProduct(stateVector, q.stateVector) };
 #else
     // Implementing tensor product manually.
+    StateVector sv { StateVector::Zero(stateVector.size() * q.stateVector.size()) };
+    for (size_t i = 0; i < stateVector.size(); i++) {
+        for (size_t j = 0; j < q.stateVector.size(); j++) {
+            sv(q.stateVector.size() * i + j) = stateVector(i) * q.stateVector(j);
+        }
+    }
 
 #endif
-    //StateVector sv { StateVector::Zero(stateVector.size() * q.stateVector.size()) };
-
     return Qubits(sv);
 }
 

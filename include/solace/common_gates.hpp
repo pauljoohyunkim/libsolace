@@ -8,10 +8,9 @@ constexpr static std::complex<double> i { 0.0, 1.0 };
 namespace Solace::Gate {
     class Identity : public Solace::QuantumGate {
         public:
-            Identity() : Solace::QuantumGate() {
-                transformer = QuantumGateTransformer(2,2);
-                transformer << 1.0, 0.0,
-                               0.0, 1.0;
+            Identity(const int n=1) : Solace::QuantumGate() {
+                const auto dim { 1 << n };
+                transformer = QuantumGateTransformer::Identity(dim, dim);
                 validate();
             }
     };

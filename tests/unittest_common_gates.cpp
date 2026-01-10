@@ -54,3 +54,18 @@ TEST(CommonGate, Hadamard) {
     ASSERT_TRUE(std::abs(std::norm(sv[0]) - 0.5) < 0.0001);
     ASSERT_TRUE(std::abs(std::norm(sv[1]) - 0.5) < 0.0001);
 }
+
+TEST(CommonGate, Hadamard2) {
+    Solace::Qubits q {};
+    Solace::Gate::Hadamard H;
+    H.apply(q);
+
+    // Create two qubit system
+    Solace::Qubits q2 { q ^ q };
+    const auto sv { q2.viewStateVector() };
+    std::cout << sv << std::endl;
+    ASSERT_TRUE(std::abs(std::norm(sv(0)) - 0.25) < 0.001);
+    ASSERT_TRUE(std::abs(std::norm(sv(1)) - 0.25) < 0.001);
+    ASSERT_TRUE(std::abs(std::norm(sv(2)) - 0.25) < 0.001);
+    ASSERT_TRUE(std::abs(std::norm(sv(3)) - 0.25) < 0.001);
+}
