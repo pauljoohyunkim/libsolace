@@ -11,9 +11,11 @@ static inline std::complex<double> innerProduct(const StateVector& u, const Stat
 }
 
 Qubits::Qubits(const std::vector<std::complex<double>>& cs) : stateVector(cs.size()) {
+    validateLength();
     for (size_t i = 0; i < cs.size(); i++) {
         stateVector(i) = cs[i];
     }
+    normalizeStateVector();
 }
 
 #if defined(BE_A_QUANTUM_CHEATER)
@@ -50,6 +52,13 @@ ObservedQubitState Qubits::observe() {
     }
 #endif
     return observedState;
+}
+
+void Qubits::validateLength() const {
+    const auto n { stateVector.size() };
+    if (n == 0 || ((n & (n-1)) != 0)) {
+        throw std::runtime_error("State vector must be of length 2^N");
+    }
 }
 
 QuantumGate::QuantumGate(const StateVector& q0, const StateVector& q1) : transformer(QuantumGateTransformer(2, 2)) {

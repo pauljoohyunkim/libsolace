@@ -9,6 +9,11 @@ TEST(Qubit, Normalization) {
     ASSERT_TRUE(std::abs(std::norm(sv[0]) + std::norm(sv[1]) - 1) < 0.000001);
 }
 
+TEST(Qubit, InvalidLength) {
+    ASSERT_ANY_THROW(Solace::Qubits q0 { std::vector<std::complex<double>>({}) });
+    ASSERT_ANY_THROW(Solace::Qubits q5 { std::vector<std::complex<double>>({1, 2, 3, 4, 5 }) });
+}
+
 TEST(Qubit, ObservationWithCheat) {
     const unsigned int testN { 10000 };
     Solace::Qubits q {

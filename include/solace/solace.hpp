@@ -20,10 +20,10 @@ namespace Solace {
 
     class Qubits {
         public:
-            Qubits(const int n=1) : stateVector(StateVector::Zero(1<<n)) { stateVector(0) = 1.0; }
+            Qubits(const int n=1) : stateVector(StateVector::Zero(1<<n)) { validateLength(); stateVector(0) = 1.0; }
             Qubits(const std::vector<std::complex<double>>& cs);
-            Qubits(const std::complex<double>& c0, const std::complex<double>& c1) : stateVector(2) { stateVector << c0, c1; normalizeStateVector(); }
-            Qubits(const StateVector& sv) : stateVector(sv) { normalizeStateVector(); }
+            Qubits(const std::complex<double>& c0, const std::complex<double>& c1) : stateVector(2) { validateLength(); stateVector << c0, c1; normalizeStateVector(); }
+            Qubits(const StateVector& sv) : stateVector(sv) { validateLength(); normalizeStateVector(); }
 
 #if defined(BE_A_QUANTUM_CHEATER)
             ObservedQubitState observe(const bool cheat=false);
@@ -39,6 +39,7 @@ namespace Solace {
             friend class QuantumGate;
             StateVector stateVector;
 
+            void validateLength() const;
             void normalizeStateVector() { stateVector.normalize(); }
     };
 
