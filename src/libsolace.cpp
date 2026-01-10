@@ -93,6 +93,12 @@ void QuantumGate::validate() {
     } else {
         throw std::runtime_error("Invalid quantum gate.");
     }
+
+    const auto m { transformer.rows() };
+    const auto n { transformer.cols() };
+    if (m == 0 || m != n || ((m & (m-1)) != 0)) {
+        throw std::runtime_error("Invalid quantum gate.");
+    }
 }
 
 }
