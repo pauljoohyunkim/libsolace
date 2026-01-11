@@ -17,7 +17,7 @@ namespace Solace::Gate {
              */
             Identity(const int n=1) : Solace::QuantumGate() {
                 const auto dim { 1 << n };
-                transformer = QuantumGateTransformer::Identity(dim, dim);
+                transformer = Solace::QuantumGateTransformer::Identity(dim, dim);
                 validate();
             }
     };
@@ -31,7 +31,7 @@ namespace Solace::Gate {
              * @brief Constructor for Pauli-X gate.
              */
             PauliX() : Solace::QuantumGate() {
-                transformer = QuantumGateTransformer(2,2);
+                transformer = Solace::QuantumGateTransformer(2,2);
                 transformer << 0.0, 1.0,
                                1.0, 0.0;
                 validate();
@@ -47,7 +47,7 @@ namespace Solace::Gate {
              * @brief Constructor for Pauli-Y gate.
              */
             PauliY() : Solace::QuantumGate() {
-                transformer = QuantumGateTransformer(2,2);
+                transformer = Solace::QuantumGateTransformer(2,2);
                 transformer << 0.0, -i,
                                i, 0.0;
                 validate();
@@ -63,7 +63,7 @@ namespace Solace::Gate {
              * @brief Constructor for Pauli-Z gate.
              */
             PauliZ() : Solace::QuantumGate() {
-                transformer = QuantumGateTransformer(2,2);
+                transformer = Solace::QuantumGateTransformer(2,2);
                 transformer << 1.0, 0.0,
                                0.0, -1.0;
                 validate();
@@ -83,7 +83,7 @@ namespace Solace::Gate {
              * @brief Constructor for Hadamard gate.
              */
             Hadamard() : Solace::QuantumGate() {
-                transformer = QuantumGateTransformer(2,2);
+                transformer = Solace::QuantumGateTransformer(2,2);
                 Solace::StateVector q1(2);
                 q1 << 1, 1;
                 Solace::StateVector q2(2);
