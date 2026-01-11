@@ -44,6 +44,7 @@ int main() {
     // Note that technically one should do diligence of initializing by applying Hadamard gate to all nQubits qubits,
     // but the initial state vector is also required for Grover diffusion gate.
     // I will be "quasi-cheating" here.
+    std::cout << "Creating " << nQubits << " qubits and the required gates..." << std::endl;
     Solace::StateVector s { Solace::StateVector::Ones(1<<nQubits) };
     s.normalize();
 
@@ -51,7 +52,9 @@ int main() {
     GroverDiffusionGate us { s };
     QuantumOracle uw { 3, nQubits };
 
+    std::cout << "Starting Grover algorithm" << std::endl;
     for (auto n = 0; n < nIter; n++) {
+        std::cout << "Iter num: " << n << "/" << nIter << std::endl;
         uw.apply(system);
         us.apply(system);
     }
