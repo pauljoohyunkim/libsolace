@@ -25,7 +25,7 @@ TEST(Qubit, ObservationWithCheat) {
     std::vector<int> observedCount { 0, 0 };
 
     for (auto i = 0U; i < testN; i++) {
-        const auto observation { q.observe(true) };
+        const auto observation { q.observe(false, true) };
         if (observation == 0) {
             observedCount[0]++;
         } else {
