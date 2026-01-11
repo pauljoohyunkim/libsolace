@@ -12,13 +12,16 @@ TESTS=tests
 
 .PHONY: unittest lib docs
 
-OBJS=$(OBJ)/libsolace.o
+OBJS=$(OBJ)/libsolace.o \
+	 $(OBJ)/utility.o
 
 DBG_OBJS=$(OBJ)/unittest.o \
 		 $(OBJ)/libsolace_dbg.o \
+		 $(OBJ)/utility_dbg.o \
 		 $(OBJ)/unittest_qubit.o \
 		 $(OBJ)/unittest_gate.o \
-		 $(OBJ)/unittest_common_gates.o
+		 $(OBJ)/unittest_common_gates.o \
+		 $(OBJ)/unittest_utility.o
 
 objs: $(OBJS)
 
