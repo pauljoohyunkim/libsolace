@@ -9,7 +9,10 @@ I want to stress the fact that this project is not meant to be the winner of "Wh
 most efficient quantum emulator"; Microsoft's QDK seems to be already far ahead in the race at the moment.
 Rather this is a **demonstrative tool** with maximum liberty in terms of licenses for education and research.
 
-## Documentation
+## Documentation (HIGHLY RECOMMENDED READING)
+*The documentation is NOT long at all. You can take ten minutes to read the entire thing!*
+(But if you are in a hurry, I would say, generate the documentation and read the [Class List](docs/html/annotated.html))
+
 You can build your documentation using Make and Doxygen.
 ```
 make clean
@@ -59,6 +62,13 @@ You will see that `libsolace.so` and `libsolace.a` were created at `bin` directo
 You can install the libsolace header at `/usr/include` (or other system path that you want),
 then link your `./hadamard.cpp` with `libsolace.so` or `libsolace.a`.
 
+Note that if you have Eigen headers downloaded/installed at different directory, you might get an error.
+You can fix that by passing the directory to `EIGEN` variable in make.
+```
+make clean
+make lib EIGEN=/usr/include/eigen3
+```
+
 ### Option 2: Create standalone binary with your code
 Maybe you do not want to compile the library. Maybe you just want emulation for your specific program.
 In this case, you can simply compile your code with the source code of this library.
@@ -71,6 +81,8 @@ g++ -g -Wall -I /usr/include/eigen3 -I /home/user/Documents/libsolace/include /h
 ```
 
 ### Build Options
+
+### BE_A_QUANTUM_CHEATER
 Note that viewing state vector is not allowed if it were a real quantum computer.
 However, since we do not want to pull our hair out every single time we research,
 you can enable the getter functions for state vectors by setting
@@ -82,6 +94,16 @@ For example, if you are using Option 1, and you want to be a quantum cheater, yo
 make lib CXXFLAGS=-DBE_A_QUANTUM_CHEATER
 ```
 Rest of the CXXFLAGS will be added.
+
+### AVOID_UNSUPPORTED_EIGEN
+Since the library uses tensor products, and Eigen does not officially support tensor product (`KroneckerProduct`),
+it can be "broken" in the future update. To mitigate this, I implemented the tensor product manually.
+By setting `-DAVOID_UNSUPPORTED_EIGEN`, you use my manual implementation instead of Eigen's.
+
+If you are again following Option 1, you can run the following:
+```
+make lib CXXFLAGS=-DAVOID_UNSUPPORTED_EIGEN
+```
 
 ## Development Engagement
 

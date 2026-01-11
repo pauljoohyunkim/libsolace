@@ -56,15 +56,17 @@ namespace Solace {
             /**
              * @brief observe the qubit system. Note that this will collapse the state vector.
              * @param[in] cheat whether or not the observation will collapse the state vector. Setting this true will prevent the collapse.
+             * @param[in] randomphase whether or not post-measurement phase should be randomized or not. (Often meaningless.)
              * @param[out] ObservedQubitState the result of the measurement.
              */
-            ObservedQubitState observe(const bool cheat=false);
+            ObservedQubitState observe(const bool cheat=false, const bool randomphase=false);
 #else
             /**
              * @brief observe the qubit system. Note that this will collapse the state vector. Should you wish, compile with -DBE_A_QUANTUM_CHEATER flag for collapse-free version support.
+             * @param[in] randomphase whether or not post-measurement phase should be randomized or not. (Often meaningless.)
              * @param[out] ObservedQubitState the result of the measurement.
              */
-            ObservedQubitState observe();
+            ObservedQubitState observe(const bool randomphase=false);
 #endif
 
 #if defined(BE_A_QUANTUM_CHEATER)
