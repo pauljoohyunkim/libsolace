@@ -67,6 +67,12 @@ namespace Solace {
              */
             Qubits operator^(const Qubits& q) const;
 
+            /**
+             * @brief Get number of qubits.
+             * @param[out] nQubit The number of qubits.
+             */
+            size_t getNQubit() const { return nQubit; }
+
 #if defined(BE_A_QUANTUM_CHEATER)
             /**
              * @brief observe the qubit system. Note that this will collapse the state vector.
@@ -96,11 +102,12 @@ namespace Solace {
         private:
             friend class QuantumGate;
             StateVector stateVector;
+            size_t nQubit { 0 };
 
             /**
              * @brief validate the number of entries of the state vector. Makes sure that the number of entries is a power of 2.
              */
-            void validateLength() const;
+            void validateLength();
             /**
              * @brief normalizes the length of the state vector to 1.
              */
@@ -140,6 +147,12 @@ namespace Solace {
             QuantumGate operator^(const QuantumGate& gate) const;
 
             /**
+             * @brief Get number of qubits that the gate can apply to.
+             * @param[out] nQubit The number of qubits.
+             */
+            size_t getNQubit() const { return nQubit; }
+
+            /**
              * @brief apply the quantum gate to a set of qubits
              * @param[in] q the set of qubits to apply the quantum gate on
              */
@@ -154,6 +167,7 @@ namespace Solace {
         protected:
             bool isValidated { false };
             QuantumGateTransformer transformer;
+            size_t nQubit { 0 };
 
             /**
              * @brief validates the quantum gate at initialization.

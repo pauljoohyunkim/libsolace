@@ -67,11 +67,13 @@ ObservedQubitState Qubits::observe(const bool randomphase) {
     return observedState;
 }
 
-void Qubits::validateLength() const {
+void Qubits::validateLength() {
     const auto n { stateVector.size() };
     if (n == 0 || ((n & (n-1)) != 0)) {
         throw std::runtime_error("State vector must be of length 2^N");
     }
+
+    nQubit = static_cast<size_t>(std::log2(n));
 }
 
 QuantumGate::QuantumGate(const StateVector& q0, const StateVector& q1) : transformer(QuantumGateTransformer(2, 2)) {
@@ -116,6 +118,9 @@ void QuantumGate::apply(Qubits& q) {
     if (!isValidated) {
         throw std::runtime_error("Attempt to use invalid quantum gate.");
     }
+    if (transformer.rows() != q.stateVector.size()) {
+        throw std::runtime_error("Quantum gate and state vector are not compatible.");
+    }
 
     // Multiply the transformer matrix within the class.
     StateVector qTemp { transformer * q.stateVector };
@@ -135,6 +140,8 @@ void QuantumGate::validate() {
     if (m == 0 || m != n || ((m & (m-1)) != 0)) {
         throw std::runtime_error("Invalid quantum gate.");
     }
+
+    nQubit = static_cast<size_t>(std::log2(m));
 }
 
 }
