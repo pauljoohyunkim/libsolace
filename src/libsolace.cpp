@@ -34,7 +34,7 @@ Qubits Qubits::operator^(const Qubits& q) const {
 }
 
 #if defined(BE_A_QUANTUM_CHEATER)
-ObservedQubitState Qubits::observe(const bool cheat, const bool randomphase) {
+ObservedQubitState Qubits::observe(const bool randomphase, const bool cheat) {
 #else
 ObservedQubitState Qubits::observe(const bool randomphase) {
 #endif

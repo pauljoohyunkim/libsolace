@@ -20,8 +20,17 @@ make docs
 ```
 You should see a new directory called `docs/html` where you can access the Doxygen documentation at `index.html`.
 
+## Quickstart
+I provide you four demo codes in `demos` directory.
+The examples should serve as a series of short easy-to-follow tutorials.
+You can build them by running the following:
+```
+make clean
+make demos
+```
+You will see `demos/*.bin` files being created.
 
-## Quickstart and Build Guide
+## Build Guide
 First of all, here are the things you need:
 * GCC
 * Make
@@ -103,6 +112,13 @@ By setting `-DAVOID_UNSUPPORTED_EIGEN`, you use my manual implementation instead
 If you are again following Option 1, you can run the following:
 ```
 make lib CXXFLAGS=-DAVOID_UNSUPPORTED_EIGEN
+```
+
+### Optimization
+By default, all builds are `-O3` optimzied for speed.
+You can change it by passing an alternative optimization level as the following:
+```
+make lib OPTIMIZATION=-O2
 ```
 
 ## Development Engagement
