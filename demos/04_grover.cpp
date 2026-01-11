@@ -41,7 +41,7 @@ int main() {
     constexpr int nIter { (int) (M_PI_4 * (1 << (nQubits >> 1))) };
 
     // Initializing vector for Grover's algorithm.
-    // Note that technically one should do diligence of initializing by Hadamard gate,
+    // Note that technically one should do diligence of initializing by applying Hadamard gate to all nQubits qubits,
     // but the initial state vector is also required for Grover diffusion gate.
     // I will be "quasi-cheating" here.
     Solace::StateVector s { Solace::StateVector::Ones(1<<nQubits) };

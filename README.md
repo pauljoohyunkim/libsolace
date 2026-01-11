@@ -11,17 +11,17 @@ Rather this is a **demonstrative tool** with maximum liberty in terms of license
 
 ## Documentation (HIGHLY RECOMMENDED READING)
 *The documentation is NOT long at all. You can take ten minutes to read the entire thing!*
-(But if you are in a hurry, I would say, generate the documentation and read the [Class List](docs/html/annotated.html))
+(But if you are in a hurry, I would say, generate the documentation and read the [Class List](annotated.html))
 
 You can build your documentation using Make and Doxygen.
 ```
 make clean
 make docs
 ```
-You should see a new directory called `docs/html` where you can access the Doxygen documentation at `index.html`.
+You should see a new directory called [docs/html](docs/html) where you can access the Doxygen documentation at [index.html](index.html).
 
 ## Quickstart
-I provide you four demo codes in `demos` directory.
+I provide you four demo codes in [demos](demos) directory.
 The examples should serve as a series of short easy-to-follow tutorials.
 You can build them by running the following:
 ```
@@ -62,12 +62,12 @@ int main() {
 Once you have these prerequisites installed, you have several avenues to proceed:
 
 ### Option 1: Build the libsolace library, then link with your code.
-To build a dynamic library, simply run:
+To build a dynamic library and a static library, simply run:
 ```
 make clean
 make lib
 ```
-You will see that `libsolace.so` and `libsolace.a` were created at `bin` directory.
+You will see that `libsolace.so` and `libsolace.a` are created at [bin](bin) directory.
 You can install the libsolace header at `/usr/include` (or other system path that you want),
 then link your `./hadamard.cpp` with `libsolace.so` or `libsolace.a`.
 

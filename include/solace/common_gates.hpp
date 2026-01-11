@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Common quantum gates implementations.
+ */
 #ifndef __SOLACE_COMMON_GATES_HPP__
 #define __SOLACE_COMMON_GATES_HPP__
 

@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Utility functions for Solace library.
+ */
 #ifndef __SOLACE_UTILITY_HPP__
 #define __SOLACE_UTILITY_HPP__
 

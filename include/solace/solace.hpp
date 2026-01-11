@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Main Solace library. Defines Qubits and QuantumGate.
+ */
 #ifndef __SOLACE_HPP__
 #define __SOLACE_HPP__
 
@@ -10,8 +14,19 @@ namespace Solace {
     class Qubits;
     class QuantumGate;
     
+    /**
+     * @brief Represents what value can be observed from measurement. (Alias to unsigned int)
+     */
     using ObservedQubitState = unsigned int;
+
+    /**
+     * @brief Represents a state vector. (Alias to Eigen::VectorXcd from Eigen library)
+     */
     using StateVector = Eigen::VectorXcd;
+
+    /**
+     * @brief Represents a quantum gate matrix. (Alias to Eigen::MatrixXcd from Eigen library)
+     */
     using QuantumGateTransformer = Eigen::MatrixXcd;
 
     /**
