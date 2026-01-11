@@ -6,6 +6,7 @@
 *.lo
 *.o
 *.obj
+*.bin
 
 # Precompiled Headers
 *.gch
@@ -36,6 +37,10 @@
 *.exe
 *.out
 *.app
+tests/unittest
 
 # debug information files
 *.dwo
+
+# Documentation
+docs/html
