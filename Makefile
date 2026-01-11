@@ -25,7 +25,8 @@ DBG_OBJS=$(OBJ)/unittest.o \
 		 $(OBJ)/unittest_utility.o
 
 DEMO_BINS=$(DEMOS)/01_hadamard.bin \
-		  $(DEMOS)/02_hadamard2.bin
+		  $(DEMOS)/02_hadamard2.bin \
+		  $(DEMOS)/03_hadamard3.bin
 
 objs: $(OBJS)
 
