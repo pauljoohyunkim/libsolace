@@ -168,6 +168,13 @@ namespace Solace {
             size_t getNQubit() const { return nQubit; }
 
             /**
+             * @brief Compile the generated quantum gate to a file.
+             * 
+             * @param[in] filepath 
+             */
+            void compile(const std::filesystem::path& filepath) const;
+
+            /**
              * @brief apply the quantum gate to a set of qubits
              * @param[in] q the set of qubits to apply the quantum gate on
              */

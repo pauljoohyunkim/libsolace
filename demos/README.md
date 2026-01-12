@@ -15,3 +15,5 @@ Think of them as tutorials.
 * [04_grover.cpp](04_grover.cpp)
     * This exapmle shows how to define custom quantum gates and an actual application of Grover's algorithm to solve a quantum oracle.
     * The result should be 3. (with >99% probability)
+* [05_grover2.cpp](05_grover.cpp)
+    * This example shows how to "compile"/precompute the qubits and quantum gate so that once it launches subsequently, it can run much faster (and the objects can be reused in other projects.)

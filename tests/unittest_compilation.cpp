@@ -34,3 +34,23 @@ TEST(Compilation, DoubleQubit) {
     auto diff { sv - sv_load };
     ASSERT_TRUE(diff.norm() < 0.001);
 }
+
+TEST(Compilation, QuantumGate1) {
+    const std::string filename { "./q.qgate" };
+    Solace::StateVector q1(2);
+    q1 << 2.0/3.0, std::complex<double>(2,1)/3.0;
+    Solace::StateVector q2(2);
+    q2 << std::complex<double>(-2,1)/3.0, 2.0/3.0;
+    Solace::QuantumGate H { q1, q2 };
+
+    auto t { H.viewTransformer() };
+    std::cout << t << std::endl;
+    H.compile(filename);
+
+    //Solace::Qubits q2_load { filename };
+    //auto sv_load { q2_load.viewStateVector() };
+    //std::cout << sv_load << std::endl;
+
+    //auto diff { sv - sv_load };
+    //ASSERT_TRUE(diff.norm() < 0.001);
+}

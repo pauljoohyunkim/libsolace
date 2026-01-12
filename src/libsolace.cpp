@@ -97,7 +97,6 @@ ObservedQubitState Qubits::observe(const bool randomphase) {
 void Qubits::compile(const std::filesystem::path& filepath) const {
     std::ofstream outfile { filepath, std::ios::binary };
     Compiled::QuantumObject quantumObj;
-    //Compiled::Qubits qubitsObj;
 
     quantumObj.set_type(Compiled::ObjectType::QUBITS);
     quantumObj.set_nqubit(nQubit);
@@ -156,6 +155,27 @@ QuantumGate QuantumGate::operator^(const QuantumGate& gate) const {
 #endif
 
     return QuantumGate(t);
+}
+
+void QuantumGate::compile(const std::filesystem::path& filepath) const {
+    std::ofstream outfile { filepath, std::ios::binary };
+    Compiled::QuantumObject quantumObj;
+
+    quantumObj.set_type(Compiled::ObjectType::QUANTUM_GATE);
+    quantumObj.set_nqubit(nQubit);
+    
+    auto quantumGateM { quantumObj.mutable_quantumgate() };
+    for (auto i = 0; i < transformer.rows(); i++) {
+        auto row { quantumGateM->add_matrix() };
+        for (auto j = 0; j < transformer.cols(); j++) {
+            auto entry { row->add_entry() };
+            entry->set_real(transformer(i, j).real());
+            entry->set_imag(transformer(i, j).imag());
+        }
+    }
+
+    quantumObj.PrintDebugString();
+    outfile << quantumObj.SerializeAsString();
 }
 
 void QuantumGate::apply(Qubits& q) {
