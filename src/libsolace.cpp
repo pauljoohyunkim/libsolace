@@ -130,12 +130,33 @@ QuantumGate::QuantumGate(const StateVector& q0, const StateVector& q1) : transfo
     q1_cpy.normalize();
     transformer << q0_cpy, q1_cpy;
 
-    // Check if [q0, q1] is actually a unitary matrix.
-    if (!transformer.isUnitary()) {
-        throw std::runtime_error("Invalid quantum gate.");
+    validate();
+}
+
+QuantumGate::QuantumGate(const std::filesystem::path& filepath) {
+    std::ifstream infile { filepath, std::ios::binary };
+    std::stringstream filecontentStream;
+    filecontentStream << infile.rdbuf();
+    
+    Compiled::QuantumObject obj;
+    if (!obj.ParseFromString(filecontentStream.str())) {
+        throw std::runtime_error("Could not read quantum object.");
     }
 
-    isValidated = true;
+    if (obj.type() != Compiled::ObjectType::QUANTUM_GATE) {
+        throw std::runtime_error("Wrong type of object read.");
+    }
+
+    const auto dim { 1 << obj.nqubit() };
+    transformer = QuantumGateTransformer(dim, dim);
+    for (auto i = 0; i < obj.quantumgate().matrix_size(); i++) {
+        for (auto j = 0; j < obj.quantumgate().matrix(i).entry_size(); j++) {
+            auto entry { obj.quantumgate().matrix(i).entry(j) };
+            std::complex<double> val { entry.real(), entry.imag() };
+            transformer(i, j) = val;
+        }
+    }
+    validate();
 }
 
 QuantumGate QuantumGate::operator^(const QuantumGate& gate) const {

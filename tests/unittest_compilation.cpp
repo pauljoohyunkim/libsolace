@@ -47,10 +47,10 @@ TEST(Compilation, QuantumGate1) {
     std::cout << t << std::endl;
     H.compile(filename);
 
-    //Solace::Qubits q2_load { filename };
-    //auto sv_load { q2_load.viewStateVector() };
-    //std::cout << sv_load << std::endl;
+    Solace::QuantumGate H_load { filename };
+    auto t_load { H_load.viewTransformer() };
+    std::cout << t_load << std::endl;
 
-    //auto diff { sv - sv_load };
-    //ASSERT_TRUE(diff.norm() < 0.001);
+    auto diff { t - t_load };
+    ASSERT_TRUE(diff.norm() < 0.001);
 }

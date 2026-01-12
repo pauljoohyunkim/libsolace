@@ -62,7 +62,7 @@ namespace Solace {
             Qubits(const StateVector& sv) : stateVector(sv) { validateLength(); normalizeStateVector(); }
 
             /**
-             * @brief Constructor qubits. Reads from a previously "compiled" qubit and load from it.
+             * @brief Constructor qubits. Reads from a previously "compiled" qubit and loads from it.
              * 
              * @param[in] filepath the file path to compiled qubit object.
              */
@@ -152,6 +152,13 @@ namespace Solace {
              * @param[in] transformer the unitary matrix that defines the gate. Must be a unitary matrix of N x N where N is a power of 2.
              */
             QuantumGate(const QuantumGateTransformer& transformer) : transformer(transformer) { validate(); }
+
+            /**
+             * @brief Constructor quantum gates. Reads from a previously "compiled" quantum gates and loads from it.
+             * 
+             * @param[in] filepath the file path to compiled quantum gate object.
+             */
+            QuantumGate(const std::filesystem::path& filepath);
 
             // Entanglement (Tensor Product of Quantum Gate Matrices)
             /**
