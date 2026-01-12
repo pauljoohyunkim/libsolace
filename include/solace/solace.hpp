@@ -61,6 +61,11 @@ namespace Solace {
              */
             Qubits(const StateVector& sv) : stateVector(sv) { validateLength(); normalizeStateVector(); }
 
+            /**
+             * @brief Constructor qubits. Reads from a previously "compiled" qubit and load from it.
+             * 
+             * @param[in] filepath the file path to compiled qubit object.
+             */
             Qubits(const std::filesystem::path& filepath);
 
             /**
@@ -103,11 +108,12 @@ namespace Solace {
 #endif
 
             /**
-             * @brief Save the generated qubits to a file.
+             * @brief Compile the generated qubits to a file.
              * 
              * @param[in] filepath 
              */
             void compile(const std::filesystem::path& filepath) const;
+
         private:
             friend class QuantumGate;
             StateVector stateVector;
