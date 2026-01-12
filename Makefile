@@ -17,16 +17,19 @@ PROTO=proto
 
 .PHONY: unittest lib docs demos proto
 
-OBJS=$(OBJ)/libsolace.o \
+OBJS=$(OBJ)/solace_proto.o \
+	 $(OBJ)/libsolace.o \
 	 $(OBJ)/utility.o
 
-DBG_OBJS=$(OBJ)/unittest.o \
+DBG_OBJS=$(OBJ)/solace_proto.o \
+		 $(OBJ)/unittest.o \
 		 $(OBJ)/libsolace_dbg.o \
 		 $(OBJ)/utility_dbg.o \
 		 $(OBJ)/unittest_qubit.o \
 		 $(OBJ)/unittest_gate.o \
 		 $(OBJ)/unittest_common_gates.o \
-		 $(OBJ)/unittest_utility.o
+		 $(OBJ)/unittest_utility.o \
+		 $(OBJ)/unittest_compilation.o
 
 DEMO_BINS=$(DEMOS)/01_hadamard.bin \
 		  $(DEMOS)/02_hadamard2.bin \
@@ -41,26 +44,29 @@ $(BIN)/libsolace.so: $(OBJS)
 $(BIN)/libsolace.a: $(OBJS)
 	$(AR) rcs $@ $^
 
+$(OBJ)/solace_proto.o: $(SRC)/solace.pb.cc
+	$(CXX) $(CXXFLAGS) -fPIC -shared -c $< -o $@ $(LDFLAGS)
+
 $(OBJ)/%_dbg.o: CXXFLAGS += -DBE_A_QUANTUM_CHEATER `pkg-config --cflags gtest`
 $(OBJ)/%_dbg.o: $(SRC)/%.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(LDFLAGS)
 
 $(OBJ)/demo_%.o: $(DEMOS)/%.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(LDFLAGS)
 
 $(DEMOS)/%.bin: $(OBJ)/demo_%.o $(BIN)/libsolace.a
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(OBJ)/unittest_%.o: CXXFLAGS += -DBE_A_QUANTUM_CHEATER `pkg-config --cflags gtest`
-$(OBJ)/unittest_%.o: $(TESTS)/unittest_%.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(OBJ)/unittest_%.o: $(TESTS)/unittest_%.cpp $(PROTOFILES)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(LDFLAGS)
 
 $(OBJ)/unittest.o: CXXFLAGS += -DBE_A_QUANTUM_CHEATER `pkg-config --cflags gtest`
-$(OBJ)/unittest.o: $(TESTS)/unittest.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(OBJ)/unittest.o: $(TESTS)/unittest.cpp $(PROTOFILES)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(LDFLAGS)
 
-$(OBJ)/%.o: $(SRC)/%.cpp
-	$(CXX) $(CXXFLAGS) -fPIC -shared -c $< -o $@
+$(OBJ)/%.o: $(SRC)/%.cpp $(PROTOFILES)
+	$(CXX) $(CXXFLAGS) -fPIC -shared -c $< -o $@ $(LDFLAGS)
 
 
 PROTOFILES=$(SRC)/solace.pb.cc $(INCLUDE)/solace.pb.h
@@ -68,14 +74,13 @@ PROTOFILES=$(SRC)/solace.pb.cc $(INCLUDE)/solace.pb.h
 proto: $(PROTOFILES)
 
 $(SRC)/solace.pb.cc $(INCLUDE)/solace.pb.h &: $(PROTO)/solace.proto
-	$(PROTOC) --cpp_out=. $<
-	mv $(PROTO)/solace.pb.cc $(SRC)/solace.pb.cc
-	mv $(PROTO)/solace.pb.h $(INCLUDE)/solace.pb.h
+	$(PROTOC) -I=$(PROTO) --cpp_out=$(SRC) $<
+	mv $(SRC)/solace.pb.h $(INCLUDE)/solace.pb.h
 
 
 $(TESTS)/unittest: CXXFLAGS += -DBE_A_QUANTUM_CHEATER `pkg-config --cflags gtest`
 $(TESTS)/unittest: $(DBG_OBJS)
-	$(CXX) $(CXXFLAGS) $^ -o $@ `pkg-config --libs gtest`
+	$(CXX) $(CXXFLAGS) $^ -o $@ `pkg-config --libs gtest` $(LDFLAGS)
 
 unittest: $(TESTS)/unittest
 
@@ -91,4 +96,5 @@ clean:
 	$(RM) -r $(DOCS)/html
 	$(RM) $(DEMOS)/*.bin
 	$(RM) $(PROTOFILES)
+	$(RM) *.qbit
 

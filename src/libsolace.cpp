@@ -1,10 +1,12 @@
 #include <random>
+#include <fstream>
 #include <numbers>
 #include <cmath>
 #if !defined(AVOID_UNSUPPORTED_EIGEN)
 #include <unsupported/Eigen/KroneckerProduct>
 #endif
 #include "solace/solace.hpp"
+#include "solace.pb.h"
 
 namespace Solace {
 
@@ -65,6 +67,24 @@ ObservedQubitState Qubits::observe(const bool randomphase) {
     }
 #endif
     return observedState;
+}
+
+void Qubits::compile(const std::filesystem::path& filepath) const {
+    std::ofstream outfile { filepath, std::ios::binary };
+    Compiled::QuantumObject quantumObj;
+    //Compiled::Qubits qubitsObj;
+
+    quantumObj.set_type(Compiled::ObjectType::QUBITS);
+    quantumObj.set_nqubit(nQubit);
+    
+    const auto qubitsV { quantumObj.mutable_qubits()->mutable_vector() };
+    for (auto cs : stateVector) {
+        auto entry { qubitsV->add_entry() };
+        entry->set_real(cs.real());
+        entry->set_imag(cs.imag());
+    }
+
+    outfile << quantumObj.SerializeAsString();
 }
 
 void Qubits::validateLength() {

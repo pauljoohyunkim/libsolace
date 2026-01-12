@@ -7,6 +7,7 @@
 
 #include <complex>
 #include <vector>
+#include <filesystem>
 #include <Eigen/Dense>
 
 namespace Solace {
@@ -98,7 +99,13 @@ namespace Solace {
              */
             StateVector viewStateVector() const { return stateVector; }
 #endif
-            
+
+            /**
+             * @brief Save the generated qubits to a file.
+             * 
+             * @param[in] filepath 
+             */
+            void compile(const std::filesystem::path& filepath) const;
         private:
             friend class QuantumGate;
             StateVector stateVector;
