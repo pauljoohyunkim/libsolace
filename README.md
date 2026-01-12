@@ -9,6 +9,15 @@ I want to stress the fact that this project is not meant to be the winner of "Wh
 most efficient quantum emulator"; Microsoft's QDK seems to be already far ahead in the race at the moment.
 Rather this is a **demonstrative tool** with maximum liberty in terms of licenses for education and research.
 
+## Dependency
+Here are the packages you need:
+* GCC
+* Make
+* Eigen (C++ header-only library for linear algebra)
+    * You could install the package, or simply download/clone it. The only thing that changes is the include path for Eigen library.
+* Protobuf
+    * This is used for precompilation of qubits, quantum gates, and any other quantum object that might be invented!
+
 ## Documentation (HIGHLY RECOMMENDED READING)
 *The documentation is NOT long at all. You can take ten minutes to read the entire thing!*
 (But if you are in a hurry, I would say, generate the documentation and read the [Class List](annotated.html))
@@ -31,12 +40,6 @@ make demos
 You will see `demos/*.bin` files being created.
 
 ## Build Guide
-First of all, here are the things you need:
-* GCC
-* Make
-* Eigen (C++ header-only library for linear algebra)
-    * You could install the package, or simply download/clone it. The only thing that changes is the include path for Eigen library.
-
 Suppose for example, you have the following separate project directory.
 ```
 hadamard/
