@@ -1,10 +1,13 @@
 #include <random>
+#include <fstream>
+#include <sstream>
 #include <numbers>
 #include <cmath>
 #if !defined(AVOID_UNSUPPORTED_EIGEN)
 #include <unsupported/Eigen/KroneckerProduct>
 #endif
 #include "solace/solace.hpp"
+#include "solace.pb.h"
 
 namespace Solace {
 
@@ -12,6 +15,30 @@ Qubits::Qubits(const std::vector<std::complex<double>>& cs) : stateVector(cs.siz
     validateLength();
     for (size_t i = 0; i < cs.size(); i++) {
         stateVector(i) = cs[i];
+    }
+    normalizeStateVector();
+}
+
+Qubits::Qubits(const std::filesystem::path& filepath) {
+    std::ifstream infile { filepath, std::ios::binary };
+    std::stringstream filecontentStream;
+    filecontentStream << infile.rdbuf();
+    
+    Compiled::QuantumObject obj;
+    if (!obj.ParseFromString(filecontentStream.str())) {
+        throw std::runtime_error("Could not read quantum object.");
+    }
+
+    if (obj.type() != Compiled::ObjectType::QUBITS) {
+        throw std::runtime_error("Wrong type of object read.");
+    }
+
+    stateVector = StateVector(1 << obj.nqubit());
+    validateLength();
+    for (auto i = 0; i < obj.qubits().vector().entry_size(); i++) {
+        auto entry { obj.qubits().vector().entry(i) };
+        std::complex<double> val { entry.real(), entry.imag() };
+        stateVector(i) = val;
     }
     normalizeStateVector();
 }
@@ -67,6 +94,23 @@ ObservedQubitState Qubits::observe(const bool randomphase) {
     return observedState;
 }
 
+void Qubits::compile(const std::filesystem::path& filepath) const {
+    std::ofstream outfile { filepath, std::ios::binary };
+    Compiled::QuantumObject quantumObj;
+
+    quantumObj.set_type(Compiled::ObjectType::QUBITS);
+    quantumObj.set_nqubit(nQubit);
+    
+    const auto qubitsV { quantumObj.mutable_qubits()->mutable_vector() };
+    for (auto cs : stateVector) {
+        auto entry { qubitsV->add_entry() };
+        entry->set_real(cs.real());
+        entry->set_imag(cs.imag());
+    }
+
+    outfile << quantumObj.SerializeAsString();
+}
+
 void Qubits::validateLength() {
     const auto n { stateVector.size() };
     if (n == 0 || ((n & (n-1)) != 0)) {
@@ -86,12 +130,33 @@ QuantumGate::QuantumGate(const StateVector& q0, const StateVector& q1) : transfo
     q1_cpy.normalize();
     transformer << q0_cpy, q1_cpy;
 
-    // Check if [q0, q1] is actually a unitary matrix.
-    if (!transformer.isUnitary()) {
-        throw std::runtime_error("Invalid quantum gate.");
+    validate();
+}
+
+QuantumGate::QuantumGate(const std::filesystem::path& filepath) {
+    std::ifstream infile { filepath, std::ios::binary };
+    std::stringstream filecontentStream;
+    filecontentStream << infile.rdbuf();
+    
+    Compiled::QuantumObject obj;
+    if (!obj.ParseFromString(filecontentStream.str())) {
+        throw std::runtime_error("Could not read quantum object.");
     }
 
-    isValidated = true;
+    if (obj.type() != Compiled::ObjectType::QUANTUM_GATE) {
+        throw std::runtime_error("Wrong type of object read.");
+    }
+
+    const auto dim { 1 << obj.nqubit() };
+    transformer = QuantumGateTransformer(dim, dim);
+    for (auto i = 0; i < obj.quantumgate().matrix_size(); i++) {
+        for (auto j = 0; j < obj.quantumgate().matrix(i).entry_size(); j++) {
+            auto entry { obj.quantumgate().matrix(i).entry(j) };
+            std::complex<double> val { entry.real(), entry.imag() };
+            transformer(i, j) = val;
+        }
+    }
+    validate();
 }
 
 QuantumGate QuantumGate::operator^(const QuantumGate& gate) const {
@@ -111,6 +176,26 @@ QuantumGate QuantumGate::operator^(const QuantumGate& gate) const {
 #endif
 
     return QuantumGate(t);
+}
+
+void QuantumGate::compile(const std::filesystem::path& filepath) const {
+    std::ofstream outfile { filepath, std::ios::binary };
+    Compiled::QuantumObject quantumObj;
+
+    quantumObj.set_type(Compiled::ObjectType::QUANTUM_GATE);
+    quantumObj.set_nqubit(nQubit);
+    
+    auto quantumGateM { quantumObj.mutable_quantumgate() };
+    for (auto i = 0; i < transformer.rows(); i++) {
+        auto row { quantumGateM->add_matrix() };
+        for (auto j = 0; j < transformer.cols(); j++) {
+            auto entry { row->add_entry() };
+            entry->set_real(transformer(i, j).real());
+            entry->set_imag(transformer(i, j).imag());
+        }
+    }
+
+    outfile << quantumObj.SerializeAsString();
 }
 
 void QuantumGate::apply(Qubits& q) {

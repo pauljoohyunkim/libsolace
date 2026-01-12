@@ -7,6 +7,7 @@
 
 #include <complex>
 #include <vector>
+#include <filesystem>
 #include <Eigen/Dense>
 
 namespace Solace {
@@ -61,6 +62,13 @@ namespace Solace {
             Qubits(const StateVector& sv) : stateVector(sv) { validateLength(); normalizeStateVector(); }
 
             /**
+             * @brief Constructor qubits. Reads from a previously "compiled" qubit and loads from it.
+             * 
+             * @param[in] filepath the file path to compiled qubit object.
+             */
+            Qubits(const std::filesystem::path& filepath);
+
+            /**
              * @brief Construct combined qubit system by a tensor product.
              * @param[in] q the other set of qubits.
              * @param[out] Qubits a new set of qubits that looks like it is entangled.
@@ -98,7 +106,14 @@ namespace Solace {
              */
             StateVector viewStateVector() const { return stateVector; }
 #endif
-            
+
+            /**
+             * @brief Compile the generated qubits to a file.
+             * 
+             * @param[in] filepath 
+             */
+            void compile(const std::filesystem::path& filepath) const;
+
         private:
             friend class QuantumGate;
             StateVector stateVector;
@@ -138,6 +153,13 @@ namespace Solace {
              */
             QuantumGate(const QuantumGateTransformer& transformer) : transformer(transformer) { validate(); }
 
+            /**
+             * @brief Constructor quantum gates. Reads from a previously "compiled" quantum gates and loads from it.
+             * 
+             * @param[in] filepath the file path to compiled quantum gate object.
+             */
+            QuantumGate(const std::filesystem::path& filepath);
+
             // Entanglement (Tensor Product of Quantum Gate Matrices)
             /**
              * @brief create a new quantum gate that is the tensor product of two quantum gates (hence acts on larger set of qubits)
@@ -151,6 +173,13 @@ namespace Solace {
              * @param[out] nQubit The number of qubits.
              */
             size_t getNQubit() const { return nQubit; }
+
+            /**
+             * @brief Compile the generated quantum gate to a file.
+             * 
+             * @param[in] filepath 
+             */
+            void compile(const std::filesystem::path& filepath) const;
 
             /**
              * @brief apply the quantum gate to a set of qubits
