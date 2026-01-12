@@ -1,18 +1,21 @@
 CXX=g++
 AR=ar
+PROTOC=protoc
 INCLUDE=include
 EIGEN=/usr/include/eigen3
 #EIGEN=C:/msys64/mingw64/include/eigen3
 OPTIMIZATION?=-O3
-override CXXFLAGS+=-g $(OPTIMIZATION) -Wall -I$(INCLUDE) -I$(EIGEN)
+override CXXFLAGS+=-g $(OPTIMIZATION) -Wall -I$(INCLUDE) -I$(EIGEN) `pkg-config --cflags protobuf`
+LDFLAGS=`pkg-config --libs protobuf`
 SRC=src
 OBJ=obj
 BIN=bin
 DOCS=docs
 TESTS=tests
 DEMOS=demos
+PROTO=proto
 
-.PHONY: unittest lib docs demos
+.PHONY: unittest lib docs demos proto
 
 OBJS=$(OBJ)/libsolace.o \
 	 $(OBJ)/utility.o
@@ -60,6 +63,15 @@ $(OBJ)/%.o: $(SRC)/%.cpp
 	$(CXX) $(CXXFLAGS) -fPIC -shared -c $< -o $@
 
 
+PROTOFILES=$(SRC)/solace.pb.cc $(INCLUDE)/solace.pb.h
+
+proto: $(PROTOFILES)
+
+$(SRC)/solace.pb.cc $(INCLUDE)/solace.pb.h &: $(PROTO)/solace.proto
+	$(PROTOC) --cpp_out=. $<
+	mv $(PROTO)/solace.pb.cc $(SRC)/solace.pb.cc
+	mv $(PROTO)/solace.pb.h $(INCLUDE)/solace.pb.h
+
 
 $(TESTS)/unittest: CXXFLAGS += -DBE_A_QUANTUM_CHEATER `pkg-config --cflags gtest`
 $(TESTS)/unittest: $(DBG_OBJS)
@@ -78,4 +90,5 @@ clean:
 	$(RM) $(OBJ)/*.o $(TESTS)/unittest $(BIN)/*.o $(BIN)/*.so
 	$(RM) -r $(DOCS)/html
 	$(RM) $(DEMOS)/*.bin
+	$(RM) $(PROTOFILES)
 
