@@ -89,7 +89,8 @@ First of all, locate the include path of Eigen library (eg. /usr/include/eigen3)
 Also, note the include path of the libsolace library (eg. /home/user/Documents/libsolace/include).
 Then you can compile by:
 ```
-g++ -g -Wall -I /usr/include/eigen3 -I /home/user/Documents/libsolace/include /home/user/Documents/libsolace/src/libsolace.cpp ./hadamard.cpp -o hadamard
+make proto      # This generates protobuf files.
+g++ -g -Wall -I /usr/include/eigen3 -I /home/user/Documents/libsolace/include /home/user/Documents/libsolace/src/* ./hadamard.cpp -o hadamard
 ```
 
 ### Build Options
