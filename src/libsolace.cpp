@@ -195,7 +195,6 @@ void QuantumGate::compile(const std::filesystem::path& filepath) const {
         }
     }
 
-    quantumObj.PrintDebugString();
     outfile << quantumObj.SerializeAsString();
 }
 

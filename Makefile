@@ -34,7 +34,8 @@ DBG_OBJS=$(OBJ)/solace_proto.o \
 DEMO_BINS=$(DEMOS)/01_hadamard.bin \
 		  $(DEMOS)/02_hadamard2.bin \
 		  $(DEMOS)/03_hadamard3.bin \
-		  $(DEMOS)/04_grover.bin
+		  $(DEMOS)/04_grover.bin \
+		  $(DEMOS)/05_grover2.bin
 
 objs: $(OBJS)
 
@@ -96,5 +97,5 @@ clean:
 	$(RM) -r $(DOCS)/html
 	$(RM) $(DEMOS)/*.bin
 	$(RM) $(PROTOFILES)
-	$(RM) *.qbit
+	$(RM) *.qbit *.qgate
 
