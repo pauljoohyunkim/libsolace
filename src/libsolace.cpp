@@ -1,5 +1,6 @@
 #include <random>
 #include <fstream>
+#include <sstream>
 #include <numbers>
 #include <cmath>
 #if !defined(AVOID_UNSUPPORTED_EIGEN)
@@ -14,6 +15,30 @@ Qubits::Qubits(const std::vector<std::complex<double>>& cs) : stateVector(cs.siz
     validateLength();
     for (size_t i = 0; i < cs.size(); i++) {
         stateVector(i) = cs[i];
+    }
+    normalizeStateVector();
+}
+
+Qubits::Qubits(const std::filesystem::path& filepath) {
+    std::ifstream infile { filepath, std::ios::binary };
+    std::stringstream filecontentStream;
+    filecontentStream << infile.rdbuf();
+    
+    Compiled::QuantumObject obj;
+    if (!obj.ParseFromString(filecontentStream.str())) {
+        throw std::runtime_error("Could not read quantum object.");
+    }
+
+    if (obj.type() != Compiled::ObjectType::QUBITS) {
+        throw std::runtime_error("Wrong type of object read.");
+    }
+
+    stateVector = StateVector(1 << obj.nqubit());
+    validateLength();
+    for (auto i = 0; i < obj.qubits().vector().entry_size(); i++) {
+        auto entry { obj.qubits().vector().entry(i) };
+        std::complex<double> val { entry.real(), entry.imag() };
+        stateVector(i) = val;
     }
     normalizeStateVector();
 }

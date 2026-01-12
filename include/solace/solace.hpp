@@ -61,6 +61,8 @@ namespace Solace {
              */
             Qubits(const StateVector& sv) : stateVector(sv) { validateLength(); normalizeStateVector(); }
 
+            Qubits(const std::filesystem::path& filepath);
+
             /**
              * @brief Construct combined qubit system by a tensor product.
              * @param[in] q the other set of qubits.

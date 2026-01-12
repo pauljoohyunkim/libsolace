@@ -48,3 +48,7 @@ docs/html
 # Protobuf Generated Files
 *.pb.cc
 *.pb.h
+
+# Compiled quantum objects
+*.qbit
+*.qgate
