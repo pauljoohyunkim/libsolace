@@ -42,8 +42,8 @@ Suppose for example, you have the following separate project directory.
 hadamard/
 └── hadamard.cpp
 ```
-where `hadamard.cpp` is your emulation of the usage of the Hadamard gate as the following.
-```
+where `hadamard.cpp` is your emulation of the usage of the Hadamard gate as the following. (This is [demos/01_hadamard.cpp](demos/01_hadamard.cpp) with less comments.)
+```cpp
 // hadamard.cpp
 #include "solace/solace.hpp"
 #include "solace/common_gates.hpp"
