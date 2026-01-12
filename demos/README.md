@@ -19,4 +19,6 @@ Think of them as tutorials.
     * This example shows how to "compile"/precompute the qubits and quantum gate so that once it launches subsequently, it can run much faster (and the objects can be reused in other projects.)
     * For reference, there are three files generated: `qubits.qbit` (44KiB), `diffuser.qgate` (176.0MiB), and `oracle.qgate`.
     * Loading takes a lot of time as well. Use precomputation if you know your storage access speed is faster than computation.
+        * In Grover's algorithm, you could actually combine the oracle gate and the diffuser gate into one. For optimization, you could compute the combined gate, then compile it to a file. This would involve only one gate reading instead of two.
+        * In my machine, it took 2 minutes 33 seconds for the first run, and 2 minutes and 32 seconds for the second run (with reading), so if the combined gate is compiled and loaded instead, this could result in a speedup.
     * For durability of storage, you might consider saving it onto RAM disk.
