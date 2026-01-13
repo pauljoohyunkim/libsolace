@@ -135,6 +135,11 @@ after all, I did not get a doctorate in quantum computing or anything.
 * ~~Implement precompilation of qubits and gates.~~
   * ~~It turns out from experimenting with [04_grover.cpp](demos/04_grover.cpp) that the majority of time spent on running is from building the qubits and gates. Allow precomputation to make it to make it run faster next time.~~ Turns out reading through the compiled quantum objects is about the same if not longer (although it may depend on the storage medium and CPU power.)
   * On the other hand, now there is a way to conveniently transfer quantum objects that were generated from other machines.
+* Optimize quantum gate expression for sparse gates.
+* Support measurement of specific number of qubits.
+    * Reference: GHZ state and others.
+    $$\ket{GHZ} = \frac{\ket{000} + \ket{111}}{\sqrt{2}}$$
+    $$\ket{\psi_{pedantic}} = \frac{1}{2} \left(\ket{00} \otimes \ket{000} + \ket{00} \otimes \ket{111} + \ket{11} \otimes \ket{001} + \ket{11} \times \ket{110}\right)
 * Implement a class (such as "QuantumSystem" or "QuantumComputer") such that it can generate the quantum circuit diagram if built using its API.
 * Write a Tex document outlining the basic principles of how quantum computing works and how this library emulates it.
 
