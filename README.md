@@ -132,8 +132,9 @@ I, in fact, highly welcome fixes for bugs that *arise from my erroneous understa
 after all, I did not get a doctorate in quantum computing or anything.
 
 ### TODO
-* Implement precompilation of qubits and gates.
-  * It turns out from experimenting with [04_grover.cpp](demos/04_grover.cpp) that the majority of time spent on running is from building the qubits and gates. Allow precomputation to make it to make it run faster next time.
+* ~~Implement precompilation of qubits and gates.~~
+  * ~~It turns out from experimenting with [04_grover.cpp](demos/04_grover.cpp) that the majority of time spent on running is from building the qubits and gates. Allow precomputation to make it to make it run faster next time.~~ Turns out reading through the compiled quantum objects is about the same if not longer (although it may depend on the storage medium and CPU power.)
+  * On the other hand, now there is a way to conveniently transfer quantum objects that were generated from other machines.
 * Implement a class (such as "QuantumSystem" or "QuantumComputer") such that it can generate the quantum circuit diagram if built using its API.
 * Write a Tex document outlining the basic principles of how quantum computing works and how this library emulates it.
 
