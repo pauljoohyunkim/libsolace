@@ -9,6 +9,15 @@ I want to stress the fact that this project is not meant to be the winner of "Wh
 most efficient quantum emulator"; Microsoft's QDK seems to be already far ahead in the race at the moment.
 Rather this is a **demonstrative tool** with maximum liberty in terms of licenses for education and research.
 
+## Dependency
+Here are the packages you need:
+* GCC
+* Make
+* Eigen (C++ header-only library for linear algebra)
+    * You could install the package, or simply download/clone it. The only thing that changes is the include path for Eigen library.
+* Protobuf
+    * This is used for precompilation of qubits, quantum gates, and any other quantum object that might be invented!
+
 ## Documentation (HIGHLY RECOMMENDED READING)
 *The documentation is NOT long at all. You can take ten minutes to read the entire thing!*
 (But if you are in a hurry, I would say, generate the documentation and read the [Class List](annotated.html))
@@ -31,19 +40,13 @@ make demos
 You will see `demos/*.bin` files being created.
 
 ## Build Guide
-First of all, here are the things you need:
-* GCC
-* Make
-* Eigen (C++ header-only library for linear algebra)
-    * You could install the package, or simply download/clone it. The only thing that changes is the include path for Eigen library.
-
 Suppose for example, you have the following separate project directory.
 ```
 hadamard/
 └── hadamard.cpp
 ```
-where `hadamard.cpp` is your emulation of the usage of the Hadamard gate as the following.
-```
+where `hadamard.cpp` is your emulation of the usage of the Hadamard gate as the following. (This is [demos/01_hadamard.cpp](demos/01_hadamard.cpp) with less comments.)
+```cpp
 // hadamard.cpp
 #include "solace/solace.hpp"
 #include "solace/common_gates.hpp"
@@ -86,12 +89,13 @@ First of all, locate the include path of Eigen library (eg. /usr/include/eigen3)
 Also, note the include path of the libsolace library (eg. /home/user/Documents/libsolace/include).
 Then you can compile by:
 ```
-g++ -g -Wall -I /usr/include/eigen3 -I /home/user/Documents/libsolace/include /home/user/Documents/libsolace/src/libsolace.cpp ./hadamard.cpp -o hadamard
+make proto      # This generates protobuf files.
+g++ -g -Wall -I /usr/include/eigen3 -I /home/user/Documents/libsolace/include /home/user/Documents/libsolace/src/* ./hadamard.cpp -o hadamard
 ```
 
 ### Build Options
 
-### BE_A_QUANTUM_CHEATER
+#### BE_A_QUANTUM_CHEATER
 Note that viewing state vector is not allowed if it were a real quantum computer.
 However, since we do not want to pull our hair out every single time we research,
 you can enable the getter functions for state vectors by setting
@@ -104,7 +108,7 @@ make lib CXXFLAGS=-DBE_A_QUANTUM_CHEATER
 ```
 Rest of the CXXFLAGS will be added.
 
-### AVOID_UNSUPPORTED_EIGEN
+#### AVOID_UNSUPPORTED_EIGEN
 Since the library uses tensor products, and Eigen does not officially support tensor product (`KroneckerProduct`),
 it can be "broken" in the future update. To mitigate this, I implemented the tensor product manually.
 By setting `-DAVOID_UNSUPPORTED_EIGEN`, you use my manual implementation instead of Eigen's.
@@ -114,16 +118,23 @@ If you are again following Option 1, you can run the following:
 make lib CXXFLAGS=-DAVOID_UNSUPPORTED_EIGEN
 ```
 
-### Optimization
+#### Optimization
 By default, all builds are `-O3` optimzied for speed.
 You can change it by passing an alternative optimization level as the following:
 ```
 make lib OPTIMIZATION=-O2
 ```
 
-## Development Engagement
+## Development and Engagement
 
 I welcome constructive feedbacks and contributions (which hopefully aligns with the goal of this project).
 I, in fact, highly welcome fixes for bugs that *arise from my erroneous understanding of quantum computing*;
 after all, I did not get a doctorate in quantum computing or anything.
+
+### TODO
+* ~~Implement precompilation of qubits and gates.~~
+  * ~~It turns out from experimenting with [04_grover.cpp](demos/04_grover.cpp) that the majority of time spent on running is from building the qubits and gates. Allow precomputation to make it to make it run faster next time.~~ Turns out reading through the compiled quantum objects is about the same if not longer (although it may depend on the storage medium and CPU power.)
+  * On the other hand, now there is a way to conveniently transfer quantum objects that were generated from other machines.
+* Implement a class (such as "QuantumSystem" or "QuantumComputer") such that it can generate the quantum circuit diagram if built using its API.
+* Write a Tex document outlining the basic principles of how quantum computing works and how this library emulates it.
 
