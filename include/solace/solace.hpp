@@ -162,6 +162,13 @@ namespace Solace {
             QuantumGate(const QuantumGateTransformer& transformer) : transformer(transformer) { validate(); }
 
             /**
+             * @brief Quantum gate constructor for any number of qubits, using sparse matrix.
+             * 
+             * @param[in] transformer the sparse matrix that defines the gate. Must be a unitary matrix of N x N where N is a power of 2.
+             */
+            QuantumGate(const SparseQuantumGateTransformer& transformer) : transformer(transformer) { validate(); }
+
+            /**
              * @brief Constructor quantum gates. Reads from a previously "compiled" quantum gates and loads from it.
              * 
              * @param[in] filepath the file path to compiled quantum gate object.
