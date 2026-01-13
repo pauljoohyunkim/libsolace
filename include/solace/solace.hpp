@@ -7,8 +7,10 @@
 
 #include <complex>
 #include <vector>
+#include <variant>
 #include <filesystem>
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 
 namespace Solace {
     // Forward Declaration
@@ -26,9 +28,15 @@ namespace Solace {
     using StateVector = Eigen::VectorXcd;
 
     /**
-     * @brief Represents a quantum gate matrix. (Alias to Eigen::MatrixXcd from Eigen library)
+     * @brief Represents a general quantum gate matrix. (Alias to Eigen::MatrixXcd from Eigen library)
      */
     using QuantumGateTransformer = Eigen::MatrixXcd;
+
+    /**
+     * @brief Represents a sparse quantum gate matrix. (Alias to Eigen::SparseMatrix<std::complex<double>> from Eigen library)
+     * 
+     */
+    using SparseQuantumGateTransformer = Eigen::SparseMatrix<std::complex<double>>;
 
     /**
      * @class Qubits
@@ -202,7 +210,9 @@ namespace Solace {
             QuantumGateTransformer viewTransformer() const { return transformer; }
 #endif
         protected:
+            using QuantumGateTransformerFormat = std::variant<std::monostate, QuantumGateTransformer, SparseQuantumGateTransformer>;
             bool isValidated { false };
+            QuantumGateTransformerFormat transformerNew { std::monostate() };
             QuantumGateTransformer transformer;
             size_t nQubit { 0 };
 
