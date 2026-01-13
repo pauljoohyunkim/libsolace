@@ -36,7 +36,7 @@ class QuantumOracle : public Solace::QuantumGate {
                 throw std::invalid_argument("Solution must be representable with nQubit qubits.");
             }
             transformer = Solace::QuantumGateTransformer::Identity(dim, dim);
-            transformer(sol, sol) = -1;
+            std::get<Solace::QuantumGateTransformer>(transformer)(sol, sol) = -1;
             validate();
         }
 };

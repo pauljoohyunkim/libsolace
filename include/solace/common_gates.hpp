@@ -36,8 +36,9 @@ namespace Solace::Gate {
              */
             PauliX() : Solace::QuantumGate() {
                 transformer = Solace::QuantumGateTransformer(2,2);
-                transformer << 0.0, 1.0,
-                               1.0, 0.0;
+                auto& t { std::get<Solace::QuantumGateTransformer>(transformer) };
+                t << 0.0, 1.0,
+                     1.0, 0.0;
                 validate();
             }
     };
@@ -52,8 +53,9 @@ namespace Solace::Gate {
              */
             PauliY() : Solace::QuantumGate() {
                 transformer = Solace::QuantumGateTransformer(2,2);
-                transformer << 0.0, -i,
-                               i, 0.0;
+                auto& t { std::get<Solace::QuantumGateTransformer>(transformer) };
+                t << 0.0, -i,
+                     i, 0.0;
                 validate();
             }
     };
@@ -68,8 +70,9 @@ namespace Solace::Gate {
              */
             PauliZ() : Solace::QuantumGate() {
                 transformer = Solace::QuantumGateTransformer(2,2);
-                transformer << 1.0, 0.0,
-                               0.0, -1.0;
+                auto& t { std::get<Solace::QuantumGateTransformer>(transformer) };
+                t << 1.0, 0.0,
+                     0.0, -1.0;
                 validate();
             }
     };
@@ -96,7 +99,8 @@ namespace Solace::Gate {
                 q1.normalize();
                 q2.normalize();
 
-                transformer << q1, q2;
+                auto& t { std::get<Solace::QuantumGateTransformer>(transformer) };
+                t << q1, q2;
                 validate();
             }
     };
