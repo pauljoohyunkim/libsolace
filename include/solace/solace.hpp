@@ -39,6 +39,13 @@ namespace Solace {
     using SparseQuantumGateTransformer = Eigen::SparseMatrix<std::complex<double>>;
 
     /**
+     * @brief Represents the type of matrix that is inside the quantum gate. (Either "none", "dense", or "sparse")
+     * 
+     */
+    using QuantumGateTransformerFormat = std::variant<std::monostate, QuantumGateTransformer, SparseQuantumGateTransformer>;
+
+
+    /**
      * @class Qubits
      * @brief Represents a quantum system with multiple qubits.
      */
@@ -214,10 +221,9 @@ namespace Solace {
              * @brief get the transformer matrix of the quantum gate for debugging purposes.
              * @return transformer the unitary matrix that defines the gate.
              */
-            QuantumGateTransformer viewTransformer() const { return transformer; }
+            QuantumGateTransformerFormat viewTransformer() const { return transformer; }
 #endif
         protected:
-            using QuantumGateTransformerFormat = std::variant<std::monostate, QuantumGateTransformer, SparseQuantumGateTransformer>;
             bool isValidated { false };
             QuantumGateTransformerFormat transformer { std::monostate() };
             size_t nQubit { 0 };

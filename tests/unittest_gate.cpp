@@ -41,7 +41,7 @@ TEST(QuantumGate, Application_x) {
     q1.normalize();
 
     H.apply(q);
-    std::cout << H.viewTransformer() << std::endl;
+    std::cout << std::get<Solace::QuantumGateTransformer>(H.viewTransformer()) << std::endl;
     const auto sv { q.viewStateVector() };
     ASSERT_TRUE(std::abs(q1[0] - sv[0]) < 0.001);
     ASSERT_TRUE(std::abs(q1[1] - sv[1]) < 0.001);
