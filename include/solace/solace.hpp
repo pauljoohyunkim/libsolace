@@ -71,13 +71,13 @@ namespace Solace {
             /**
              * @brief Construct combined qubit system by a tensor product.
              * @param[in] q the other set of qubits.
-             * @param[out] Qubits a new set of qubits that looks like it is entangled.
+             * @return Qubits a new set of qubits that looks like it is entangled.
              */
             Qubits operator^(const Qubits& q) const;
 
             /**
              * @brief Get number of qubits.
-             * @param[out] nQubit The number of qubits.
+             * @return nQubit The number of qubits.
              */
             size_t getNQubit() const { return nQubit; }
 
@@ -86,14 +86,14 @@ namespace Solace {
              * @brief observe the qubit system. Note that this will collapse the state vector.
              * @param[in] cheat whether or not the observation will collapse the state vector. Setting this true will prevent the collapse.
              * @param[in] randomphase whether or not post-measurement phase should be randomized or not. (Often meaningless.)
-             * @param[out] ObservedQubitState the result of the measurement.
+             * @return ObservedQubitState the result of the measurement.
              */
             ObservedQubitState observe(const bool randomphase=false, const bool cheat=false);
 #else
             /**
              * @brief observe the qubit system. Note that this will collapse the state vector. Should you wish, compile with -DBE_A_QUANTUM_CHEATER flag for collapse-free version support.
              * @param[in] randomphase whether or not post-measurement phase should be randomized or not. (Often meaningless.)
-             * @param[out] ObservedQubitState the result of the measurement.
+             * @return ObservedQubitState the result of the measurement.
              */
             ObservedQubitState observe(const bool randomphase=false);
 #endif
@@ -102,7 +102,7 @@ namespace Solace {
 
             /**
              * @brief get the state vector out of a qubit system. This is useful for debugging purposes and unit testing.
-             * @param[out] StateVector the current state vector.
+             * @return StateVector the current state vector.
              */
             StateVector viewStateVector() const { return stateVector; }
 #endif
@@ -164,20 +164,28 @@ namespace Solace {
             /**
              * @brief create a new quantum gate that is the tensor product of two quantum gates (hence acts on larger set of qubits)
              * @param[in] gate a quantum gate
-             * @param[out] QuantumGate a quantum gate that is the tensor product of the two.
+             * @return QuantumGate a quantum gate that is the tensor product of the two.
              */
             QuantumGate operator^(const QuantumGate& gate) const;
 
             /**
+             * @brief "merge" two quantum gates into one. May be useful if there are multiple quantum gates that take up memory.
+             * 
+             * @param[in] gate a quantum gate
+             * @return QuantumGate a quantum gate that is the combination of the two.
+             */
+            QuantumGate operator*(const QuantumGate& gate) const;
+
+            /**
              * @brief Get number of qubits that the gate can apply to.
-             * @param[out] nQubit The number of qubits.
+             * @return nQubit The number of qubits.
              */
             size_t getNQubit() const { return nQubit; }
 
             /**
              * @brief Compile the generated quantum gate to a file.
              * 
-             * @param[in] filepath 
+             * @param[in] filepath output quantum gate file.
              */
             void compile(const std::filesystem::path& filepath) const;
 
@@ -189,7 +197,7 @@ namespace Solace {
 #if defined(BE_A_QUANTUM_CHEATER)
             /**
              * @brief get the transformer matrix of the quantum gate for debugging purposes.
-             * @param[out] transformer the unitary matrix that defines the gate.
+             * @return transformer the unitary matrix that defines the gate.
              */
             QuantumGateTransformer viewTransformer() const { return transformer; }
 #endif

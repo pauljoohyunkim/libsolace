@@ -178,6 +178,15 @@ QuantumGate QuantumGate::operator^(const QuantumGate& gate) const {
     return QuantumGate(t);
 }
 
+QuantumGate QuantumGate::operator*(const QuantumGate& gate) const {
+    if (nQubit != gate.nQubit) {
+        throw std::runtime_error("Mismatch in shape. Check the nQubit variable.");
+    }
+    const QuantumGateTransformer t { transformer * gate.transformer };
+
+    return QuantumGate(t);
+}
+
 void QuantumGate::compile(const std::filesystem::path& filepath) const {
     std::ofstream outfile { filepath, std::ios::binary };
     Compiled::QuantumObject quantumObj;
