@@ -212,8 +212,7 @@ namespace Solace {
         protected:
             using QuantumGateTransformerFormat = std::variant<std::monostate, QuantumGateTransformer, SparseQuantumGateTransformer>;
             bool isValidated { false };
-            QuantumGateTransformerFormat transformerNew { std::monostate() };
-            QuantumGateTransformer transformer;
+            QuantumGateTransformerFormat transformer { std::monostate() };
             size_t nQubit { 0 };
 
             /**

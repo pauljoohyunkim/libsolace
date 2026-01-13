@@ -128,7 +128,9 @@ QuantumGate::QuantumGate(const StateVector& q0, const StateVector& q1) : transfo
     StateVector q1_cpy = q1;
     q0_cpy.normalize();
     q1_cpy.normalize();
-    transformer << q0_cpy, q1_cpy;
+    transformer = QuantumGateTransformer(2,2);
+    auto& t { std::get<QuantumGateTransformer>(transformer) };
+    t << q0_cpy, q1_cpy;
 
     validate();
 }
@@ -149,11 +151,12 @@ QuantumGate::QuantumGate(const std::filesystem::path& filepath) {
 
     const auto dim { 1 << obj.nqubit() };
     transformer = QuantumGateTransformer(dim, dim);
+    auto& t { std::get<QuantumGateTransformer>(transformer) };
     for (auto i = 0; i < obj.quantumgate().matrix_size(); i++) {
         for (auto j = 0; j < obj.quantumgate().matrix(i).entry_size(); j++) {
             auto entry { obj.quantumgate().matrix(i).entry(j) };
             std::complex<double> val { entry.real(), entry.imag() };
-            transformer(i, j) = val;
+            t(i, j) = val;
         }
     }
     validate();
@@ -223,19 +226,35 @@ void QuantumGate::apply(Qubits& q) {
 }
 
 void QuantumGate::validate() {
-    if (transformer.isUnitary()) {
-        isValidated = true;
+    int m;
+    int n;
+    if (std::holds_alternative<QuantumGateTransformer>(transformer)) {
+        const auto& t { std::get<QuantumGateTransformer>(transformer) };
+        if (!t.isUnitary()) {
+            throw std::runtime_error("Invalid quantum gate: not unitary");
+        } else {
+            m = t.rows();
+            n = t.cols();
+        }
+    } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer)) {
+        const auto& t { std::get<SparseQuantumGateTransformer>(transformer) };
+        if (!t.isUnitary()) {
+            throw std::runtime_error("Invalid quantum gate: not unitary");
+        } else {
+            m = t.rows();
+            n = t.cols();
+        }
     } else {
-        throw std::runtime_error("Invalid quantum gate.");
+        // Not filled in; variant is monostate.
+        throw std::runtime_error("Invalid quantum gate; unfilled.");
     }
 
-    const auto m { transformer.rows() };
-    const auto n { transformer.cols() };
     if (m == 0 || m != n || ((m & (m-1)) != 0)) {
         throw std::runtime_error("Invalid quantum gate.");
     }
 
     nQubit = static_cast<size_t>(std::log2(m));
+    isValidated = true;
 }
 
 }
