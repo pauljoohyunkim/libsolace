@@ -194,15 +194,39 @@ QuantumGate QuantumGate::operator^(const QuantumGate& gate) const {
     }
 #else
 #error "Not supported at the moment"
-    QuantumGateTransformer t(transformer.rows() * gate.transformer.rows(), transformer.cols() * gate.transformer.cols());
-    for (auto i = 0; i < transformer.rows(); i++) {
-        for (auto j = 0; j < transformer.cols(); j++) {
-            t.block(i * gate.transformer.rows(),
-                    j * gate.transformer.cols(),
-                    gate.transformer.rows(),
-                    gate.transformer.cols())
-                    = transformer(i,j) * gate.transformer;
+    if (std::holds_alternative<SparseQuantumGateTransformer>(transformer) && std::holds_alternative<SparseQuantumGateTransformer>(gate.transformer)) {
+        const auto& t1 { std::get<SparseQuantumGateTransformer>(transformer) };
+        const auto& t2 { std::get<SparseQuantumGateTransformer>(gate.transformer) };
+        SparseQuantumGateTransformer t(t1.rows()*t2.rows(), t1.cols()*t2.cols());
+        t = Eigen::kroneckerProduct(t1, t2);
+        return QuantumGate(t);
+    } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer) && std::holds_alternative<QuantumGateTransformer>(gate.transformer)) {
+        const auto& t1 { std::get<SparseQuantumGateTransformer>(transformer) };
+        const auto& t2 { std::get<QuantumGateTransformer>(gate.transformer) };
+        QuantumGateTransformer t { Eigen::KroneckerProduct(t1, t2) };
+        return QuantumGate(t);
+    } else if (std::holds_alternative<QuantumGateTransformer>(transformer) && std::holds_alternative<SparseQuantumGateTransformer>(gate.transformer)) {
+        const auto& t1 { std::get<QuantumGateTransformer>(transformer) };
+        const auto& t2 { std::get<SparseQuantumGateTransformer>(gate.transformer) };
+        QuantumGateTransformer t { Eigen::KroneckerProduct(t1, t2) };
+        return QuantumGate(t);
+    } else if (std::holds_alternative<QuantumGateTransformer>(transformer) && std::holds_alternative<QuantumGateTransformer>(gate.transformer)) {
+        // Both are dense matrices.
+        const auto& t1 { std::get<QuantumGateTransformer>(transformer) };
+        const auto& t2 { std::get<QuantumGateTransformer>(gate.transformer) };
+        QuantumGateTransformer t(t1.rows() * t2.rows(), t1.cols() * t2.cols());
+        for (auto i = 0; i < t1.rows(); i++) {
+            for (auto j = 0; j < t1.cols(); j++) {
+                t.block(i * t2.rows(),
+                        j * t2.cols(),
+                        t2.rows(),
+                        t2.cols())
+                        = t1(i,j) * t2;
+            }
         }
+        return QuantumGate(t);
+    } else {
+        throw std::runtime_error("Unsupported quantum gate");
     }
 #endif
 
