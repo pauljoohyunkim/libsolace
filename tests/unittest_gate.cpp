@@ -145,6 +145,25 @@ TEST(QuantumGate, TensorProductSparseDense) {
     std::cout << t_gh << std::endl;
 }
 
+TEST(QuantumGate, TensorProductDenseSparse) {
+    Solace::StateVector q1(2);
+    q1 << 2.0/3.0, std::complex<double>(2,1)/3.0;
+    Solace::StateVector q2(2);
+    q2 << std::complex<double>(-2,1)/3.0, 2.0/3.0;
+    Solace::QuantumGate G { q1, q2 };
+    
+    Solace::SparseQuantumGateTransformer t(2,2);
+    t.insert(0,0) = 1;
+    t.insert(1,1) = -1;
+    t.makeCompressed();
+    Solace::QuantumGate H { t };
+
+    Solace::QuantumGate GH { G ^ H };
+    auto t_gh_maybe { GH.viewTransformer() };
+    auto t_gh = std::get<Solace::QuantumGateTransformer>(t_gh_maybe);
+    std::cout << t_gh << std::endl;
+}
+
 TEST(QuantumGate, TensorProductDenseDense) {
     Solace::StateVector q1(2);
     q1 << 2.0/3.0, std::complex<double>(2,1)/3.0;
