@@ -193,28 +193,39 @@ QuantumGate QuantumGate::operator^(const QuantumGate& gate) const {
         throw std::runtime_error("Unsupported quantum gate");
     }
 #else
-#error "Not supported at the moment"
+//#error "Not supported at the moment"
     if (std::holds_alternative<SparseQuantumGateTransformer>(transformer) && std::holds_alternative<SparseQuantumGateTransformer>(gate.transformer)) {
         const auto& t1 { std::get<SparseQuantumGateTransformer>(transformer) };
         const auto& t2 { std::get<SparseQuantumGateTransformer>(gate.transformer) };
         SparseQuantumGateTransformer t(t1.rows()*t2.rows(), t1.cols()*t2.cols());
-        t = Eigen::kroneckerProduct(t1, t2);
-        return QuantumGate(t);
+        //t = Eigen::kroneckerProduct(t1, t2);
+        //return QuantumGate(t);
     } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer) && std::holds_alternative<QuantumGateTransformer>(gate.transformer)) {
         const auto& t1 { std::get<SparseQuantumGateTransformer>(transformer) };
         const auto& t2 { std::get<QuantumGateTransformer>(gate.transformer) };
-        QuantumGateTransformer t { Eigen::KroneckerProduct(t1, t2) };
+        QuantumGateTransformer t { QuantumGateTransformer::Zero(t1.rows() * t2.rows(), t1.cols() * t2.cols()) };
+        for (auto k = 0; k < t1.outerSize(); k++) {
+            for (SparseQuantumGateTransformer::InnerIterator it(t1, k); it; ++it) {
+                const auto i { it.row() };
+                const auto j { it.col() };
+                t.block(i * t2.rows(),
+                        j * t2.cols(),
+                        t2.rows(),
+                        t2.cols())
+                        = it.value() * t2;
+            }
+        }
         return QuantumGate(t);
     } else if (std::holds_alternative<QuantumGateTransformer>(transformer) && std::holds_alternative<SparseQuantumGateTransformer>(gate.transformer)) {
         const auto& t1 { std::get<QuantumGateTransformer>(transformer) };
         const auto& t2 { std::get<SparseQuantumGateTransformer>(gate.transformer) };
-        QuantumGateTransformer t { Eigen::KroneckerProduct(t1, t2) };
-        return QuantumGate(t);
+        //QuantumGateTransformer t { Eigen::KroneckerProduct(t1, t2) };
+        //return QuantumGate(t);
     } else if (std::holds_alternative<QuantumGateTransformer>(transformer) && std::holds_alternative<QuantumGateTransformer>(gate.transformer)) {
         // Both are dense matrices.
         const auto& t1 { std::get<QuantumGateTransformer>(transformer) };
         const auto& t2 { std::get<QuantumGateTransformer>(gate.transformer) };
-        QuantumGateTransformer t(t1.rows() * t2.rows(), t1.cols() * t2.cols());
+        QuantumGateTransformer t { QuantumGateTransformer::Zero(t1.rows() * t2.rows(), t1.cols() * t2.cols()) };
         for (auto i = 0; i < t1.rows(); i++) {
             for (auto j = 0; j < t1.cols(); j++) {
                 t.block(i * t2.rows(),
@@ -341,16 +352,16 @@ void QuantumGate::validate() {
         }
     } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer)) {
         const auto& t { std::get<SparseQuantumGateTransformer>(transformer) };
-        // TODO: Check if t is unitary.
-        //const auto iMaybe { t.adjoint() * t };
-        //SparseQuantumGateTransformer identity(t.rows(), t.cols());
-        //identity.setIdentity();
-        //if (iMaybe == identity) {
-        //    throw std::runtime_error("Invalid quantum gate: not unitary");
-        //} else {
-            m = t.rows();
-            n = t.cols();
-        //}
+        const auto iMaybe { t.adjoint() * t };
+        SparseQuantumGateTransformer identity(t.rows(), t.cols());
+        identity.setIdentity();
+        SparseQuantumGateTransformer diff { iMaybe - identity };
+        if (diff.squaredNorm() > 1e-6) {
+            throw std::runtime_error("Invalid quantum gate: not unitary");
+        } else {
+          m = t.rows();
+          n = t.cols();
+        }
     } else {
         // Not filled in; variant is monostate.
         throw std::runtime_error("Invalid quantum gate; unfilled.");

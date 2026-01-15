@@ -66,7 +66,7 @@ TEST(QuantumGate, Application_y) {
 }
 
 // Checks if HG = H * G
-TEST(QuantumGate, MergeOperator) {
+TEST(QuantumGate, MergeOperatorDense) {
     // q with normalized (2, 1) as state vector
     Solace::Qubits q { 2, 1 };
     Solace::Qubits q2 { 2, 1 };
@@ -89,4 +89,36 @@ TEST(QuantumGate, MergeOperator) {
     const auto sv2 { q2.viewStateVector() };
     auto diff { sv - sv2 };
     ASSERT_TRUE(diff.norm() < 0.0001);
+}
+
+TEST(QuantumGate, TensorProductSparseDense) {
+    Solace::StateVector q1(2);
+    q1 << 2.0/3.0, std::complex<double>(2,1)/3.0;
+    Solace::StateVector q2(2);
+    q2 << std::complex<double>(-2,1)/3.0, 2.0/3.0;
+    Solace::QuantumGate H { q1, q2 };
+    
+    Solace::SparseQuantumGateTransformer t(2,2);
+    t.insert(0,0) = 1;
+    t.insert(1,1) = -1;
+    t.makeCompressed();
+    Solace::QuantumGate G { t };
+
+    Solace::QuantumGate GH { G ^ H };
+    auto t_gh_maybe { GH.viewTransformer() };
+    auto t_gh = std::get<Solace::QuantumGateTransformer>(t_gh_maybe);
+    std::cout << t_gh << std::endl;
+}
+
+TEST(QuantumGate, TensorProductDenseDense) {
+    Solace::StateVector q1(2);
+    q1 << 2.0/3.0, std::complex<double>(2,1)/3.0;
+    Solace::StateVector q2(2);
+    q2 << std::complex<double>(-2,1)/3.0, 2.0/3.0;
+    Solace::QuantumGate H { q1, q2 };
+    
+    Solace::QuantumGate H2 { H ^ H };
+    auto t_h2_maybe { H2.viewTransformer() };
+    auto t_h2 = std::get<Solace::QuantumGateTransformer>(t_h2_maybe);
+    std::cout << t_h2 << std::endl;
 }
