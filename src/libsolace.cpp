@@ -395,7 +395,7 @@ void QuantumGate::validate() {
             n = t.cols();
         }
     } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer)) {
-        const auto& t { std::get<SparseQuantumGateTransformer>(transformer) };
+        auto& t { std::get<SparseQuantumGateTransformer>(transformer) };
         const auto iMaybe { t.adjoint() * t };
         SparseQuantumGateTransformer identity(t.rows(), t.cols());
         identity.setIdentity();
@@ -405,6 +405,10 @@ void QuantumGate::validate() {
         } else {
           m = t.rows();
           n = t.cols();
+        }
+
+        if (!t.isCompressed()) {
+            t.makeCompressed();
         }
     } else {
         // Not filled in; variant is monostate.

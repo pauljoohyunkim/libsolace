@@ -35,8 +35,10 @@ class QuantumOracle : public Solace::QuantumGate {
             if (sol >= dim) {
                 throw std::invalid_argument("Solution must be representable with nQubit qubits.");
             }
-            transformer = Solace::QuantumGateTransformer::Identity(dim, dim);
-            std::get<Solace::QuantumGateTransformer>(transformer)(sol, sol) = -1;
+            transformer = Solace::SparseQuantumGateTransformer(dim, dim);
+            auto& t { std::get<Solace::SparseQuantumGateTransformer>(transformer) };
+            t.setIdentity();
+            t.coeffRef(sol, sol) = -1.0;
             validate();
         }
 };
