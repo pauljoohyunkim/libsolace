@@ -198,6 +198,8 @@ QuantumGate QuantumGate::operator^(const QuantumGate& gate) const {
         const auto& t1 { std::get<SparseQuantumGateTransformer>(transformer) };
         const auto& t2 { std::get<SparseQuantumGateTransformer>(gate.transformer) };
         SparseQuantumGateTransformer t(t1.rows()*t2.rows(), t1.cols()*t2.cols());
+        // TODO: Iterate through nonzero components of both entries for maximal efficiency.
+        t.makeCompressed();
         //t = Eigen::kroneckerProduct(t1, t2);
         //return QuantumGate(t);
     } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer) && std::holds_alternative<QuantumGateTransformer>(gate.transformer)) {

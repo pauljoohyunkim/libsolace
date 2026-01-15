@@ -91,6 +91,26 @@ TEST(QuantumGate, MergeOperatorDense) {
     ASSERT_TRUE(diff.norm() < 0.0001);
 }
 
+TEST(QuantumGate, TensorProductSparseSparse) {
+    std::complex<double> i { 0, 1 };
+    Solace::SparseQuantumGateTransformer g(2,2);
+    g.insert(0, 0) = -1;
+    g.insert(1, 1) = i;
+    g.makeCompressed();
+    Solace::QuantumGate G { g };
+
+    Solace::SparseQuantumGateTransformer s(4, 4);
+    s.insert(0,0) = 1;
+    s.insert(2,1) = 1;
+    s.insert(1, 2) = 1;
+    s.insert(3, 3) = 1;
+    s.makeCompressed();
+    Solace::QuantumGate S { s };
+
+    Solace::QuantumGate GS { G ^ S };
+    
+}
+
 TEST(QuantumGate, TensorProductSparseDense) {
     Solace::StateVector q1(2);
     q1 << 2.0/3.0, std::complex<double>(2,1)/3.0;
