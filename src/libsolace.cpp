@@ -198,10 +198,21 @@ QuantumGate QuantumGate::operator^(const QuantumGate& gate) const {
         const auto& t1 { std::get<SparseQuantumGateTransformer>(transformer) };
         const auto& t2 { std::get<SparseQuantumGateTransformer>(gate.transformer) };
         SparseQuantumGateTransformer t(t1.rows()*t2.rows(), t1.cols()*t2.cols());
-        // TODO: Iterate through nonzero components of both entries for maximal efficiency.
+        for (auto k1 = 0; k1 < t1.outerSize(); k1++) {
+            for (auto k2 = 0; k2 < t2.outerSize(); k2++) {
+                for (SparseQuantumGateTransformer::InnerIterator it1(t1, k1); it1; ++it1) {
+                    for (SparseQuantumGateTransformer::InnerIterator it2(t2, k2); it2; ++it2) {
+                        const auto r { it1.row() };
+                        const auto s { it1.col() };
+                        const auto v { it2.row() };
+                        const auto w { it2.col() };
+                        t.insert(t2.rows() * r + v, t2.cols() * s + w) = it1.value() * it2.value();
+                    }
+                }
+            }
+        }
         t.makeCompressed();
-        //t = Eigen::kroneckerProduct(t1, t2);
-        //return QuantumGate(t);
+        return QuantumGate(t);
     } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer) && std::holds_alternative<QuantumGateTransformer>(gate.transformer)) {
         const auto& t1 { std::get<SparseQuantumGateTransformer>(transformer) };
         const auto& t2 { std::get<QuantumGateTransformer>(gate.transformer) };
