@@ -145,19 +145,37 @@ QuantumGate::QuantumGate(const std::filesystem::path& filepath) {
         throw std::runtime_error("Could not read quantum object.");
     }
 
-    if (obj.type() != Compiled::ObjectType::QUANTUM_GATE) {
+    if (obj.type() != Compiled::ObjectType::QUANTUM_GATE && obj.type() != Compiled::ObjectType::SPARSE_QUANTUM_GATE) {
         throw std::runtime_error("Wrong type of object read.");
     }
 
     const auto dim { 1 << obj.nqubit() };
-    transformer = QuantumGateTransformer(dim, dim);
-    auto& t { std::get<QuantumGateTransformer>(transformer) };
-    for (auto i = 0; i < obj.quantumgate().matrix_size(); i++) {
-        for (auto j = 0; j < obj.quantumgate().matrix(i).entry_size(); j++) {
-            auto entry { obj.quantumgate().matrix(i).entry(j) };
-            std::complex<double> val { entry.real(), entry.imag() };
-            t(i, j) = val;
+    if (obj.type() == Compiled::ObjectType::QUANTUM_GATE) {
+        transformer = QuantumGateTransformer(dim, dim);
+        auto& t { std::get<QuantumGateTransformer>(transformer) };
+        for (auto i = 0; i < obj.quantumgate().matrix_size(); i++) {
+            for (auto j = 0; j < obj.quantumgate().matrix(i).entry_size(); j++) {
+                auto entry { obj.quantumgate().matrix(i).entry(j) };
+                std::complex<double> val { entry.real(), entry.imag() };
+                t(i, j) = val;
+            }
         }
+    } else {
+        // Check if the number of row indices, column indices and nonzero vals are equal.
+        auto sparseQuantumGate { obj.sparsequantumgate() };
+        if (sparseQuantumGate.rowindices_size() != sparseQuantumGate.colindices_size() || sparseQuantumGate.colindices_size() != sparseQuantumGate.nonzerovals().entry_size()) {
+            throw std::runtime_error("Malformed sparse quantum gate object.");
+        }
+        const auto nNonZeroVals { sparseQuantumGate.nonzerovals().entry_size() };
+        transformer = SparseQuantumGateTransformer(dim, dim);
+        auto& t { std::get<SparseQuantumGateTransformer>(transformer) };
+        for (auto i = 0; i < nNonZeroVals; i++) {
+            const auto row { sparseQuantumGate.rowindices(i) };
+            const auto col { sparseQuantumGate.colindices(i) };
+            const auto val { sparseQuantumGate.nonzerovals().entry(i) };
+            t.insert(row, col) = std::complex<double>(val.real(), val.imag());
+        }
+        t.makeCompressed();
     }
     validate();
 }
@@ -308,11 +326,11 @@ void QuantumGate::compile(const std::filesystem::path& filepath) const {
     std::ofstream outfile { filepath, std::ios::binary };
     Compiled::QuantumObject quantumObj;
 
-    quantumObj.set_type(Compiled::ObjectType::QUANTUM_GATE);
     quantumObj.set_nqubit(nQubit);
-    auto quantumGateM { quantumObj.mutable_quantumgate() };
 
     if (std::holds_alternative<QuantumGateTransformer>(transformer)) {
+        quantumObj.set_type(Compiled::ObjectType::QUANTUM_GATE);
+        auto quantumGateM { quantumObj.mutable_quantumgate() };
         const auto& t { std::get<QuantumGateTransformer>(transformer) };
         nRow = t.rows();
         nCol = t.cols();
@@ -325,15 +343,19 @@ void QuantumGate::compile(const std::filesystem::path& filepath) const {
             }
         }
     } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer)) {
+        quantumObj.set_type(Compiled::ObjectType::SPARSE_QUANTUM_GATE);
+        auto quantumGateM { quantumObj.mutable_sparsequantumgate() };
         const auto& t { std::get<SparseQuantumGateTransformer>(transformer) };
-        nRow = t.rows();
-        nCol = t.cols();
-        for (auto i = 0; i < nRow; i++) {
-            auto row { quantumGateM->add_matrix() };
-            for (auto j = 0; j < nCol; j++) {
-                auto entry { row->add_entry() };
-                entry->set_real(t.coeff(i, j).real());
-                entry->set_imag(t.coeff(i, j).imag());
+        for (auto k = 0; k < t.outerSize(); k++) {
+            for (SparseQuantumGateTransformer::InnerIterator it(t, k); it; ++it) {
+                const auto i { it.row() };
+                const auto j { it.col() };
+                const auto val { it.value() };
+                quantumGateM->add_rowindices(i);
+                quantumGateM->add_colindices(j);
+                auto entry { quantumGateM->mutable_nonzerovals()->add_entry() };
+                entry->set_real(val.real());
+                entry->set_imag(val.imag());
             }
         }
     } else {

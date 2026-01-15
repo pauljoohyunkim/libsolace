@@ -14,6 +14,7 @@ message ComplexVector {
 enum ObjectType {
     QUBITS = 0;
     QUANTUM_GATE = 1;
+    SPARSE_QUANTUM_GATE = 2;
 }
 
 message QuantumObject {
@@ -22,6 +23,7 @@ message QuantumObject {
     oneof object {
         Qubits qubits = 3;
         QuantumGate quantumGate = 4;
+        SparseQuantumGate sparseQuantumGate = 5;
     }
 }
 
@@ -31,5 +33,11 @@ message Qubits {
 
 message QuantumGate {
     repeated ComplexVector matrix = 1;
+}
+
+message SparseQuantumGate {
+    repeated uint32 rowIndices = 1;
+    repeated uint32 colIndices = 2;
+    ComplexVector nonZeroVals = 3;
 }
 
