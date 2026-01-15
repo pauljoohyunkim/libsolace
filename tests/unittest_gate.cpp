@@ -107,7 +107,22 @@ TEST(QuantumGate, TensorProductSparseSparse) {
     s.makeCompressed();
     Solace::QuantumGate S { s };
 
+    Solace::SparseQuantumGateTransformer gs_expected(8, 8);
+    gs_expected.insert(0,0) = -1;
+    gs_expected.insert(1,2) = -1;
+    gs_expected.insert(2,1) = -1;
+    gs_expected.insert(3,3) = -1;
+    gs_expected.insert(4,4) = i;
+    gs_expected.insert(5,6) = i;
+    gs_expected.insert(6,5) = i;
+    gs_expected.insert(7,7) = i;
+    gs_expected.makeCompressed();
+
     Solace::QuantumGate GS { G ^ S };
+    auto t_gs_maybe { GS.viewTransformer() };
+    auto t_gs = std::get<Solace::SparseQuantumGateTransformer>(t_gs_maybe);
+    auto diff { t_gs - gs_expected };
+    ASSERT_TRUE(diff.norm() < 0.00001);
     
 }
 
