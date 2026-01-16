@@ -104,7 +104,8 @@ std::tuple<ObservedQubitState, std::optional<Qubits>, std::vector<ObservedQubitS
         // TODO: Check if bitmask is valid with respect to nQubits.
         std::vector<ObservedQubitState> observableStates {};
         std::vector<ObservedQubitState> unobservableStates {};
-        for (ObservedQubitState state = 0; state < stateVector.size(); state++) {
+        const auto stateVectorLen { stateVector.size() };
+        for (ObservedQubitState state = 0; state < stateVectorLen; state++) {
             const ObservedQubitState masked { state & (~bitmask) };
             if (masked == 0) {
                 observableStates.push_back(state);
@@ -112,11 +113,6 @@ std::tuple<ObservedQubitState, std::optional<Qubits>, std::vector<ObservedQubitS
             } else {
                 unobservableStates.push_back(state);
             }
-        }
-
-        // Build Born interpretation probability vector.
-        for (const auto v : stateVector) {
-            weights.push_back(std::norm(v));
         }
 
         // Choose based on the probability vector

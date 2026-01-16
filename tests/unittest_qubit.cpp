@@ -64,3 +64,29 @@ TEST(Qubit, EntangledQubits) {
                       {1, -2.2} };
     Solace::Qubits q1xq2 { q1 ^ q2 };
 }
+
+TEST(Qubit, WState) {
+    std::complex<double> v { 1/std::sqrt(3), 0 };
+    Solace::StateVector sv(8);
+    sv(0b001) = v;
+    sv(0b010) = v;
+    sv(0b100) = v;
+    Solace::Qubits q { sv };
+
+    // Observing qubit 1; qubit 0 and qubit 2 still entangled
+    const auto bitmask { 0b101 };
+    auto result { q.observe(bitmask) };
+    auto measurement { std::get<0>(result) };
+    auto entangledMaybe { std::get<1>(result) };
+    Solace::Qubits entangled { entangledMaybe.value() };
+    Solace::StateVector entangledSv { entangled.viewStateVector() };
+    auto unobservables { std::get<2>(result) };
+
+    std::cout << "Measurement: " << (int) measurement << std::endl;
+    std::cout << "Entangled state vector" << entangledSv << std::endl;
+    std::cout << "Unobservables: ";
+    for (const auto state : unobservables) {
+        std::cout << (int) state << ", ";
+    }
+    std::cout << std::flush;
+}
