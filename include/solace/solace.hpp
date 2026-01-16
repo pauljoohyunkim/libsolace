@@ -115,7 +115,7 @@ namespace Solace {
              * The state vector for unaffected states will be modified according to entanglement.
              * @return A tuple of ObservedQubitStates and std::optional<Qubits> where the latter is nullopt if observing all qubits, or reindexed Qubits if partial reading.
              */
-            std::pair<ObservedQubitState, std::optional<Qubits>> observe(const unsigned int bitmask=0);
+            std::tuple<ObservedQubitState, std::optional<Qubits>, std::vector<ObservedQubitState>> observe(const unsigned int bitmask=0);
 
 #if defined(BE_A_QUANTUM_CHEATER)
 

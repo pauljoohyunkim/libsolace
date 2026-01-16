@@ -78,7 +78,7 @@ ObservedQubitState Qubits::cheatObserve() {
 }
 #endif
 
-std::pair<ObservedQubitState, std::optional<Qubits>> Qubits::observe(const unsigned int bitmask) {
+std::tuple<ObservedQubitState, std::optional<Qubits>, std::vector<ObservedQubitState>> Qubits::observe(const unsigned int bitmask) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::vector<double> weights {};
@@ -98,7 +98,7 @@ std::pair<ObservedQubitState, std::optional<Qubits>> Qubits::observe(const unsig
         stateVector = StateVector::Zero(stateVector.size());
         stateVector(observedState) = 1;
             
-        return { observedState, std::nullopt };
+        return { observedState, std::nullopt, {} };
     } else {
         // Observing specific qubits.
         // TODO: Check if bitmask is valid with respect to nQubits.
@@ -140,7 +140,7 @@ std::pair<ObservedQubitState, std::optional<Qubits>> Qubits::observe(const unsig
         stateVector = StateVector::Zero(stateVector.size());
         stateVector(index) = 1;
 
-        return { observedState, unobservedQubits };
+        return { observedState, unobservedQubits, unobservableStates };
     }
 }
 
