@@ -128,7 +128,9 @@ QuantumGate::QuantumGate(const StateVector& q0, const StateVector& q1) : transfo
     StateVector q1_cpy = q1;
     q0_cpy.normalize();
     q1_cpy.normalize();
-    transformer << q0_cpy, q1_cpy;
+    transformer = QuantumGateTransformer(2,2);
+    auto& t { std::get<QuantumGateTransformer>(transformer) };
+    t << q0_cpy, q1_cpy;
 
     validate();
 }
@@ -143,65 +145,221 @@ QuantumGate::QuantumGate(const std::filesystem::path& filepath) {
         throw std::runtime_error("Could not read quantum object.");
     }
 
-    if (obj.type() != Compiled::ObjectType::QUANTUM_GATE) {
+    if (obj.type() != Compiled::ObjectType::QUANTUM_GATE && obj.type() != Compiled::ObjectType::SPARSE_QUANTUM_GATE) {
         throw std::runtime_error("Wrong type of object read.");
     }
 
     const auto dim { 1 << obj.nqubit() };
-    transformer = QuantumGateTransformer(dim, dim);
-    for (auto i = 0; i < obj.quantumgate().matrix_size(); i++) {
-        for (auto j = 0; j < obj.quantumgate().matrix(i).entry_size(); j++) {
-            auto entry { obj.quantumgate().matrix(i).entry(j) };
-            std::complex<double> val { entry.real(), entry.imag() };
-            transformer(i, j) = val;
+    if (obj.type() == Compiled::ObjectType::QUANTUM_GATE) {
+        transformer = QuantumGateTransformer(dim, dim);
+        auto& t { std::get<QuantumGateTransformer>(transformer) };
+        for (auto i = 0; i < obj.quantumgate().matrix_size(); i++) {
+            for (auto j = 0; j < obj.quantumgate().matrix(i).entry_size(); j++) {
+                auto entry { obj.quantumgate().matrix(i).entry(j) };
+                std::complex<double> val { entry.real(), entry.imag() };
+                t(i, j) = val;
+            }
         }
+    } else {
+        // Check if the number of row indices, column indices and nonzero vals are equal.
+        auto sparseQuantumGate { obj.sparsequantumgate() };
+        if (sparseQuantumGate.rowindices_size() != sparseQuantumGate.colindices_size() || sparseQuantumGate.colindices_size() != sparseQuantumGate.nonzerovals().entry_size()) {
+            throw std::runtime_error("Malformed sparse quantum gate object.");
+        }
+        const auto nNonZeroVals { sparseQuantumGate.nonzerovals().entry_size() };
+        transformer = SparseQuantumGateTransformer(dim, dim);
+        auto& t { std::get<SparseQuantumGateTransformer>(transformer) };
+        for (auto i = 0; i < nNonZeroVals; i++) {
+            const auto row { sparseQuantumGate.rowindices(i) };
+            const auto col { sparseQuantumGate.colindices(i) };
+            const auto val { sparseQuantumGate.nonzerovals().entry(i) };
+            t.insert(row, col) = std::complex<double>(val.real(), val.imag());
+        }
+        t.makeCompressed();
     }
     validate();
 }
 
 QuantumGate QuantumGate::operator^(const QuantumGate& gate) const {
+    if (!isValidated || !gate.isValidated) {
+        throw std::runtime_error("Invalidated quantum gates cannot be entangled.");
+    }
 #if !defined(AVOID_UNSUPPORTED_EIGEN)
-    const QuantumGateTransformer t { Eigen::KroneckerProduct(transformer, gate.transformer) };
+    // Check if both are sparse matrix.
+    if (std::holds_alternative<SparseQuantumGateTransformer>(transformer) && std::holds_alternative<SparseQuantumGateTransformer>(gate.transformer)) {
+        const auto& t1 { std::get<SparseQuantumGateTransformer>(transformer) };
+        const auto& t2 { std::get<SparseQuantumGateTransformer>(gate.transformer) };
+        SparseQuantumGateTransformer t(t1.rows()*t2.rows(), t1.cols()*t2.cols());
+        t = Eigen::kroneckerProduct(t1, t2);
+        return QuantumGate(t);
+    } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer) && std::holds_alternative<QuantumGateTransformer>(gate.transformer)) {
+        const auto& t1 { std::get<SparseQuantumGateTransformer>(transformer) };
+        const auto& t2 { std::get<QuantumGateTransformer>(gate.transformer) };
+        QuantumGateTransformer t { Eigen::KroneckerProduct(t1, t2) };
+        return QuantumGate(t);
+    } else if (std::holds_alternative<QuantumGateTransformer>(transformer) && std::holds_alternative<SparseQuantumGateTransformer>(gate.transformer)) {
+        const auto& t1 { std::get<QuantumGateTransformer>(transformer) };
+        const auto& t2 { std::get<SparseQuantumGateTransformer>(gate.transformer) };
+        QuantumGateTransformer t { Eigen::KroneckerProduct(t1, t2) };
+        return QuantumGate(t);
+    } else if (std::holds_alternative<QuantumGateTransformer>(transformer) && std::holds_alternative<QuantumGateTransformer>(gate.transformer)) {
+        const auto& t1 { std::get<QuantumGateTransformer>(transformer) };
+        const auto& t2 { std::get<QuantumGateTransformer>(gate.transformer) };
+        QuantumGateTransformer t { Eigen::KroneckerProduct(t1, t2) };
+        return QuantumGate(t);
+    } else {
+        throw std::runtime_error("Unsupported quantum gate");
+    }
 #else
-    QuantumGateTransformer t(transformer.rows() * gate.transformer.rows(), transformer.cols() * gate.transformer.cols());
-    for (auto i = 0; i < transformer.rows(); i++) {
-        for (auto j = 0; j < transformer.cols(); j++) {
-            t.block(i * gate.transformer.rows(),
-                    j * gate.transformer.cols(),
-                    gate.transformer.rows(),
-                    gate.transformer.cols())
-                    = transformer(i,j) * gate.transformer;
+//#error "Not supported at the moment"
+    if (std::holds_alternative<SparseQuantumGateTransformer>(transformer) && std::holds_alternative<SparseQuantumGateTransformer>(gate.transformer)) {
+        const auto& t1 { std::get<SparseQuantumGateTransformer>(transformer) };
+        const auto& t2 { std::get<SparseQuantumGateTransformer>(gate.transformer) };
+        SparseQuantumGateTransformer t(t1.rows()*t2.rows(), t1.cols()*t2.cols());
+        for (auto k1 = 0; k1 < t1.outerSize(); k1++) {
+            for (auto k2 = 0; k2 < t2.outerSize(); k2++) {
+                for (SparseQuantumGateTransformer::InnerIterator it1(t1, k1); it1; ++it1) {
+                    for (SparseQuantumGateTransformer::InnerIterator it2(t2, k2); it2; ++it2) {
+                        const auto r { it1.row() };
+                        const auto s { it1.col() };
+                        const auto v { it2.row() };
+                        const auto w { it2.col() };
+                        t.insert(t2.rows() * r + v, t2.cols() * s + w) = it1.value() * it2.value();
+                    }
+                }
+            }
         }
+        t.makeCompressed();
+        return QuantumGate(t);
+    } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer) && std::holds_alternative<QuantumGateTransformer>(gate.transformer)) {
+        const auto& t1 { std::get<SparseQuantumGateTransformer>(transformer) };
+        const auto& t2 { std::get<QuantumGateTransformer>(gate.transformer) };
+        QuantumGateTransformer t { QuantumGateTransformer::Zero(t1.rows() * t2.rows(), t1.cols() * t2.cols()) };
+        for (auto k = 0; k < t1.outerSize(); k++) {
+            for (SparseQuantumGateTransformer::InnerIterator it(t1, k); it; ++it) {
+                const auto i { it.row() };
+                const auto j { it.col() };
+                t.block(i * t2.rows(),
+                        j * t2.cols(),
+                        t2.rows(),
+                        t2.cols())
+                        = it.value() * t2;
+            }
+        }
+        return QuantumGate(t);
+    } else if (std::holds_alternative<QuantumGateTransformer>(transformer) && std::holds_alternative<SparseQuantumGateTransformer>(gate.transformer)) {
+        const auto& t1 { std::get<QuantumGateTransformer>(transformer) };
+        const auto& t2 { std::get<SparseQuantumGateTransformer>(gate.transformer) };
+        QuantumGateTransformer t { QuantumGateTransformer::Zero(t1.rows() * t2.rows(), t1.cols() * t2.cols()) };
+        for (auto i = 0; i < t1.rows(); i++) {
+            for (auto j = 0; j < t1.cols(); j++) {
+                t.block(i * t2.rows(),
+                        j * t2.cols(),
+                        t2.rows(),
+                        t2.cols())
+                        = t1(i,j) * t2;
+            }
+        }
+        return QuantumGate(t);
+    } else if (std::holds_alternative<QuantumGateTransformer>(transformer) && std::holds_alternative<QuantumGateTransformer>(gate.transformer)) {
+        // Both are dense matrices.
+        const auto& t1 { std::get<QuantumGateTransformer>(transformer) };
+        const auto& t2 { std::get<QuantumGateTransformer>(gate.transformer) };
+        QuantumGateTransformer t { QuantumGateTransformer::Zero(t1.rows() * t2.rows(), t1.cols() * t2.cols()) };
+        for (auto i = 0; i < t1.rows(); i++) {
+            for (auto j = 0; j < t1.cols(); j++) {
+                t.block(i * t2.rows(),
+                        j * t2.cols(),
+                        t2.rows(),
+                        t2.cols())
+                        = t1(i,j) * t2;
+            }
+        }
+        return QuantumGate(t);
+    } else {
+        throw std::runtime_error("Unsupported quantum gate");
     }
 #endif
 
-    return QuantumGate(t);
+    //return QuantumGate(t);
 }
 
 QuantumGate QuantumGate::operator*(const QuantumGate& gate) const {
+    if (!isValidated || !gate.isValidated) {
+        throw std::runtime_error("Invalidated quantum gates cannot be entangled.");
+    }
     if (nQubit != gate.nQubit) {
         throw std::runtime_error("Mismatch in shape. Check the nQubit variable.");
     }
-    const QuantumGateTransformer t { transformer * gate.transformer };
-
-    return QuantumGate(t);
+    if (std::holds_alternative<SparseQuantumGateTransformer>(transformer) && std::holds_alternative<SparseQuantumGateTransformer>(gate.transformer)) {
+        const auto& t1 { std::get<SparseQuantumGateTransformer>(transformer) };
+        const auto& t2 { std::get<SparseQuantumGateTransformer>(gate.transformer) };
+        SparseQuantumGateTransformer t { t1 * t2 };
+        return QuantumGate(t);
+    } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer) && std::holds_alternative<QuantumGateTransformer>(gate.transformer)) {
+        const auto& t1 { std::get<SparseQuantumGateTransformer>(transformer) };
+        const auto& t2 { std::get<QuantumGateTransformer>(gate.transformer) };
+        QuantumGateTransformer t { t1 * t2 };
+        return QuantumGate(t);
+    } else if (std::holds_alternative<QuantumGateTransformer>(transformer) && std::holds_alternative<SparseQuantumGateTransformer>(gate.transformer)) {
+        const auto& t1 { std::get<QuantumGateTransformer>(transformer) };
+        const auto& t2 { std::get<SparseQuantumGateTransformer>(gate.transformer) };
+        QuantumGateTransformer t { t1 * t2 };
+        return QuantumGate(t);
+    } else if (std::holds_alternative<QuantumGateTransformer>(transformer) && std::holds_alternative<QuantumGateTransformer>(gate.transformer)) {
+        const auto& t1 { std::get<QuantumGateTransformer>(transformer) };
+        const auto& t2 { std::get<QuantumGateTransformer>(gate.transformer) };
+        QuantumGateTransformer t { t1 * t2 };
+        return QuantumGate(t);
+    } else {
+        throw std::runtime_error("Unsupported quantum gate");
+    }
 }
 
 void QuantumGate::compile(const std::filesystem::path& filepath) const {
+    int nRow;
+    int nCol;
+    if (!isValidated) {
+        throw std::runtime_error("Not validated for compilation");
+    }
+
     std::ofstream outfile { filepath, std::ios::binary };
     Compiled::QuantumObject quantumObj;
 
-    quantumObj.set_type(Compiled::ObjectType::QUANTUM_GATE);
     quantumObj.set_nqubit(nQubit);
-    
-    auto quantumGateM { quantumObj.mutable_quantumgate() };
-    for (auto i = 0; i < transformer.rows(); i++) {
-        auto row { quantumGateM->add_matrix() };
-        for (auto j = 0; j < transformer.cols(); j++) {
-            auto entry { row->add_entry() };
-            entry->set_real(transformer(i, j).real());
-            entry->set_imag(transformer(i, j).imag());
+
+    if (std::holds_alternative<QuantumGateTransformer>(transformer)) {
+        quantumObj.set_type(Compiled::ObjectType::QUANTUM_GATE);
+        auto quantumGateM { quantumObj.mutable_quantumgate() };
+        const auto& t { std::get<QuantumGateTransformer>(transformer) };
+        nRow = t.rows();
+        nCol = t.cols();
+        for (auto i = 0; i < nRow; i++) {
+            auto row { quantumGateM->add_matrix() };
+            for (auto j = 0; j < nCol; j++) {
+                auto entry { row->add_entry() };
+                entry->set_real(t(i, j).real());
+                entry->set_imag(t(i, j).imag());
+            }
         }
+    } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer)) {
+        quantumObj.set_type(Compiled::ObjectType::SPARSE_QUANTUM_GATE);
+        auto quantumGateM { quantumObj.mutable_sparsequantumgate() };
+        const auto& t { std::get<SparseQuantumGateTransformer>(transformer) };
+        for (auto k = 0; k < t.outerSize(); k++) {
+            for (SparseQuantumGateTransformer::InnerIterator it(t, k); it; ++it) {
+                const auto i { it.row() };
+                const auto j { it.col() };
+                const auto val { it.value() };
+                quantumGateM->add_rowindices(i);
+                quantumGateM->add_colindices(j);
+                auto entry { quantumGateM->mutable_nonzerovals()->add_entry() };
+                entry->set_real(val.real());
+                entry->set_imag(val.imag());
+            }
+        }
+    } else {
+        throw std::runtime_error("Gate is not filled for compilation.");
     }
 
     outfile << quantumObj.SerializeAsString();
@@ -212,30 +370,57 @@ void QuantumGate::apply(Qubits& q) {
     if (!isValidated) {
         throw std::runtime_error("Attempt to use invalid quantum gate.");
     }
-    if (transformer.rows() != q.stateVector.size()) {
+    if (nQubit != q.nQubit) {
         throw std::runtime_error("Quantum gate and state vector are not compatible.");
     }
 
     // Multiply the transformer matrix within the class.
-    StateVector qTemp { transformer * q.stateVector };
-    q.stateVector = qTemp;
+    if (std::holds_alternative<QuantumGateTransformer>(transformer)) {
+        q.stateVector = std::get<QuantumGateTransformer>(transformer) * q.stateVector;
+    } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer)) {
+        q.stateVector = std::get<SparseQuantumGateTransformer>(transformer) * q.stateVector;
+    }
     q.stateVector.normalize();
 }
 
 void QuantumGate::validate() {
-    if (transformer.isUnitary()) {
-        isValidated = true;
+    int m;
+    int n;
+    if (std::holds_alternative<QuantumGateTransformer>(transformer)) {
+        const auto& t { std::get<QuantumGateTransformer>(transformer) };
+        if (!t.isUnitary()) {
+            throw std::runtime_error("Invalid quantum gate: not unitary");
+        } else {
+            m = t.rows();
+            n = t.cols();
+        }
+    } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer)) {
+        auto& t { std::get<SparseQuantumGateTransformer>(transformer) };
+        const auto iMaybe { t.adjoint() * t };
+        SparseQuantumGateTransformer identity(t.rows(), t.cols());
+        identity.setIdentity();
+        SparseQuantumGateTransformer diff { iMaybe - identity };
+        if (diff.squaredNorm() > 1e-6) {
+            throw std::runtime_error("Invalid quantum gate: not unitary");
+        } else {
+          m = t.rows();
+          n = t.cols();
+        }
+
+        if (!t.isCompressed()) {
+            t.makeCompressed();
+        }
     } else {
-        throw std::runtime_error("Invalid quantum gate.");
+        // Not filled in; variant is monostate.
+        throw std::runtime_error("Invalid quantum gate; unfilled.");
     }
 
-    const auto m { transformer.rows() };
-    const auto n { transformer.cols() };
     if (m == 0 || m != n || ((m & (m-1)) != 0)) {
         throw std::runtime_error("Invalid quantum gate.");
     }
 
     nQubit = static_cast<size_t>(std::log2(m));
+    isValidated = true;
 }
 
 }

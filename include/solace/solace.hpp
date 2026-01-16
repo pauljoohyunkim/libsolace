@@ -7,8 +7,10 @@
 
 #include <complex>
 #include <vector>
+#include <variant>
 #include <filesystem>
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 
 namespace Solace {
     // Forward Declaration
@@ -26,9 +28,22 @@ namespace Solace {
     using StateVector = Eigen::VectorXcd;
 
     /**
-     * @brief Represents a quantum gate matrix. (Alias to Eigen::MatrixXcd from Eigen library)
+     * @brief Represents a general quantum gate matrix. (Alias to Eigen::MatrixXcd from Eigen library)
      */
     using QuantumGateTransformer = Eigen::MatrixXcd;
+
+    /**
+     * @brief Represents a sparse quantum gate matrix. (Alias to Eigen::SparseMatrix<std::complex<double>> from Eigen library)
+     * 
+     */
+    using SparseQuantumGateTransformer = Eigen::SparseMatrix<std::complex<double>>;
+
+    /**
+     * @brief Represents the type of matrix that is inside the quantum gate. (Either "none", "dense", or "sparse")
+     * 
+     */
+    using QuantumGateTransformerFormat = std::variant<std::monostate, QuantumGateTransformer, SparseQuantumGateTransformer>;
+
 
     /**
      * @class Qubits
@@ -154,6 +169,13 @@ namespace Solace {
             QuantumGate(const QuantumGateTransformer& transformer) : transformer(transformer) { validate(); }
 
             /**
+             * @brief Quantum gate constructor for any number of qubits, using sparse matrix.
+             * 
+             * @param[in] transformer the sparse matrix that defines the gate. Must be a unitary matrix of N x N where N is a power of 2.
+             */
+            QuantumGate(const SparseQuantumGateTransformer& transformer) : transformer(transformer) { validate(); }
+
+            /**
              * @brief Constructor quantum gates. Reads from a previously "compiled" quantum gates and loads from it.
              * 
              * @param[in] filepath the file path to compiled quantum gate object.
@@ -199,11 +221,11 @@ namespace Solace {
              * @brief get the transformer matrix of the quantum gate for debugging purposes.
              * @return transformer the unitary matrix that defines the gate.
              */
-            QuantumGateTransformer viewTransformer() const { return transformer; }
+            QuantumGateTransformerFormat viewTransformer() const { return transformer; }
 #endif
         protected:
             bool isValidated { false };
-            QuantumGateTransformer transformer;
+            QuantumGateTransformerFormat transformer { std::monostate() };
             size_t nQubit { 0 };
 
             /**
