@@ -61,9 +61,9 @@ Qubits Qubits::operator^(const Qubits& q) const {
 }
 
 #if defined(BE_A_QUANTUM_CHEATER)
-ObservedQubitState Qubits::observe(const bool randomphase, const bool cheat, const int bitmask) {
+ObservedQubitState Qubits::observe(const bool cheat, const int bitmask) {
 #else
-ObservedQubitState Qubits::observe(const bool randomphase, const int bitmask) {
+ObservedQubitState Qubits::observe(const int bitmask) {
 #endif
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -79,14 +79,7 @@ ObservedQubitState Qubits::observe(const bool randomphase, const int bitmask) {
 #endif    
         // State collapse
         stateVector = StateVector::Zero(stateVector.size());
-        if (randomphase) {
-            std::uniform_real_distribution<double> phaseDist(0, M_PI);
-            const auto phase { phaseDist(gen) };
-            const auto nonzero { std::exp(std::complex<double>(0, phase)) };
-            stateVector(observedState) = nonzero;
-        } else {
-            stateVector(observedState) = 1;
-        }
+        stateVector(observedState) = 1;
         
 #if defined(BE_A_QUANTUM_CHEATER)
     }
