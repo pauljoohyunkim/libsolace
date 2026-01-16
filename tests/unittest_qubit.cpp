@@ -25,7 +25,7 @@ TEST(Qubit, ObservationWithCheat) {
     std::vector<int> observedCount { 0, 0 };
 
     for (auto i = 0U; i < testN; i++) {
-        const auto observation { q.observe(true) };
+        const auto observation { q.cheatObserve() };
         if (observation == 0) {
             observedCount[0]++;
         } else {
@@ -46,7 +46,8 @@ TEST(Qubit, ObservationCollapse) {
         {1,2},
         {-3,1}
     };
-    const auto ret { q.observe(false) };
+    auto ret_raw { q.observe() };
+    const auto ret { ret_raw.first };
     const auto sv { q.viewStateVector() };
     if (ret == 0) {
         ASSERT_EQ(sv[1], std::complex<double>(0,0));

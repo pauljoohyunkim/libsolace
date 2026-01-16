@@ -8,6 +8,8 @@
 #include <complex>
 #include <vector>
 #include <variant>
+#include <utility>
+#include <optional>
 #include <filesystem>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -98,24 +100,22 @@ namespace Solace {
 
 #if defined(BE_A_QUANTUM_CHEATER)
             /**
-             * @brief observe the qubit system. Note that this will collapse the state vector.
-             * @param[in] cheat whether or not the observation will collapse the state vector. Setting this true will prevent the collapse.
+             * @brief observe the qubit system. Note that this will NOT collapse the state vector.
              * @param[in] bitmask can be set to read certain qubits, even in entangled state. -1 by default, which refers to "read all".
              * If you specify, for example, bitmask=0b1010 in a four-qubit system, the only potential outputs are |0000>, |0010>, |1000>, and |1010>.
-             * The state vector for unaffected states will be modified according to entanglement, unless cheat is set to true.
-             * @return ObservedQubitState the result of the measurement.
+             * The state vector will NOT be modified.
+             * @return The result of the observation
              */
-            ObservedQubitState observe(const bool cheat=false, const int bitmask=-1);
-#else
+            ObservedQubitState cheatObserve(const unsigned int bitmask=0);
+#endif
             /**
-             * @brief observe the qubit system. Note that this will collapse the state vector. Should you wish, compile with -DBE_A_QUANTUM_CHEATER flag for collapse-free version support.
-             * @param[in] bitmask can be set to read certain qubits, even in entangled state. -1 by default, which refers to "read all".
+             * @brief observe the qubit system. Note that this will collapse the state vector. Should you wish, compile with -DBE_A_QUANTUM_CHEATER flag to enable "cheatObserve" function.
+             * @param[in] bitmask can be set to read certain qubits, even in entangled state. 0 by default, which refers to "read all". (You could also read all by 0b11...1)
              * If you specify, for example, bitmask=0b1010 in a four-qubit system, the only potential outputs are |0000>, |0010>, |1000>, and |1010>.
              * The state vector for unaffected states will be modified according to entanglement.
-             * @return ObservedQubitState the result of the measurement.
+             * @return A tuple of ObservedQubitStates and std::optional<Qubits> where the latter is nullopt if observing all qubits, or reindexed Qubits if partial reading.
              */
-            ObservedQubitState observe(const int bitmask=-1);
-#endif
+            std::pair<ObservedQubitState, std::optional<Qubits>> observe(const unsigned int bitmask=0);
 
 #if defined(BE_A_QUANTUM_CHEATER)
 
