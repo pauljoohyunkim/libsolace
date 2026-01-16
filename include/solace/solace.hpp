@@ -99,18 +99,24 @@ namespace Solace {
 #if defined(BE_A_QUANTUM_CHEATER)
             /**
              * @brief observe the qubit system. Note that this will collapse the state vector.
-             * @param[in] cheat whether or not the observation will collapse the state vector. Setting this true will prevent the collapse.
              * @param[in] randomphase whether or not post-measurement phase should be randomized or not. (Often meaningless.)
+             * @param[in] cheat whether or not the observation will collapse the state vector. Setting this true will prevent the collapse.
+             * @param[in] bitmask can be set to read certain qubits, even in entangled state. -1 by default, which refers to "read all".
+             * If you specify, for example, bitmask=0b1010 in a four-qubit system, the only potential outputs are |0000>, |0010>, |1000>, and |1010>.
+             * The state vector for unaffected states will be modified according to entanglement, unless cheat is set to true.
              * @return ObservedQubitState the result of the measurement.
              */
-            ObservedQubitState observe(const bool randomphase=false, const bool cheat=false);
+            ObservedQubitState observe(const bool randomphase=false, const bool cheat=false, const int bitmask=-1);
 #else
             /**
              * @brief observe the qubit system. Note that this will collapse the state vector. Should you wish, compile with -DBE_A_QUANTUM_CHEATER flag for collapse-free version support.
              * @param[in] randomphase whether or not post-measurement phase should be randomized or not. (Often meaningless.)
+             * @param[in] bitmask can be set to read certain qubits, even in entangled state. -1 by default, which refers to "read all".
+             * If you specify, for example, bitmask=0b1010 in a four-qubit system, the only potential outputs are |0000>, |0010>, |1000>, and |1010>.
+             * The state vector for unaffected states will be modified according to entanglement.
              * @return ObservedQubitState the result of the measurement.
              */
-            ObservedQubitState observe(const bool randomphase=false);
+            ObservedQubitState observe(const bool randomphase=false, const int bitmask=-1);
 #endif
 
 #if defined(BE_A_QUANTUM_CHEATER)

@@ -61,9 +61,9 @@ Qubits Qubits::operator^(const Qubits& q) const {
 }
 
 #if defined(BE_A_QUANTUM_CHEATER)
-ObservedQubitState Qubits::observe(const bool randomphase, const bool cheat) {
+ObservedQubitState Qubits::observe(const bool randomphase, const bool cheat, const int bitmask) {
 #else
-ObservedQubitState Qubits::observe(const bool randomphase) {
+ObservedQubitState Qubits::observe(const bool randomphase, const int bitmask) {
 #endif
     std::random_device rd;
     std::mt19937 gen(rd());
