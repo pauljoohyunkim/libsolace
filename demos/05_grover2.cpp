@@ -5,12 +5,16 @@
 #include "solace/solace.hpp"
 #include "solace/common_gates.hpp"
 #include "solace/utility.hpp"
+#include "executionTimeMeasurement.hpp"
 #include <iostream>
 #include <filesystem>
 
 #define QUBITS_FILE "qubits.qbit"
 #define DIFFUSER_FILE "diffuser.qgate"
 #define ORACLE_FILE "oracle.qgate"
+
+#define SHOW_EXECUTION_TIME() do { std::cout << "Took " << END_TIMER() << "ms of execution" << std::endl; } while (0)
+    
 
 /**
  * To define a custom quantum gate, you need to allocate an appropriate matrix to transformer.
@@ -52,38 +56,58 @@ int main() {
     // but the initial state vector is also required for Grover diffusion gate.
     // I will be "quasi-cheating" here.
     std::cout << "Creating " << nQubits << " qubits and the required gates..." << std::endl;
+    START_TIMER();
     Solace::StateVector s { Solace::StateVector::Ones(1<<nQubits) };
     s.normalize();
+    SHOW_EXECUTION_TIME();
 
     Solace::Qubits system {};
     Solace::QuantumGate us {};
     Solace::QuantumGate uw {};
     if (!std::filesystem::exists(QUBITS_FILE)) {
         std::cout << "Creating initial vector s" << std::endl;
+        START_TIMER();
         system = Solace::Qubits(s);
+        SHOW_EXECUTION_TIME();
         std::cout << "Compiling..." << std::endl;
+        START_TIMER();
         system.compile(QUBITS_FILE);
+        SHOW_EXECUTION_TIME();
     } else {
         std::cout << "Loading initial qubit system file." << std::endl;
+        START_TIMER();
         system = Solace::Qubits(QUBITS_FILE);
+        SHOW_EXECUTION_TIME();
     }
     if (!std::filesystem::exists(DIFFUSER_FILE)) {
         std::cout << "Creating Grover diffusion gate" << std::endl;
+        START_TIMER();
         us = GroverDiffusionGate(s);
+        SHOW_EXECUTION_TIME();
         std::cout << "Compiling..." << std::endl;
+        START_TIMER();
         us.compile(DIFFUSER_FILE);
+        SHOW_EXECUTION_TIME();
     } else {
         std::cout << "Loading Grover diffusion gate" << std::endl;
+        START_TIMER();
         us = Solace::QuantumGate(DIFFUSER_FILE);
+        SHOW_EXECUTION_TIME();
     }
     if (!std::filesystem::exists(ORACLE_FILE)) {
         std::cout << "Creating oracle gate" << std::endl;
+        START_TIMER();
         uw = QuantumOracle(3, nQubits);
+        SHOW_EXECUTION_TIME();
         std::cout << "Compiling..." << std::endl;
+        START_TIMER();
         uw.compile(ORACLE_FILE);
+        SHOW_EXECUTION_TIME();
     } else {
         std::cout << "Loading oracle gate" << std::endl;
+        START_TIMER();
         uw = Solace::QuantumGate(ORACLE_FILE);
+        SHOW_EXECUTION_TIME();
     }
 
     std::cout << "Starting Grover algorithm" << std::endl;

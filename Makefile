@@ -55,7 +55,7 @@ $(OBJ)/%_dbg.o: $(SRC)/%.cpp
 $(OBJ)/demo_%.o: $(DEMOS)/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(LDFLAGS)
 
-$(DEMOS)/%.bin: $(OBJ)/demo_%.o $(BIN)/libsolace.a
+$(DEMOS)/%.bin: $(OBJ)/demo_%.o $(BIN)/libsolace.a $(DEMOS)/executionTimeMeasurement.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(OBJ)/unittest_%.o: CXXFLAGS += -DBE_A_QUANTUM_CHEATER `pkg-config --cflags gtest`
