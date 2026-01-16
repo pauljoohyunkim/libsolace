@@ -61,7 +61,7 @@ Qubits Qubits::operator^(const Qubits& q) const {
 }
 
 #if defined(BE_A_QUANTUM_CHEATER)
-ObservedQubitState Qubits::cheatObserve(const unsigned int bitmask) {
+ObservedQubitState Qubits::cheatObserve() {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::vector<double> weights {};

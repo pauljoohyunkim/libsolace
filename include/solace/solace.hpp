@@ -106,7 +106,7 @@ namespace Solace {
              * The state vector will NOT be modified.
              * @return The result of the observation
              */
-            ObservedQubitState cheatObserve(const unsigned int bitmask=0);
+            ObservedQubitState cheatObserve();
 #endif
             /**
              * @brief observe the qubit system. Note that this will collapse the state vector. Should you wish, compile with -DBE_A_QUANTUM_CHEATER flag to enable "cheatObserve" function.
