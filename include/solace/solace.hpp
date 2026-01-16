@@ -108,14 +108,23 @@ namespace Solace {
              */
             ObservedQubitState cheatObserve();
 #endif
+
             /**
              * @brief observe the qubit system. Note that this will collapse the state vector. Should you wish, compile with -DBE_A_QUANTUM_CHEATER flag to enable "cheatObserve" function.
-             * @param[in] bitmask can be set to read certain qubits, even in entangled state. 0 by default, which refers to "read all". (You could also read all by 0b11...1)
+             * @return measured state.
+             */
+            ObservedQubitState observe() {  return std::get<0>(observe(0)); }
+
+            /**
+             * @brief observe the qubit system. Note that this will collapse the state vector. Should you wish, compile with -DBE_A_QUANTUM_CHEATER flag to enable "cheatObserve" function.
+             * @param[in] bitmask can be set to read certain qubits, even in entangled state. 0 refers to "read all". (You could also read all by 0b11...1)
              * If you specify, for example, bitmask=0b1010 in a four-qubit system, the only potential outputs are |0000>, |0010>, |1000>, and |1010>.
              * The state vector for unaffected states will be modified according to entanglement.
-             * @return A tuple of ObservedQubitStates and std::optional<Qubits> where the latter is nullopt if observing all qubits, or reindexed Qubits if partial reading.
+             * @return A tuple of ObservedQubitStates (observed state), std::optional<Qubits> and a vector of unobservable states from bitmask.
+             * Second item is nullopt if observing all qubits, or reindexed Qubits if partial reading.
+             * Third item (unobservable states) is provided so that one could use it for reindexing.
              */
-            std::tuple<ObservedQubitState, std::optional<Qubits>, std::vector<ObservedQubitState>> observe(const unsigned int bitmask=0);
+            std::tuple<ObservedQubitState, std::optional<Qubits>, std::vector<ObservedQubitState>> observe(const unsigned int bitmask);
 
 #if defined(BE_A_QUANTUM_CHEATER)
 

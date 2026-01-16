@@ -46,8 +46,7 @@ TEST(Qubit, ObservationCollapse) {
         {1,2},
         {-3,1}
     };
-    auto ret_raw { q.observe() };
-    const auto ret { std::get<0>(ret_raw) };
+    auto ret { q.observe() };
     const auto sv { q.viewStateVector() };
     if (ret == 0) {
         ASSERT_EQ(sv[1], std::complex<double>(0,0));
