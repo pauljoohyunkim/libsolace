@@ -49,7 +49,7 @@ class QuantumOracle : public Solace::QuantumGate {
 
 int main() {
     constexpr int nQubits { 12 };       // Number of qubits increased from previous example.
-    constexpr int nIter { (int) (M_PI_4 * (1 << (nQubits >> 1))) };
+    const int nIter { (int) (M_PI_4 * (std::exp2((float) nQubits / 2))) };
 
     // Initializing vector for Grover's algorithm.
     // Note that technically one should do diligence of initializing by applying Hadamard gate to all nQubits qubits,
