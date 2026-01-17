@@ -130,22 +130,27 @@ std::tuple<ObservedQubitState, std::optional<Qubits>, std::vector<ObservedQubitS
         const auto it { std::find(observableStates.begin(), observableStates.end(), observedState) };
         const auto index { std::distance(observableStates.begin(), it) };
 
-        // Build a new qubits object for unobservable states.
-        StateVector unobservedStateVector(unobservableStates.size());
-        for (auto i = 0U; i < unobservableStates.size(); i++) {
-            const auto state { unobservableStates.at(i) };
-            unobservedStateVector(i) = stateVector(state);
+        // Build a new qubits object from unobserved.
+        //const size_t unobservedStateVectorLength { stateVectorLen / observableStates.size() };
+        //StateVector unobservedStateVector { StateVector::Zero(unobservedStateVectorLength) };
+        std::vector<std::complex<double>> unobservedStateVector {};
+        const auto nCondition { observedState & bitmask };    // This encodes the necessary condition for the rest of the entangled qubits
+        for (ObservedQubitState i = 0; i < stateVectorLen; i++) {
+            // Conditional
+            if ((nCondition & bitmask) == (i & bitmask)) {
+                unobservedStateVector.push_back(stateVector(i));
+            }
+        }
+        if ((size_t) stateVectorLen != observableStates.size() * unobservedStateVector.size()) {
+            throw std::runtime_error("Something went wrong when computing the entangled subsystem.");
         }
         // Automatically normalized by the constructor.
         Qubits unobservedQubits { unobservedStateVector };
+
+        // Finally, state vector collapse.
         stateVector = StateVector::Zero(observableStates.size());
         stateVector(index) = 1;
         validateLength();
-
-        // State collapse
-        stateVector = StateVector::Zero(stateVector.size());
-        stateVector(0) = 1;         // Temporary for compilation.
-        //stateVector(index) = 1;
 
         return { observedState, unobservedQubits, unobservableStates };
     }
