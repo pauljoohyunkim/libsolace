@@ -30,6 +30,7 @@ To follow along this document, it would be very helpful to have understanding of
         \item The relationship between a matrix and a linear transformation.
         \item Matrix multiplication and inversion
         \item Orthogonal/Unitary Matrix
+        \item Tensor product
         %\item (Optional) Eigenvalues/Eigenvectors
     \end{itemize}
     \item Probability
@@ -231,6 +232,23 @@ As an intuition, a unitary matrix encapsulates a linear transformation of which 
 
 Also, unitary matrices \textbf{ARE} the quantum gates, as it will be discussed later.
 
+Any vector or matrix is also an object known as a tensor, which is a generalized linear object.
+We define \textbf{tensor product} (Kronecker product) of $A \in \mathbb{C}^{m \times n}$ and $B \in \mathbb{C}^{p \times q}$ as the following:
+\begin{equation*}
+    (A \otimes B)_{pr+v, qs+w} = a_{rs} b_{vw} \in \mathbb{C}^{pm \times qn}
+\end{equation*}
+or more conceptually,
+\begin{equation*}
+    A \otimes B = \begin{pmatrix}
+        a_{00}B & \cdots & a_{0, n-1}B \\
+        \vdots & \ddots & \vdots \\
+        a_{m-1, 0}B & \cdots & a_{m-1, n-1}B
+    \end{pmatrix}
+\end{equation*}
+
+Tensor product can apply to vector or array of any shape, and within quantum computing,
+it will be used for entanglement.
+
 \subsection{Probability}
 For quantum computing, the idea of probability distribution is important.
 \subsubsection{Probability Distribution}
@@ -349,6 +367,59 @@ If we were to measure this qubit again, there is now an equal chance of measurin
 
 The goal of quantum computing now is to come up with quantum gates and to operate on qubits,
 in the way that it would allow us to get a meaning result with a sufficient probability.
+
+Unlike classical logic gates, there are uncountably many quantum gates.
+
+\subsubsection{Entangled States and Partial Measurement}
+Given two qubits, we can often think of them as having a ``combined'' state vector.
+For example,
+\begin{equation*}
+    \ket{\psi_1} \otimes \ket{\psi_2} = a_{00} \ket{00} + a_{01} \ket{01} + a_{10} \ket{10} + a_{11} \ket{11}
+    = \begin{pmatrix}
+        a_{00} \\
+        a_{01} \\
+        a_{10} \\
+        a_{11}
+    \end{pmatrix}
+\end{equation*}
+where each of the $\ket{\alpha \beta}$ refers to $\ket{\alpha} \otimes \ket{\beta}$.
+
+However, it is also entirely possible that the RHS length-4 state vector cannot be written as tensor product of state vectors of two qubits.
+An example is the Bell state:
+\begin{equation*}
+    \ket{\psi} = \frac{1}{\sqrt{2}} \left(\ket{00} + \ket{11}\right)
+\end{equation*}
+In this case, we say the two qubits are ``entangled''.
+Intuitionistically, partially measuring one qubit may affect the other qubit as well.
+
+For example, suppose two-qubit system is entangled in the Bell state.
+Suppose you measure the first qubit and observe $\ket{0}$.
+In this case, what happens is that the entanglement of the two qubits is broken,
+and the state vector for the first qubit collapses to $\ket{0}$,
+and the second qubit also collapses to $\ket{0}$, as that is the only possible outcome.
+
+Another concrete example is the GHZ state, an entangled three-qubit system.
+\begin{equation*}
+    \ket{\psi} = \frac{1}{\sqrt{3}} \left(\ket{100} + \ket{010} + \ket{001}\right)
+\end{equation*}
+Suppose after measuring the first (index 0) qubit resulted in $\ket{0}$.
+Then after this partial measurement,
+\begin{equation*}
+    \ket{\psi} = \ket{0}_0
+    \otimes \underbrace{\frac{1}{\sqrt{2}} \left(\ket{10}_{1,2} + \ket{01}_{1,2}\right)}_{\text{Qubit 1, 2 in entanglement}}
+\end{equation*}
+qubit 0 breaks out of the entanglement, and the other qubits are normalized to form a proper state vector again.
+
+There are gates that operate on these entangled qubits as well, such as
+\begin{equation*}
+    \text{SWAP} = \begin{pmatrix}
+        1 & 0 & 0 & 0 \\
+        0 & 0 & 1 & 0 \\
+        0 & 1 & 0 & 0 \\
+        0 & 0 & 0 & 1
+    \end{pmatrix}
+\end{equation*}
+which operates on two-qubit, potentially entangled system.
 
 \section{Libsolace}
 
