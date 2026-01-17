@@ -1,0 +1,519 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{braket}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\title{Emulating Quantum System with Libsolace}
+\author{Paul Joo-Hyun Kim}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Preface}
+This document is to introduce how the basics of quantum computing works from ground up ``in a nutshell'',
+and how it is implemented in libsolace.
+
+We will skip most of the discussion on quantum theory (such as the Schr\"odinger's equation)
+and will only mention necessary concepts.
+I do highly recommend looking into those if you are interested/wanting to understand it better.
+
+Since this is meant to ``introduce'' concepts rather than be very formal about logic,
+there may be errors. If there are significant errors, please do get in touch with me!
+
+\section{Mathematics of Quantum Computing}
+\subsection{Prerequisites}
+To follow along this document, it would be very helpful to have understanding of the following concepts
+(which I will introduce shortly.)
+\begin{itemize}
+    \item Linear Algebra
+    \begin{itemize}
+        \item Vector, inner products, and norms.
+        \item The relationship between a matrix and a linear transformation.
+        \item Matrix multiplication and inversion
+        \item Orthogonal/Unitary Matrix
+        \item Tensor product
+        %\item (Optional) Eigenvalues/Eigenvectors
+    \end{itemize}
+    \item Probability
+    \begin{itemize}
+        \item Probability Distribution
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Linear Algebra}
+We say an of complex numbers in $\mathbb{C}$ a \textbf{vector}.
+Here are some examples of vectors.
+
+\begin{align*}
+    \begin{pmatrix}
+        1\\i
+    \end{pmatrix} \in \mathbb{C}^2 \\
+    \begin{pmatrix}
+        1\\\frac{1+i}{\sqrt{2}}\\i
+    \end{pmatrix} \in \mathbb{C}^3
+\end{align*}
+
+\textbf{Canonical} vectors\footnote{Often case denoted by lowercase alphabet} is an important class of vectors where it has only one nonzero entry, and that nonzero entry is 1.
+For example,
+\begin{align*}
+    e_0 = \begin{pmatrix}
+        1\\0\\0\\ \vdots
+    \end{pmatrix} \in \mathbb{C}^n \\
+    e_1 = \begin{pmatrix}
+        0\\1\\0\\ \vdots
+    \end{pmatrix}
+    \in \mathbb{C}^n
+\end{align*}
+The length $n$ depends on the circumstance.
+Note that any non-canonical vector can be written as a linear combination\footnote{Notice that I wrote I started indexing from 0. This is a computer science convention rather than mathematical convention.
+This allows for simplicity when working with modulo operations.}
+ of canonical vectors as they form a basis.
+For example,
+\begin{align*}
+    \begin{pmatrix}
+        3 \\ \frac{1 + \sqrt{3}i}{2} \\ -i
+    \end{pmatrix}
+    = 3e_0 + \frac{1 + \sqrt{3}i}{2} e_1 - ie_2 \in \mathbb{C}^3
+\end{align*}
+
+Given two vectors $u, v$ within $\mathbb{C}^n$, define the following operation.
+\begin{equation*}
+    \braket{u|v} = \sum_{i=0}^{n-1} \overline{u_i} v_i
+\end{equation*}
+We will refer to this as \textbf{generalized inner product}, or simply inner product.
+
+For a vector $v$, taking the inner product with itself results in the square of the ``Euclidean length'' of the vector:
+\begin{equation*}
+    |v|^2 = \braket{v|v} = \sum_{i=0}^{n-1} |v_i|^2
+\end{equation*}
+The \textbf{norm} $|v|$ of the vector $v$ is precisely defined in terms of the generalized inner product.
+Note that a norm can only be nonnegative, and zero if and only if $v$ has only zeros as its entries.
+
+We also have an $m \times n$ (two-dimensional) array holding complex values. This is called a \textbf{matrix}\footnote{Often case denoted by uppercase alphabet.}
+\begin{align*}
+    \begin{pmatrix}
+        3 & 2 \\
+        0 & i
+    \end{pmatrix} \in \mathbb{C}^{2 \times 2} \\
+    \begin{pmatrix}
+        2 & 1 & i \\
+        i & -3 & 0
+    \end{pmatrix} \in \mathbb{C}^{2 \times 3} \\
+    \begin{pmatrix}
+        2 & 1 \\
+        i & i \\
+        -3 & 0
+    \end{pmatrix} \in \mathbb{C}^{3 \times 2}
+\end{align*}
+For quantum computing we are only interested in square matrices, that is an element of $\mathbb{C}^{n \times n}$ for some $n$.
+
+From now on, we may assume all matrices we will be working on are square matrices unless stated othewise.
+
+For matrices, we have \textbf{transpose} operator for ``flipping'' the entries across diagonal, turning a matrix of $m \times n$ into a matrix of $n \times m$.
+\begin{align*}
+    \begin{pmatrix}
+        2 & 1 \\
+        i & i \\
+        -3 & 0
+    \end{pmatrix}^T
+    =
+    \begin{pmatrix}
+        2 & i & -3 \\
+        1 & i & 0
+    \end{pmatrix}
+\end{align*}
+More concretely, we can describe\footnote{By convention, we write the index of the row first. We will start indexing from 0 throughout the document.} it as
+\begin{equation*}
+    \left(A^T\right)_{i,j} = A_{j,i}
+\end{equation*}
+
+We also have \textbf{conjugate transpose}, which is to replace every element inside a matrix by complex conjugate, then taking the transpose.
+\begin{equation*}
+    \begin{pmatrix}
+        1+i & 1-i \\
+        3+2i & e^{i\theta}
+    \end{pmatrix}^*
+    = 
+    \begin{pmatrix}
+        1-i & 3-2i \\
+        1+i & e^{-i\theta}
+    \end{pmatrix}
+\end{equation*}
+
+We define \textbf{matrix multiplication} between an array $A$ of dimension $m \times n$ and $B$ of dimension $n \times k$ as:
+\begin{equation*}
+    \left(AB\right)_{i,j} = \sum_{k = 0}^{n-1} A_{i,k} B_{k, j}
+\end{equation*}
+for $i = 0, \cdots, m-1$ and $j = 0, \cdots, k-1$. The resulting array $AB$ is of shape $m \times k$.
+Note that $AB \neq BA$ in general (often times the operation itself is not defined for the other multiplication.)
+
+It turns out multiplying a canonical vector $e_j$ on the left by a square matrix $A$ simply extracts the $j$\textsuperscript{th} column of $A$.
+\begin{align*}
+    A &= \begin{pmatrix}
+        1 & 2 & 3 \\
+        4 & 5 & 6 \\
+        7 & 8 & 9
+    \end{pmatrix} \\
+    e_1 &= \begin{pmatrix}
+        0 \\ 1 \\ 0
+    \end{pmatrix} \\
+    Ae_1 &= \begin{pmatrix}
+        2 \\ 5 \\ 8
+    \end{pmatrix}
+\end{align*}
+In general, if we can decompose a general vector $v$ as linear combination of canonical vectors as the following,
+\begin{equation*}
+    v = \sum_{i=0}^{n-1} c_i e_i
+\end{equation*}
+then it turns out we can write the product of the matrix and vector as a linear combination analogously.
+\begin{equation*}
+    Av = \sum_{i=0}^{n-1} c_i \underbrace{A e_i}_{\text{col } i \text{ of } A}
+\end{equation*}
+
+As you can see, we can think of matrix $A$ as a function that maps a vector to another vector by a linear combination,
+that is, left multiplication by $A$ can be thought of as a way to capture $\textbf{linear transformation}$.
+
+Note that multiplying the \textbf{identity matrix} of the following form is like multiplying by one in numbers; it returns the other matrix.
+\begin{equation*}
+    I = \begin{pmatrix}
+        1 & 0 & \cdots & 0\\
+        0 & 1 & \cdots & 0\\
+        \vdots & \ddots & \vdots & \vdots \\
+        0 & 0 & \cdots & 0
+    \end{pmatrix}
+\end{equation*}
+
+Given $Av$, it is also possible to find $v$ back if $A$ is known to be ``invertible''. This is known as \textbf{matrix inversion}.
+For example,
+\begin{align*}
+    A &= \begin{pmatrix}
+        1 & 0 & 0 \\
+        0 & -1 & 1 \\
+        0 & 1 & 2
+    \end{pmatrix}
+\end{align*}
+turns out to be invertible, meaning there exists some matrix $A^{-1}$ such that it can ``undo'' the operation of multiplying by $A$.
+Explicitly, this is
+\begin{align*}
+    A^{-1} &= \begin{pmatrix}
+        1 & 0 & 0\\
+        0 & -\frac{2}{3} & \frac{1}{3} \\
+        0 & \frac{1}{3} & \frac{1}{3}
+        \end{pmatrix}
+\end{align*}
+For example, if given a general vector $v$,
+then $A^{-1} A v = v$.
+
+Given an invertible matrix $A$, note that $A^{-1}A = I$ and also $A A^{-1} = I$.
+
+If a real matrix $Q$ satisfies the following, we say $Q$ is an \textbf{orthogonal matrix}:
+\begin{align*}
+    Q^T Q = Q Q^T = I
+\end{align*}
+Analogously, if a complex matrix $Q$ satisfies the following, we say $Q$ is a \textbf{unitary matrix}:
+\begin{align*}
+    Q^* Q = Q Q^* = I
+\end{align*}
+Note that if a real matrix is an orthogonal matrix, it is obviously a unitary matrix.
+
+Unitary matrices do not change the norm of a vector when multiplied, that is, for any general $v \in \mathbb{C}^n$ and unitary $Q \in \mathbb{C}^{n \times n}$,
+\begin{equation*}
+    |Qv| = |v|
+\end{equation*}
+This can easily be shown by noting the fact that,
+\begin{align*}
+    |Qv|^2 &= \left(Qv\right)^* \left(Qv\right) \\
+           &= v^* Q^* Q v \\
+           &= v^* v \\
+           &= |v|^2
+\end{align*}
+where the second line comes from the fact that applying transpose (or conjugate transpose) swaps the order of multiplication.
+
+As an intuition, a unitary matrix encapsulates a linear transformation of which fixes the zero vector at zero vector and preserves lengths (and angles), such as rotation and flip.
+
+Also, unitary matrices \textbf{ARE} the quantum gates, as it will be discussed later.
+
+Any vector or matrix is also an object known as a tensor, which is a generalized linear object.
+We define \textbf{tensor product} (Kronecker product) of $A \in \mathbb{C}^{m \times n}$ and $B \in \mathbb{C}^{p \times q}$ as the following:
+\begin{equation*}
+    (A \otimes B)_{pr+v, qs+w} = a_{rs} b_{vw} \in \mathbb{C}^{pm \times qn}
+\end{equation*}
+or more conceptually,
+\begin{equation*}
+    A \otimes B = \begin{pmatrix}
+        a_{00}B & \cdots & a_{0, n-1}B \\
+        \vdots & \ddots & \vdots \\
+        a_{m-1, 0}B & \cdots & a_{m-1, n-1}B
+    \end{pmatrix}
+\end{equation*}
+
+Tensor product can apply to vector or array of any shape, and within quantum computing,
+it will be used for entanglement.
+
+\subsection{Probability}
+For quantum computing, the idea of probability distribution is important.
+\subsubsection{Probability Distribution}
+Suppose $X$ is a random variable that can be any of the values within $\left\{0, 1, 2, \cdots, N\right\}$.
+We write $p(X=i)$ for the probability that if you were to observe random variable $X$, it is found to be $i$.
+
+Since the law of total probability states that
+\begin{equation*}
+    \sum_{i=0}^{N} p(X=i) = 1
+\end{equation*}
+
+\subsection{Quantum Computing}
+Finally, we get into quantum computing.
+
+\subsubsection{Qubit and State Vector}
+Just like classical computers where the smallest unit of information is composed of \textbf{bits}, that is, a container for 0 or 1,
+the smallest storage unit of information in a quantum computer is a \textbf{qubit}.
+A lot of resources may say that \textit{a qubit is both 0 and 1 at the same time with some amount of probability},
+but frankly, this is a \underline{misleading description};
+a qubit will always either be 0 or 1, not both.
+It is just that the result of observing a qubit is nondeterministic.
+
+Just as we represent the OFF state of a bit with 0,
+and ON state of a bit with 1 in a classical computer,
+we represent the two states on a quantum computer with the following notation:
+$\ket{0}, \ket{1}$.
+
+Mathematically speaking, you can think of them as:
+\begin{align*}
+    \ket{0} = \begin{pmatrix}
+        1 \\ 0
+    \end{pmatrix},
+    \ket{1} = \begin{pmatrix}
+        0 \\ 1
+    \end{pmatrix}
+\end{align*}
+
+We now postulate that each qubit holds a thing called \textbf{state vector} $\ket{\psi}$ of the following form
+\begin{align*}
+    \ket{\psi} = a_0 \ket{0} + a_1 \ket{1} = \begin{pmatrix}
+        a_0 \\
+        a_1
+    \end{pmatrix}
+\end{align*}
+where it satisfies the two conditions:
+\begin{itemize}
+    \item $a_0, a_1 \in \mathbb{C}$
+    \item $|a_0|^2 + |a_1|^2 = 1$
+\end{itemize}
+The second condition enforces the fact that a state vector ALWAYS has a norm of 1.
+
+The heart of quantum computing is using ``quantum gates'' to manipulate state vector.
+
+\subsubsection{Measurement and Born Interpretation}
+A computer is not really useful if it does not give us a result back.
+In a classical computer, you can simply read the state of each bit as a result,
+but in a quantum computer, state vector is not a thing that we can see.
+
+When we ``measure'' the value inside a qubit, it will always be either a $\ket{0}$ or a $\ket{1}$,
+but this will be a probablistic result.
+
+The probability of measuring $\ket{0}$ and $\ket{1}$ from a qubit with statte vector $\ket{\psi}$ are described below,
+\begin{align*}
+    P\left(\ket{0}\right) &= |\braket{0|\psi}|^2 = |a_0|^2 \\
+    P\left(\ket{1}\right) &= |\braket{1|\psi}|^2 = |a_1|^2
+\end{align*}
+and a quirky thing about quantum computer is that, after we measure the qubit, the state vector undergoes \textbf{quantum state collapse},
+where the entry of the state vector will change in a way that, when observed again, give the exact same result with 100\% probability.
+
+For example, suppose a qubit has the state vector $\ket{\psi} = \frac{1}{\sqrt{2}} \left(\ket{0} + \ket{1}\right)$.
+(NOTE: we cannot see the state vector in practice.)
+then the analysis above shows
+\begin{align*}
+    P\left(\ket{0}\right) &= |\braket{0|\psi}|^2 = \frac{1}{2} \\
+    P\left(\ket{1}\right) &= |\braket{1|\psi}|^2 = \frac{1}{2}
+\end{align*}
+Suppose $\ket{0}$ was measured.
+Then the state vector collapses post-measurement to
+\begin{equation*}
+    \ket{\psi} = \ket{0}
+\end{equation*}
+that is, it no longer has probability to be measured as $\ket{1}$.
+
+Extracting coefficient of the state vector and interpreting it as a component of probability,
+and the collapse after measurement is what is known as \textbf{Born interpretation}.
+
+Some may be curious as to why this all happens.
+I would say, for that to be answered, you will need to consult real quantum physicsts.
+
+For quantum information scientists, it is just how it works.
+
+\subsubsection{Quantum Gates}
+Suppose we are building a quantum circuit.
+It would not be of any use if the qubit keeps returning the same value over and over again (from quantum state collapse).
+This means, we need a way to ``operate'' on a qubit to make it do more interesting things.
+
+To affect a qubit, we use what is known as a \textbf{quantum gate}.
+Mathematically, this is a unitary matrix $H \in \mathbb{C}^{2 \times 2}$ that you can multiply to a state vector.
+Note that because left-multiplying by a unitary matrix does not change the norm of the state vector,
+the affected state vector is still a valid state vector.
+
+Suppose we have a qubit that we recently observed $\ket{0}$ from.
+This means the qubit now has the state vector $\ket{\psi}$.
+Now consider the Hadamard gate, one of the basic quantum gates:
+\begin{equation*}
+    H = \frac{1}{\sqrt{2}} \begin{pmatrix}
+        1 & 1 \\
+        1 & -1
+    \end{pmatrix}
+\end{equation*}
+Applying this on the qubit, the state vector of the qubit changes,
+\begin{equation*}
+    H \ket{\psi} = H \ket{0} = \frac{1}{\sqrt{2}} \left(\ket{0} + \ket{1}\right)
+\end{equation*}
+If we were to measure this qubit again, there is now an equal chance of measuring $\ket{0}$ and $\ket{1}$.
+
+The goal of quantum computing now is to come up with quantum gates and to operate on qubits,
+in the way that it would allow us to get a meaning result with a sufficient probability.
+
+Unlike classical logic gates, there are uncountably many quantum gates.
+
+\subsubsection{Entangled States and Partial Measurement}
+Given two qubits, we can often think of them as having a ``combined'' state vector.
+For example,
+\begin{equation*}
+    \ket{\psi_1} \otimes \ket{\psi_2} = a_{00} \ket{00} + a_{01} \ket{01} + a_{10} \ket{10} + a_{11} \ket{11}
+    = \begin{pmatrix}
+        a_{00} \\
+        a_{01} \\
+        a_{10} \\
+        a_{11}
+    \end{pmatrix}
+\end{equation*}
+where each of the $\ket{\alpha \beta}$ refers to $\ket{\alpha} \otimes \ket{\beta}$.
+
+However, it is also entirely possible that the RHS length-4 state vector cannot be written as tensor product of state vectors of two qubits.
+An example is the Bell state:
+\begin{equation*}
+    \ket{\psi} = \frac{1}{\sqrt{2}} \left(\ket{00} + \ket{11}\right)
+\end{equation*}
+In this case, we say the two qubits are ``entangled''.
+Intuitionistically, partially measuring one qubit may affect the other qubit as well.
+
+For example, suppose two-qubit system is entangled in the Bell state.
+Suppose you measure the first qubit and observe $\ket{0}$.
+In this case, what happens is that the entanglement of the two qubits is broken,
+and the state vector for the first qubit collapses to $\ket{0}$,
+and the second qubit also collapses to $\ket{0}$, as that is the only possible outcome.
+
+Another concrete example is the GHZ state, an entangled three-qubit system.
+\begin{equation*}
+    \ket{\psi} = \frac{1}{\sqrt{3}} \left(\ket{100} + \ket{010} + \ket{001}\right)
+\end{equation*}
+Suppose after measuring the first (index 0) qubit resulted in $\ket{0}$.
+Then after this partial measurement,
+\begin{equation*}
+    \ket{\psi} = \ket{0}_0
+    \otimes \underbrace{\frac{1}{\sqrt{2}} \left(\ket{10}_{1,2} + \ket{01}_{1,2}\right)}_{\text{Qubit 1, 2 in entanglement}}
+\end{equation*}
+qubit 0 breaks out of the entanglement, and the other qubits are normalized to form a proper state vector again.
+
+There are gates that operate on these entangled qubits as well, such as
+\begin{equation*}
+    \text{SWAP} = \begin{pmatrix}
+        1 & 0 & 0 & 0 \\
+        0 & 0 & 1 & 0 \\
+        0 & 1 & 0 & 0 \\
+        0 & 0 & 0 & 1
+    \end{pmatrix}
+\end{equation*}
+which operates on two-qubit, potentially entangled system.
+
+\section{Libsolace}
+Here are some examples of the quantum computing concepts in practice.
+
+For more concrete examples, check out the \verb|demos| directory of the repo.
+
+\subsection{Qubits and Entanglement}
+In Solace library, \verb|Qubits| class encapsulates multi-qubit system.
+\begin{lstlisting}[language=C++]
+#include "solace/solace.hpp"
+
+int main() {
+    Solace::Qubits q {};    // Defaults to single qubit set to |0>
+    Solace::Qubits q2 { 2 };    // 2-qubit system.
+    Solace::Qubits q3 { q ^ q2 };   // "Entangle" q and q2.
+}
+\end{lstlisting}
+
+\subsection{Gates}
+In Solace library, \verb|QuantumGates| class encapsulates general quantum gate object.
+Predefined quantum gates are within \verb|Solace::Gate| namespace
+
+\begin{lstlisting}[language=C++]
+#include "solace/solace.hpp"
+#include "solace/common_gates.hpp"
+
+int main() {
+    Solace::Gate::Hadamard H;
+    Solace::Qubits q {};
+    H.apply(q);     // After this, q is observed to be either 0 or 1.
+
+    // This will collapse the state vector.
+    std::cout << q.observe() << std::endl;
+}
+\end{lstlisting}
+
+\subsection{Partial Measurement}
+While \verb|Solace::Qubits::observe()| is a simple function,
+the partial measurement is a bit tricky due to lack of clean indexing system.
+However, it is still supported.
+
+\begin{lstlisting}[language=C++]
+#include "solace/solace.hpp"
+#include "solace/common_gates.hpp"
+
+int main() {
+    // Creating the GHZ state
+    std::complex<double> v { 1/std::sqrt(3), 0 };
+    Solace::StateVector sv(8);
+    sv(0b001) = v;
+    sv(0b010) = v;
+    sv(0b100) = v;
+    Solace::Qubits q { sv };
+
+    // Observe the first qubit.
+    const auto bitmask { 0b100 };
+    auto result { q.observe(bitmask) };
+    auto measurement { result.first };  // Either 0 or 4
+    auto entangledMaybe { result.second };
+    Solace::Qubits entangled { entangledMaybe.value() };
+    
+    // ...
+}
+\end{lstlisting}
+
+\end{document}
