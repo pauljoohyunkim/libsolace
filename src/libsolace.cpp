@@ -79,7 +79,7 @@ ObservedQubitState Qubits::cheatObserve() {
 }
 #endif
 
-std::tuple<ObservedQubitState, std::optional<Qubits>, std::vector<ObservedQubitState>> Qubits::observe(const unsigned int bitmask) {
+std::pair<ObservedQubitState, std::optional<Qubits>> Qubits::observe(const unsigned int bitmask) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::vector<double> weights {};
@@ -99,12 +99,12 @@ std::tuple<ObservedQubitState, std::optional<Qubits>, std::vector<ObservedQubitS
         stateVector = StateVector::Zero(stateVector.size());
         stateVector(observedState) = 1;
             
-        return { observedState, std::nullopt, {} };
+        return { observedState, std::nullopt };
     } else {
         // Observing specific qubits.
         // TODO: Check if bitmask is valid with respect to nQubits.
         std::vector<ObservedQubitState> observableStates {};
-        std::vector<ObservedQubitState> unobservableStates {};
+        //std::vector<ObservedQubitState> unobservableStates {};
 
         // Build Born interpretation probability vector.
         // Determine which states are observable through the mask, and modify the weight vector.
@@ -118,7 +118,7 @@ std::tuple<ObservedQubitState, std::optional<Qubits>, std::vector<ObservedQubitS
             if (isObservableState) {
                 observableStates.push_back(state);
             } else {
-                unobservableStates.push_back(state);
+                //unobservableStates.push_back(state);
             }
             
             weights.at(filtered) += std::norm(stateVector(state));
@@ -152,7 +152,7 @@ std::tuple<ObservedQubitState, std::optional<Qubits>, std::vector<ObservedQubitS
         stateVector(index) = 1;
         validateLength();
 
-        return { observedState, unobservedQubits, unobservableStates };
+        return { observedState, unobservedQubits };
     }
 }
 
