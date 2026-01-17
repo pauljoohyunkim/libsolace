@@ -18,6 +18,9 @@ Here are the packages you need:
 * Protobuf
     * This is used for precompilation of qubits, quantum gates, and any other quantum object that might be invented!
 
+## Quick Catch-up!
+There is a pdf document called [solace.pdf](manual/solace.pdf), where it outlines the basic concepts of quantum computing hastily. Maybe it could be worth reading if you are not familiar with how it works at all.
+
 ## Documentation (HIGHLY RECOMMENDED READING)
 *The documentation is NOT long at all. You can take ten minutes to read the entire thing!*
 (But if you are in a hurry, I would say, generate the documentation and read the [Class List](annotated.html))
