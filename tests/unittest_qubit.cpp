@@ -25,7 +25,7 @@ TEST(Qubit, ObservationWithCheat) {
     std::vector<int> observedCount { 0, 0 };
 
     for (auto i = 0U; i < testN; i++) {
-        const auto observation { q.observe(false, true) };
+        const auto observation { q.cheatObserve() };
         if (observation == 0) {
             observedCount[0]++;
         } else {
@@ -46,7 +46,7 @@ TEST(Qubit, ObservationCollapse) {
         {1,2},
         {-3,1}
     };
-    const auto ret { q.observe(false) };
+    auto ret { q.observe() };
     const auto sv { q.viewStateVector() };
     if (ret == 0) {
         ASSERT_EQ(sv[1], std::complex<double>(0,0));
@@ -63,4 +63,46 @@ TEST(Qubit, EntangledQubits) {
     Solace::Qubits q2 { {3, 2},
                       {1, -2.2} };
     Solace::Qubits q1xq2 { q1 ^ q2 };
+}
+
+TEST(Qubit, WState) {
+    std::complex<double> v { 1/std::sqrt(3), 0 };
+    Solace::StateVector sv(8);
+    sv(0b001) = v;
+    sv(0b010) = v;
+    sv(0b100) = v;
+    Solace::Qubits q { sv };
+
+    // Observing qubit 0 and 2
+    const auto bitmask { 0b101 };
+    auto result { q.observe(bitmask) };
+    auto measurement { result.first };
+    auto unobservedMaybe { result.second };
+    ASSERT_TRUE(measurement == 0b000 || measurement == 0b001 || measurement == 0b100 || measurement == 0b101);
+    Solace::Qubits unobserved { unobservedMaybe.value() };
+    Solace::StateVector unobservedSv { unobserved.viewStateVector() };
+
+    std::cout << "Measurement: " << (int) measurement << std::endl;
+    std::cout << "Unobserved state vector" << unobservedSv << std::endl;
+    std::cout << std::flush;
+}
+
+TEST(Qubit, WState2) {
+    std::complex<double> v { 1/std::sqrt(3), 0 };
+    Solace::StateVector sv(8);
+    sv(0b001) = v;
+    sv(0b010) = v;
+    sv(0b100) = v;
+    Solace::Qubits q { sv };
+
+    // Observing qubit 2; qubit 0 and qubit 1 still entangled
+    const auto bitmask { 0b001 };
+    auto result { q.observe(bitmask) };
+    auto measurement { result.first };
+    auto entangledMaybe { result.second };
+    ASSERT_TRUE(measurement == 0U || measurement == 1U);
+    Solace::Qubits entangled { entangledMaybe.value() };
+    Solace::StateVector entangledSv { entangled.viewStateVector() };
+    ASSERT_EQ(entangledSv.size(), 4);   // 2 qubit system expected.
+    std::cout << entangledSv << std::endl;
 }
