@@ -11,7 +11,7 @@ constexpr static std::complex<double> i { 0.0, 1.0 };
 
 namespace Solace::Gate {
     /**
-     * @class identity gate. Acts on a set of qubit to do nothing.
+     * @brief identity gate. Acts on a set of qubit to do nothing.
      */
     class Identity : public Solace::QuantumGate {
         public:
@@ -28,7 +28,7 @@ namespace Solace::Gate {
     };
 
     /**
-     * @class Pauli-X gate. Acts on a qubit.
+     * @brief Pauli-X gate. Acts on a qubit.
      */
     class PauliX : public Solace::QuantumGate {
         public:
@@ -46,7 +46,7 @@ namespace Solace::Gate {
     };
 
     /**
-     * @class Pauli-Y gate. Acts on a qubit.
+     * @brief Pauli-Y gate. Acts on a qubit.
      */
     class PauliY : public Solace::QuantumGate {
         public:
@@ -64,7 +64,7 @@ namespace Solace::Gate {
     };
 
     /**
-     * @class Pauli-Z gate. Acts on a qubit.
+     * @brief Pauli-Z gate. Acts on a qubit.
      */
     class PauliZ : public Solace::QuantumGate {
         public:
@@ -85,7 +85,7 @@ namespace Solace::Gate {
     // 1  1
     // 1 -1
     /**
-     * @class Hadamard gate. Acts on a qubit.
+     * @brief Hadamard gate. Acts on a qubit.
      */
     class Hadamard : public Solace::QuantumGate {
         public:
