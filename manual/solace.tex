@@ -3,6 +3,34 @@
 \usepackage{amsthm}
 \usepackage{amssymb}
 \usepackage{braket}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
 
 \title{Emulating Quantum System with Libsolace}
 \author{Paul Joo-Hyun Kim}
@@ -18,6 +46,9 @@ and how it is implemented in libsolace.
 We will skip most of the discussion on quantum theory (such as the Schr\"odinger's equation)
 and will only mention necessary concepts.
 I do highly recommend looking into those if you are interested/wanting to understand it better.
+
+Since this is meant to ``introduce'' concepts rather than be very formal about logic,
+there may be errors. If there are significant errors, please do get in touch with me!
 
 \section{Mathematics of Quantum Computing}
 \subsection{Prerequisites}
@@ -422,6 +453,67 @@ There are gates that operate on these entangled qubits as well, such as
 which operates on two-qubit, potentially entangled system.
 
 \section{Libsolace}
+Here are some examples of the quantum computing concepts in practice.
 
+For more concrete examples, check out the \verb|demos| directory of the repo.
+
+\subsection{Qubits and Entanglement}
+In Solace library, \verb|Qubits| class encapsulates multi-qubit system.
+\begin{lstlisting}[language=C++]
+#include "solace/solace.hpp"
+
+int main() {
+    Solace::Qubits q {};    // Defaults to single qubit set to |0>
+    Solace::Qubits q2 { 2 };    // 2-qubit system.
+    Solace::Qubits q3 { q ^ q2 };   // "Entangle" q and q2.
+}
+\end{lstlisting}
+
+\subsection{Gates}
+In Solace library, \verb|QuantumGates| class encapsulates general quantum gate object.
+Predefined quantum gates are within \verb|Solace::Gate| namespace
+
+\begin{lstlisting}[language=C++]
+#include "solace/solace.hpp"
+#include "solace/common_gates.hpp"
+
+int main() {
+    Solace::Gate::Hadamard H;
+    Solace::Qubits q {};
+    H.apply(q);     // After this, q is observed to be either 0 or 1.
+
+    // This will collapse the state vector.
+    std::cout << q.observe() << std::endl;
+}
+\end{lstlisting}
+
+\subsection{Partial Measurement}
+While \verb|Solace::Qubits::observe()| is a simple function,
+the partial measurement is a bit tricky due to lack of clean indexing system.
+However, it is still supported.
+
+\begin{lstlisting}[language=C++]
+#include "solace/solace.hpp"
+#include "solace/common_gates.hpp"
+
+int main() {
+    // Creating the GHZ state
+    std::complex<double> v { 1/std::sqrt(3), 0 };
+    Solace::StateVector sv(8);
+    sv(0b001) = v;
+    sv(0b010) = v;
+    sv(0b100) = v;
+    Solace::Qubits q { sv };
+
+    // Observe the first qubit.
+    const auto bitmask { 0b100 };
+    auto result { q.observe(bitmask) };
+    auto measurement { result.first };  // Either 0 or 4
+    auto entangledMaybe { result.second };
+    Solace::Qubits entangled { entangledMaybe.value() };
+    
+    // ...
+}
+\end{lstlisting}
 
 \end{document}
