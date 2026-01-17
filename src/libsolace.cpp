@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <numbers>
+#include <algorithm>
 #include <cmath>
 #if !defined(AVOID_UNSUPPORTED_EIGEN)
 #include <unsupported/Eigen/KroneckerProduct>
@@ -104,21 +105,30 @@ std::tuple<ObservedQubitState, std::optional<Qubits>, std::vector<ObservedQubitS
         // TODO: Check if bitmask is valid with respect to nQubits.
         std::vector<ObservedQubitState> observableStates {};
         std::vector<ObservedQubitState> unobservableStates {};
+
+        // Build Born interpretation probability vector.
+        // Determine which states are observable through the mask, and modify the weight vector.
         const auto stateVectorLen { stateVector.size() };
+        weights.resize(stateVectorLen, 0.0);
         for (ObservedQubitState state = 0; state < stateVectorLen; state++) {
-            const ObservedQubitState masked { state & (~bitmask) };
-            if (masked == 0) {
+            const bool isObservableState { (state & (~bitmask)) == 0 };
+            // The potential output state that current state will aggregate to.
+            const ObservedQubitState filtered { state & bitmask };
+
+            if (isObservableState) {
                 observableStates.push_back(state);
-                weights.push_back(std::norm(stateVector(state)));
             } else {
                 unobservableStates.push_back(state);
             }
+            
+            weights.at(filtered) += std::norm(stateVector(state));
         }
 
         // Choose based on the probability vector
         std::discrete_distribution<> dist (weights.begin(), weights.end());
-        const auto index { dist(gen) };
-        const auto observedState { observableStates.at(index) };
+        const auto observedState { (ObservedQubitState) dist(gen) };
+        const auto it { std::find(observableStates.begin(), observableStates.end(), observedState) };
+        const auto index { std::distance(observableStates.begin(), it) };
 
         // Build a new qubits object for unobservable states.
         StateVector unobservedStateVector(unobservableStates.size());
@@ -134,7 +144,8 @@ std::tuple<ObservedQubitState, std::optional<Qubits>, std::vector<ObservedQubitS
 
         // State collapse
         stateVector = StateVector::Zero(stateVector.size());
-        stateVector(index) = 1;
+        stateVector(0) = 1;         // Temporary for compilation.
+        //stateVector(index) = 1;
 
         return { observedState, unobservedQubits, unobservableStates };
     }
