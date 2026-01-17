@@ -82,3 +82,29 @@ TEST(CommonGate, Hadamard3) {
     ASSERT_TRUE(std::abs(std::norm(sv(2)) - 0.25) < 0.001);
     ASSERT_TRUE(std::abs(std::norm(sv(3)) - 0.25) < 0.001);
 }
+
+// The rest of the unit test will only test if the construction and its application is successful.
+
+TEST(CommonGate, CNOT) {
+    Solace::Gate::CNOT H;
+    Solace::Qubits q { 2 };
+    H.apply(q);
+}
+
+TEST(CommonGate, PhaseShift) {
+    Solace::Gate::PhaseShift H(0.3);
+    Solace::Qubits q {};
+    H.apply(q);
+}
+
+TEST(CommonGate, Swap) {
+    Solace::Gate::Swap H;
+    Solace::Qubits q { 2 };
+    H.apply(q);
+}
+
+TEST(CommonGate, ToffoliCCNOT) {
+    Solace::Gate::CCNOT H;
+    Solace::Qubits q { 3 };
+    H.apply(q);
+}

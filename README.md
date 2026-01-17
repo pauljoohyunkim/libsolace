@@ -6,7 +6,7 @@ A tiny C++ library for emulating quantum computing.
 This project is created as a tool for researching quantum computing and designing quantum algorithms.
 
 I want to stress the fact that this project is not meant to be the winner of "Who can build the best and
-most efficient quantum emulator"; Microsoft's QDK seems to be already far ahead in the race at the moment.
+most efficient quantum emulator"; Microsoft's QDK seems to be a robust solution at the moment.
 Rather this is a **demonstrative tool** with maximum liberty in terms of licenses for education and research.
 
 ## Dependency
@@ -29,7 +29,7 @@ make docs
 ```
 You should see a new directory called [docs/html](docs/html) where you can access the Doxygen documentation at [index.html](index.html).
 
-## Quickstart
+## Quickstart/Tutorial
 I provide you four demo codes in [demos](demos) directory.
 The examples should serve as a series of short easy-to-follow tutorials.
 You can build them by running the following:
@@ -132,18 +132,8 @@ I, in fact, highly welcome fixes for bugs that *arise from my erroneous understa
 after all, I did not get a doctorate in quantum computing or anything.
 
 ### TODO
-* ~~Implement precompilation of qubits and gates.~~
-  * ~~It turns out from experimenting with [04_grover.cpp](demos/04_grover.cpp) that the majority of time spent on running is from building the qubits and gates. Allow precomputation to make it to make it run faster next time.~~ Turns out reading through the compiled quantum objects is about the same if not longer (although it may depend on the storage medium and CPU power.)
-  * On the other hand, now there is a way to conveniently transfer quantum objects that were generated from other machines.
-* Optimize quantum gate expression for sparse gates.
-* Support measurement of specific number of qubits.
-    * Reference: GHZ state and others.
-
-    $$\ket{GHZ} = \frac{\ket{000} + \ket{111}}{\sqrt{2}}$$
-
-    $$\ket{\psi_{example}} = \frac{1}{2} \left(\ket{00} \otimes \ket{000} + \ket{00} \otimes \ket{111} + \ket{11} \otimes \ket{001} + \ket{11} \times \ket{110}\right)$$
-
 * Implement a class (such as "QuantumSystem" or "QuantumComputer") such that it can generate the quantum circuit diagram if built using its API.
+* Implement command line tools for interacting with compiled quantum objects (entangle, merge, inspect, etc.)
 * Write a Tex document outlining the basic principles of how quantum computing works and how this library emulates it.
 * From floating point error, if too many gates are combined (either by matrix multiplication or tensor product), the constructor might start flagging as an invalid gate. Fix this by QR factorization if this becomes an actual problem.
     * Note that this is not an issue when applying those gates to qubit sets as the state vectors are normalized at every application.

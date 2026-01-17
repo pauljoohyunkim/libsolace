@@ -8,6 +8,8 @@
 #include <complex>
 #include <vector>
 #include <variant>
+#include <utility>
+#include <optional>
 #include <filesystem>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -98,20 +100,32 @@ namespace Solace {
 
 #if defined(BE_A_QUANTUM_CHEATER)
             /**
-             * @brief observe the qubit system. Note that this will collapse the state vector.
-             * @param[in] cheat whether or not the observation will collapse the state vector. Setting this true will prevent the collapse.
-             * @param[in] randomphase whether or not post-measurement phase should be randomized or not. (Often meaningless.)
-             * @return ObservedQubitState the result of the measurement.
+             * @brief observe the qubit system. Note that this will NOT collapse the state vector.
+             * @param[in] bitmask can be set to read certain qubits, even in entangled state. -1 by default, which refers to "read all".
+             * If you specify, for example, bitmask=0b1010 in a four-qubit system, the only potential outputs are |0000>, |0010>, |1000>, and |1010>.
+             * The state vector will NOT be modified.
+             * @return The result of the observation
              */
-            ObservedQubitState observe(const bool randomphase=false, const bool cheat=false);
-#else
-            /**
-             * @brief observe the qubit system. Note that this will collapse the state vector. Should you wish, compile with -DBE_A_QUANTUM_CHEATER flag for collapse-free version support.
-             * @param[in] randomphase whether or not post-measurement phase should be randomized or not. (Often meaningless.)
-             * @return ObservedQubitState the result of the measurement.
-             */
-            ObservedQubitState observe(const bool randomphase=false);
+            ObservedQubitState cheatObserve();
 #endif
+
+            /**
+             * @brief observe the qubit system. Note that this will collapse the state vector. Should you wish, compile with -DBE_A_QUANTUM_CHEATER flag to enable "cheatObserve" function.
+             * @return measured state.
+             */
+            ObservedQubitState observe() {  return observe(0).first; }
+
+            /**
+             * @brief (Advanced) partially observe the qubit system. Note that this will collapse the state vector. Should you wish, compile with -DBE_A_QUANTUM_CHEATER flag to enable "cheatObserve" function.
+             * @param[in] bitmask can be set to read certain qubits, even in entangled state. 0 refers to "read all". (You could also read all by 0b11...1)
+             * If you specify, for example, bitmask=0b1010 in a four-qubit system, the only potential outputs are |0000>, |0010>, |1000>, and |1010>.
+             * The state vector for unaffected states will be modified according to entanglement.
+             * @return A tuple of ObservedQubitStates (observed state), and std::optional<Qubits>.
+             * Second item is nullopt if observing all qubits, or Qubits of unobserved qubits, but reindexed. For example,
+             * if using 0b1010, the first and third qubits are observed, so the resulting unobserved Qubits object would encode two qubits, still potentially entangled,
+             * and the index 0b01 refers to the state that used to refer to 0b1011.
+             */
+            std::pair<ObservedQubitState, std::optional<Qubits>> observe(const unsigned int bitmask);
 
 #if defined(BE_A_QUANTUM_CHEATER)
 

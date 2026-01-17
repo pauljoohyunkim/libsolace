@@ -21,5 +21,19 @@ Think of them as tutorials.
     * Loading takes a lot of time as well. Use precomputation if you know your storage access speed is faster than computation.
         * In Grover's algorithm, you could actually combine the oracle gate and the diffuser gate into one. For optimization, you could compute the combined gate, then compile it to a file. This would involve only one gate reading instead of two.
         * You could also create a gate from other project and import it over to another (if you know the dimensions and all that.)
-        * ~~In my machine, it took 2 minutes 33 seconds for the first run, and 2 minutes and 32 seconds for the second run (with reading), so if the combined gate is compiled and loaded instead, this could result in a speedup.~~ Will measure time again later.
+        * Benchmark (Your results will vary!)
+
+        | Task                              | Execution Time |
+        | --------------------------------- | -------------- |
+        | 12 Qubit Initialization           | 0.0570ms       |
+        | Compiling 12 qubits               | 0.6680ms       |
+        | Generating Grover diffusion gate  | 50994.ms       |
+        | Compiling Grover diffusion gate   | 2390.5ms       |
+        | Generating oracle                 | 0.3266ms       |
+        | Compiling oracle                  | 0.7667ms       |
+        | Loading 12 qubits                 | 6.5465ms       |
+        | Loading Grover diffusion gate     | 55941.ms       |
+        | Loading oracle                    | 1.0867ms       |
+        * On my machine (on top of WSL2 at the moment) it seems like loading generally takes a little bit longer, possibly due to loading the values happening one entry at a time.
+
     * For durability of storage, you might consider saving it onto RAM disk. If your gate is sparse, definitely use sparse gate instead of a general gate.

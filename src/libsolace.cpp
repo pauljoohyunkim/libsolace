@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <numbers>
+#include <algorithm>
 #include <cmath>
 #if !defined(AVOID_UNSUPPORTED_EIGEN)
 #include <unsupported/Eigen/KroneckerProduct>
@@ -61,37 +62,98 @@ Qubits Qubits::operator^(const Qubits& q) const {
 }
 
 #if defined(BE_A_QUANTUM_CHEATER)
-ObservedQubitState Qubits::observe(const bool randomphase, const bool cheat) {
-#else
-ObservedQubitState Qubits::observe(const bool randomphase) {
-#endif
+ObservedQubitState Qubits::cheatObserve() {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::vector<double> weights {};
+
+    // Build Born interpretation probability vector.
     for (const auto v : stateVector) {
         weights.push_back(std::norm(v));
     }
+    // Choose based on the probability vector
     std::discrete_distribution<> dist (weights.begin(), weights.end());
-
     const auto observedState { (ObservedQubitState) dist(gen) };
-#if defined(BE_A_QUANTUM_CHEATER)
-    if (cheat == false) {
-#endif    
+
+    return observedState;
+}
+#endif
+
+std::pair<ObservedQubitState, std::optional<Qubits>> Qubits::observe(const unsigned int bitmask) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::vector<double> weights {};
+
+    if (bitmask == 0) {
+        // Observe all.
+
+        // Build Born interpretation probability vector.
+        for (const auto v : stateVector) {
+            weights.push_back(std::norm(v));
+        }
+        // Choose based on the probability vector
+        std::discrete_distribution<> dist (weights.begin(), weights.end());
+        const auto observedState { (ObservedQubitState) dist(gen) };
+
         // State collapse
         stateVector = StateVector::Zero(stateVector.size());
-        if (randomphase) {
-            std::uniform_real_distribution<double> phaseDist(0, M_PI);
-            const auto phase { phaseDist(gen) };
-            const auto nonzero { std::exp(std::complex<double>(0, phase)) };
-            stateVector(observedState) = nonzero;
-        } else {
-            stateVector(observedState) = 1;
+        stateVector(observedState) = 1;
+            
+        return { observedState, std::nullopt };
+    } else {
+        // Observing specific qubits.
+        // TODO: Check if bitmask is valid with respect to nQubits.
+        std::vector<ObservedQubitState> observableStates {};
+        //std::vector<ObservedQubitState> unobservableStates {};
+
+        // Build Born interpretation probability vector.
+        // Determine which states are observable through the mask, and modify the weight vector.
+        const auto stateVectorLen { stateVector.size() };
+        weights.resize(stateVectorLen, 0.0);
+        for (ObservedQubitState state = 0; state < stateVectorLen; state++) {
+            const bool isObservableState { (state & (~bitmask)) == 0 };
+            // The potential output state that current state will aggregate to.
+            const ObservedQubitState filtered { state & bitmask };
+
+            if (isObservableState) {
+                observableStates.push_back(state);
+            } else {
+                //unobservableStates.push_back(state);
+            }
+            
+            weights.at(filtered) += std::norm(stateVector(state));
         }
-        
-#if defined(BE_A_QUANTUM_CHEATER)
+
+        // Choose based on the probability vector
+        std::discrete_distribution<> dist (weights.begin(), weights.end());
+        const auto observedState { (ObservedQubitState) dist(gen) };
+        const auto it { std::find(observableStates.begin(), observableStates.end(), observedState) };
+        const auto index { std::distance(observableStates.begin(), it) };
+
+        // Build a new qubits object from unobserved.
+        //const size_t unobservedStateVectorLength { stateVectorLen / observableStates.size() };
+        //StateVector unobservedStateVector { StateVector::Zero(unobservedStateVectorLength) };
+        std::vector<std::complex<double>> unobservedStateVector {};
+        const auto nCondition { observedState & bitmask };    // This encodes the necessary condition for the rest of the entangled qubits
+        for (ObservedQubitState i = 0; i < stateVectorLen; i++) {
+            // Conditional
+            if ((nCondition & bitmask) == (i & bitmask)) {
+                unobservedStateVector.push_back(stateVector(i));
+            }
+        }
+        if ((size_t) stateVectorLen != observableStates.size() * unobservedStateVector.size()) {
+            throw std::runtime_error("Something went wrong when computing the entangled subsystem.");
+        }
+        // Automatically normalized by the constructor.
+        Qubits unobservedQubits { unobservedStateVector };
+
+        // Finally, state vector collapse.
+        stateVector = StateVector::Zero(observableStates.size());
+        stateVector(index) = 1;
+        validateLength();
+
+        return { observedState, unobservedQubits };
     }
-#endif
-    return observedState;
 }
 
 void Qubits::compile(const std::filesystem::path& filepath) const {
