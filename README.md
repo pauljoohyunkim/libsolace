@@ -33,7 +33,7 @@ make docs
 You should see a new directory called [docs/html](docs/html) where you can access the Doxygen documentation at [index.html](index.html).
 
 ## Quickstart/Tutorial
-I provide you four demo codes in [demos](demos) directory.
+I provide you five demo codes in [demos](demos) directory.
 The examples should serve as a series of short easy-to-follow tutorials.
 You can build them by running the following:
 ```

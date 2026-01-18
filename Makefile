@@ -19,12 +19,14 @@ PROTO=proto
 
 OBJS=$(OBJ)/solace_proto.o \
 	 $(OBJ)/libsolace.o \
-	 $(OBJ)/utility.o
+	 $(OBJ)/utility.o \
+	 $(OBJ)/circuit.o
 
 DBG_OBJS=$(OBJ)/solace_proto.o \
 		 $(OBJ)/unittest.o \
 		 $(OBJ)/libsolace_dbg.o \
 		 $(OBJ)/utility_dbg.o \
+		 $(OBJ)/circuit_dbg.o \
 		 $(OBJ)/unittest_qubit.o \
 		 $(OBJ)/unittest_gate.o \
 		 $(OBJ)/unittest_common_gates.o \
