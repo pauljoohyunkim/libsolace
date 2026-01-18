@@ -11,6 +11,7 @@ jobs:
     - uses: actions/checkout@v6
     - run: sudo apt install protobuf-compiler libprotobuf-dev
     - run: sudo apt install libeigen3-dev
+    - run: sudo apt install libgtest-dev cmake make g++
     - name: Compile unittest
       run: make unittest
     - name: Run unittest
