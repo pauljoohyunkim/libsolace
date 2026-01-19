@@ -8,9 +8,13 @@ namespace Solace {
     class QuantumCircuit {
         public:
             QuantumCircuit() = default;
+
+            std::shared_ptr<Qubits> addQubits(const Qubits& q);
+            std::shared_ptr<QuantumGate> addQuantumGate(const QuantumGate& gate);
         private:
-            std::vector<Qubits> qubitSets {};
-            std::vector<QuantumGate> gates {};
+            // TODO: Possibly change so that it stores the tuples (labelString, std::shared_ptr<Qubits>)
+            std::vector<std::shared_ptr<Qubits>> qubitSets {};
+            std::vector<std::shared_ptr<QuantumGate>> gates {};
         
 
     };

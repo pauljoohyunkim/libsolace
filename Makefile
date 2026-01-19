@@ -31,7 +31,8 @@ DBG_OBJS=$(OBJ)/solace_proto.o \
 		 $(OBJ)/unittest_gate.o \
 		 $(OBJ)/unittest_common_gates.o \
 		 $(OBJ)/unittest_utility.o \
-		 $(OBJ)/unittest_compilation.o
+		 $(OBJ)/unittest_compilation.o \
+		 $(OBJ)/unittest_circuit.o
 
 DEMO_BINS=$(DEMOS)/01_hadamard.bin \
 		  $(DEMOS)/02_hadamard2.bin \
