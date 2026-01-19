@@ -69,4 +69,6 @@ TEST(CircuitTest, EntangleQubits) {
     ASSERT_EQ(q1->getEntangleTo(), q0q1);
     ASSERT_EQ(q0->getEntangledFrom().size(), 0);
     ASSERT_EQ(q1->getEntangledFrom().size(), 0);
+    ASSERT_EQ(qc.getIntermediateQubitSets().size(), 1);
+    ASSERT_EQ(qc.getIntermediateQubitSets().at(0), q0q1);
 }

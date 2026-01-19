@@ -51,10 +51,14 @@ message QuantumCircuitGate {
 }
 
 message QuantumCircuitQubits {
-    repeated uint32 appliedGatesReference = 1;
+    uint32 nQubit = 1;
+    repeated uint32 appliedGates = 2;
+    uint32 entangleTo = 3;
+    repeated uint32 entangledFrom = 4;
 }
 
 message QuantumCircuit {
     repeated QuantumCircuitGate gate = 1;
-    repeated QuantumCircuitQubits qubitsSet = 2;
+    repeated QuantumCircuitQubits qubitSet = 2;
+    repeated QuantumCircuitQubits intermediateQubitSet = 2;
 }

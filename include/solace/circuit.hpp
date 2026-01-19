@@ -93,9 +93,15 @@ class QuantumCircuit {
          * @return A new pointer to newly generated qubits.
          */
         std::shared_ptr<QuantumCircuitComponent::Qubits> entangle(std::vector<std::shared_ptr<QuantumCircuitComponent::Qubits>>& qubits);
+
+#ifdef SOLACE_DEV_DEBUG
+            std::vector<std::shared_ptr<QuantumCircuitComponent::Qubits>> getQubitSets() const { return qubitSets; }
+            std::vector<std::shared_ptr<QuantumCircuitComponent::Qubits>> getIntermediateQubitSets() const { return intermediateQubitSets; }
+            std::vector<std::shared_ptr<QuantumGate>> getGates() const { return gates; }
+#endif
     private:
-        // TODO: Possibly change so that it stores the tuples (labelString, std::shared_ptr<Qubits>)
         std::vector<std::shared_ptr<QuantumCircuitComponent::Qubits>> qubitSets {};
+        std::vector<std::shared_ptr<QuantumCircuitComponent::Qubits>> intermediateQubitSets {};
         std::vector<std::shared_ptr<QuantumGate>> gates {};
     
 

@@ -38,6 +38,7 @@ std::shared_ptr<QuantumCircuitComponent::Qubits> QuantumCircuit::entangle(std::v
         pQ->entangledFrom.push_back(q);
         q->entangleTo = pQ;
     }
+    intermediateQubitSets.push_back(pQ);
 
     return pQ;
 }
