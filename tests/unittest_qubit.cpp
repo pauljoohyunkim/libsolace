@@ -68,9 +68,8 @@ TEST(Qubit, EntangledQubits) {
 TEST(Qubit, WState) {
     std::complex<double> v { 1/std::sqrt(3), 0 };
     Solace::StateVector sv(8);
-    sv(0b001) = v;
-    sv(0b010) = v;
-    sv(0b100) = v;
+    sv << 0, v, v, 0, v, 0, 0, 0;
+    std::cout << sv << std::endl;
     Solace::Qubits q { sv };
 
     // Observing qubit 0 and 2
@@ -90,9 +89,7 @@ TEST(Qubit, WState) {
 TEST(Qubit, WState2) {
     std::complex<double> v { 1/std::sqrt(3), 0 };
     Solace::StateVector sv(8);
-    sv(0b001) = v;
-    sv(0b010) = v;
-    sv(0b100) = v;
+    sv << 0, v, v, 0, v, 0, 0, 0;
     Solace::Qubits q { sv };
 
     // Observing qubit 2; qubit 0 and qubit 1 still entangled

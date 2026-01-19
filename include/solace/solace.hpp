@@ -6,6 +6,7 @@
 #define __SOLACE_HPP__
 
 #include <complex>
+#include <string>
 #include <vector>
 #include <variant>
 #include <utility>
@@ -240,6 +241,11 @@ namespace Solace {
              */
             QuantumGateTransformerFormat viewTransformer() const { return transformer; }
 #endif
+            /**
+             * @brief Optional label for the quantum gate. May be used for quantum circuits.
+             * 
+             */
+            std::string label {};
         protected:
             bool isValidated { false };
             QuantumGateTransformerFormat transformer { std::monostate() };

@@ -2,6 +2,7 @@
 #define __SOLACE_CIRCUIT_HPP__
 
 #include <vector>
+#include <string>
 #include "solace.hpp"
 
 namespace Solace {
@@ -13,6 +14,12 @@ namespace QuantumCircuitComponent {
      */
     class Qubits {
         public:
+            /**
+             * @brief Label for the qubits. Kept as a public variable as it does not interfere with the computation.
+             * 
+             */
+            std::string label {};
+
             /**
              * @brief Specify which quantum gate to apply to on the set of qubits. Will not compute until Quantum Circuit's run() method is called.
              * 
