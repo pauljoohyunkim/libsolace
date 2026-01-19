@@ -11,7 +11,12 @@ namespace QuantumCircuitComponent {
         public:
             void applyQuantumGate(const std::shared_ptr<QuantumGate>& gate) { appliedGates.push_back(gate); }
 
+
+#ifdef SOLACE_DEV_DEBUG
             std::vector<std::shared_ptr<QuantumGate>> getAppliedGates() const { return appliedGates; }
+            std::shared_ptr<Qubits> getEntangleTo() const { return entangleTo; }
+            std::vector<std::shared_ptr<Qubits>> getEntangledFrom() const { return entangledFrom; }
+#endif
         private:
             friend class Solace::QuantumCircuit;
             Qubits(size_t nQubit=1) : nQubit(nQubit) { 
@@ -22,6 +27,8 @@ namespace QuantumCircuitComponent {
 
             const size_t nQubit;
             std::vector<std::shared_ptr<QuantumGate>> appliedGates {};
+            std::shared_ptr<Qubits> entangleTo { nullptr };
+            std::vector<std::shared_ptr<Qubits>> entangledFrom {};
     };
 }
 
@@ -39,6 +46,8 @@ class QuantumCircuit {
         // TODO: Support classical feedback in the future.
         std::shared_ptr<QuantumCircuitComponent::Qubits> createQubits(const size_t nQubit=1);
         std::shared_ptr<QuantumGate> addQuantumGate(const QuantumGate& gate);
+
+        std::shared_ptr<QuantumCircuitComponent::Qubits> entangle(std::vector<std::shared_ptr<QuantumCircuitComponent::Qubits>>& qubits);
     private:
         // TODO: Possibly change so that it stores the tuples (labelString, std::shared_ptr<Qubits>)
         std::vector<std::shared_ptr<QuantumCircuitComponent::Qubits>> qubitSets {};

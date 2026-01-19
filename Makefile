@@ -82,7 +82,7 @@ $(SRC)/solace.pb.cc $(INCLUDE)/solace.pb.h &: $(PROTO)/solace.proto
 	mv $(SRC)/solace.pb.h $(INCLUDE)/solace.pb.h
 
 
-$(TESTS)/unittest: CXXFLAGS += -DBE_A_QUANTUM_CHEATER `pkg-config --cflags gtest`
+$(TESTS)/unittest: CXXFLAGS += -DBE_A_QUANTUM_CHEATER -DSOLACE_DEV_DEBUG `pkg-config --cflags gtest`
 $(TESTS)/unittest: $(DBG_OBJS)
 	$(CXX) $(CXXFLAGS) $^ -o $@ `pkg-config --libs gtest` $(LDFLAGS)
 

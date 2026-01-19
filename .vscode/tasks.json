@@ -6,7 +6,7 @@
         {
             "label": "Unit test",
             "type": "shell",
-            "command": "make -j`nproc` unittest"
+            "command": "make -j`nproc` unittest OPTIMIZATION=-O0"
         }
     ]
 }

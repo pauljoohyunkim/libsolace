@@ -35,3 +35,24 @@ TEST(CircuitTest, ApplyQuantumGateToQubits) {
     ASSERT_EQ(appliedGates.at(0), H);
     ASSERT_EQ(appliedGates.at(1), H);
 }
+
+TEST(CircuitTest, EntangleQubits) {
+    Solace::QuantumCircuit qc;
+    auto H { qc.addQuantumGate(Solace::Gate::Hadamard()) };
+    auto q0 { qc.createQubits(1) };
+    auto q1 { qc.createQubits(2) };
+    q0->applyQuantumGate(H);
+
+    std::vector<std::shared_ptr<Solace::QuantumCircuitComponent::Qubits>> qbts { q0, q1 };
+    auto q0q1 { qc.entangle(qbts) };
+
+    ASSERT_EQ(q0q1->getEntangleTo(), nullptr);
+    auto entangledFrom { q0q1->getEntangledFrom() };
+    ASSERT_EQ(entangledFrom.size(), 2);
+    ASSERT_EQ(entangledFrom.at(0) , q0);
+    ASSERT_EQ(entangledFrom.at(1) , q1);
+    ASSERT_EQ(q0->getEntangleTo(), q0q1);
+    ASSERT_EQ(q1->getEntangleTo(), q0q1);
+    ASSERT_EQ(q0->getEntangledFrom().size(), 0);
+    ASSERT_EQ(q1->getEntangledFrom().size(), 0);
+}

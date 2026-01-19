@@ -26,4 +26,20 @@ std::shared_ptr<QuantumGate> QuantumCircuit::addQuantumGate(const QuantumGate& g
     return pG;
 }
 
+std::shared_ptr<QuantumCircuitComponent::Qubits> QuantumCircuit::entangle(std::vector<std::shared_ptr<QuantumCircuitComponent::Qubits>>& qubits) {
+    size_t nQubit { 0 };
+    // Find the total number of qubits
+    for (const auto& q : qubits) {
+        nQubit += q->nQubit;
+    }
+
+    auto pQ { std::shared_ptr<QuantumCircuitComponent::Qubits>(new QuantumCircuitComponent::Qubits(nQubit)) };
+    for (const auto& q : qubits) {
+        pQ->entangledFrom.push_back(q);
+        q->entangleTo = pQ;
+    }
+
+    return pQ;
+}
+
 }
