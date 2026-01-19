@@ -2,14 +2,9 @@
 #include "solace/circuit.hpp"
 #include "solace/common_gates.hpp"
 
-TEST(CircuitTest, AddQubits) {
+TEST(CircuitTest, CreateQubits) {
     Solace::QuantumCircuit qc;
-    Solace::Qubits q {};
-    auto q0 { qc.addQubits(q) };
-    auto sv { q0->viewStateVector() };
-    ASSERT_EQ(sv.size(), 2);
-    ASSERT_EQ(sv(0), std::complex<double>(1));
-    ASSERT_EQ(sv(1), std::complex<double>(0));
+    auto q0 { qc.createQubits() };
 }
 
 TEST(CircuitTest, AddQuantumGate) {

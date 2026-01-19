@@ -10,8 +10,8 @@ struct QuantumCircuitGateNode {
     std::shared_ptr<QuantumGate> gate;
 };
 
-std::shared_ptr<Qubits> QuantumCircuit::addQubits(const Qubits& q) {
-    auto pQ { std::make_shared<Qubits>(q) };
+std::shared_ptr<QuantumCircuitComponent::Qubits> QuantumCircuit::createQubits(const size_t nQubit) {
+    auto pQ { std::make_shared<QuantumCircuitComponent::Qubits>(nQubit) };
     qubitSets.push_back(pQ);
 
     return pQ;

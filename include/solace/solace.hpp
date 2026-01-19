@@ -16,8 +16,10 @@
 
 namespace Solace {
     // Forward Declaration
+    namespace QuantumCircuitComponent { class Qubits; }
     class Qubits;
     class QuantumGate;
+    class QuantumCircuit;
     
     /**
      * @brief Represents what value can be observed from measurement. (Alias to unsigned int)
@@ -145,6 +147,7 @@ namespace Solace {
 
         private:
             friend class QuantumGate;
+            friend class QuantumCircuitComponent::Qubits;
             StateVector stateVector;
             size_t nQubit { 0 };
 
@@ -249,6 +252,7 @@ namespace Solace {
 
 
     };
+
 }
 
 #endif  // __SOLACE_HPP__
