@@ -24,6 +24,7 @@ message QuantumObject {
         Qubits qubits = 3;
         QuantumGate quantumGate = 4;
         SparseQuantumGate sparseQuantumGate = 5;
+        QuantumCircuit quantumCircuit = 6;
     }
 }
 
@@ -41,3 +42,19 @@ message SparseQuantumGate {
     ComplexVector nonZeroVals = 3;
 }
 
+// This is only for circuits.
+message QuantumCircuitGate {
+    oneof gate {
+        QuantumGate quantumGate = 1;
+        SparseQuantumGate sparseQuantumGate = 2;
+    }
+}
+
+message QuantumCircuitQubits {
+    repeated uint32 appliedGatesReference = 1;
+}
+
+message QuantumCircuit {
+    repeated QuantumCircuitGate gate = 1;
+    repeated QuantumCircuitQubits qubitsSet = 2;
+}
