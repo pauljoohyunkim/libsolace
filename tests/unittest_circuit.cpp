@@ -36,6 +36,20 @@ TEST(CircuitTest, ApplyQuantumGateToQubits) {
     ASSERT_EQ(appliedGates.at(1), H);
 }
 
+TEST(CircuitTest, ApplyWrongNQubitsQuantumGateToQubits) {
+    Solace::QuantumCircuit qc;
+    auto H { qc.addQuantumGate(Solace::Gate::Swap()) };
+    auto tMaybe { H->viewTransformer() };
+    //auto t { std::get<Solace::QuantumGateTransformer>(tMaybe) };
+
+    // Create a single qubit on the circuit.
+    auto q { qc.createQubits() };
+    
+    // Apply Swap twice. Expect failure
+    ASSERT_ANY_THROW(q->applyQuantumGate(H));
+
+}
+
 TEST(CircuitTest, EntangleQubits) {
     Solace::QuantumCircuit qc;
     auto H { qc.addQuantumGate(Solace::Gate::Hadamard()) };

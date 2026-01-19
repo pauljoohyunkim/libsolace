@@ -18,7 +18,12 @@ namespace QuantumCircuitComponent {
              * 
              * @param[in] gate Gate to apply to qubits.
              */
-            void applyQuantumGate(const std::shared_ptr<QuantumGate>& gate) { appliedGates.push_back(gate); }
+            void applyQuantumGate(const std::shared_ptr<QuantumGate>& gate) { 
+                if (nQubit != gate->getNQubit()) {
+                    throw std::runtime_error("Wrong dimension when applying gate to qubit(s)!");
+                }
+                appliedGates.push_back(gate);
+            }
 
 
 #ifdef SOLACE_DEV_DEBUG
