@@ -9,14 +9,19 @@ namespace Solace {
 namespace QuantumCircuitComponent {
     class Qubits {
         public:
+            void applyQuantumGate(const std::shared_ptr<QuantumGate>& gate) { appliedGates.push_back(gate); }
+
+            std::vector<std::shared_ptr<QuantumGate>> getAppliedGates() const { return appliedGates; }
+        private:
+            friend class Solace::QuantumCircuit;
             Qubits(size_t nQubit=1) : nQubit(nQubit) { 
                 if (nQubit == 0) {
                     throw std::runtime_error("Cannot create Qubits component of 0 qubits.");
                 }
             }
 
-        private:
             const size_t nQubit;
+            std::vector<std::shared_ptr<QuantumGate>> appliedGates {};
     };
 }
 

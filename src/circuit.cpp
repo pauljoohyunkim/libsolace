@@ -11,7 +11,9 @@ struct QuantumCircuitGateNode {
 };
 
 std::shared_ptr<QuantumCircuitComponent::Qubits> QuantumCircuit::createQubits(const size_t nQubit) {
-    auto pQ { std::make_shared<QuantumCircuitComponent::Qubits>(nQubit) };
+    //auto pQ { std::make_shared<QuantumCircuitComponent::Qubits>(nQubit) };
+    // Due to make_shared requiring the constructor to be public (but QuantumCircuitComponent::Qubits is not expected to be manually constructed), old-fashioned "new" keyword used.
+    auto pQ { std::shared_ptr<QuantumCircuitComponent::Qubits>(new QuantumCircuitComponent::Qubits(nQubit)) };
     qubitSets.push_back(pQ);
 
     return pQ;
