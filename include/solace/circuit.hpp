@@ -7,8 +7,17 @@
 namespace Solace {
 
 namespace QuantumCircuitComponent {
+    /**
+     * @brief Circuit Component Qubits. Placeholder to qubits for circuit building.
+     * 
+     */
     class Qubits {
         public:
+            /**
+             * @brief Specify which quantum gate to apply to on the set of qubits. Will not compute until Quantum Circuit's run() method is called.
+             * 
+             * @param[in] gate Gate to apply to qubits.
+             */
             void applyQuantumGate(const std::shared_ptr<QuantumGate>& gate) { appliedGates.push_back(gate); }
 
 
@@ -38,15 +47,39 @@ namespace QuantumCircuitComponent {
  */
 class QuantumCircuit {
     public:
+        /**
+         * @brief Construct a Quantum Circuit/Computer instance.
+         * 
+         */
         QuantumCircuit() = default;
 
         // TODO: Change so that there is a separation between the circuit and the implementation of quantum gates.
         // Should remove addQubits and replace them with something like createQubits, and later when running, allow "inserting qubit".
         // As for addQuantumGate, I think it will be fine, as the gates do not change according to run-time.
         // TODO: Support classical feedback in the future.
+
+        /**
+         * @brief Create a Qubits circuit component
+         * 
+         * @param[in] nQubit Number of qubits.
+         * @return Pointer to qubits component created.
+         */
         std::shared_ptr<QuantumCircuitComponent::Qubits> createQubits(const size_t nQubit=1);
+
+        /**
+         * @brief Add quantum gate definition to circuit. Each gate can be reused. The copy of the gate will be added to the circuit.
+         * 
+         * @param[in] gate Quantum gate
+         * @return Pointer to gate.
+         */
         std::shared_ptr<QuantumGate> addQuantumGate(const QuantumGate& gate);
 
+        /**
+         * @brief Entangle multiple Qubits component into one. Qubits that got entangled should not be used.
+         * 
+         * @param[in] qubits A vector of pointers to qubits components.
+         * @return A new pointer to newly generated qubits.
+         */
         std::shared_ptr<QuantumCircuitComponent::Qubits> entangle(std::vector<std::shared_ptr<QuantumCircuitComponent::Qubits>>& qubits);
     private:
         // TODO: Possibly change so that it stores the tuples (labelString, std::shared_ptr<Qubits>)
