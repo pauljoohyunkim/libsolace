@@ -7,11 +7,22 @@
 
 namespace Solace {
 
-// Internal structure that keeps track of quantum gates as nodes.
-struct QuantumCircuitGateNode {
-    std::shared_ptr<QuantumCircuitGateNode> prevNode;
-    std::shared_ptr<QuantumGate> gate;
-};
+QuantumCircuit::QuantumCircuit(const std::filesystem::path& filepath) {
+    std::ifstream infile { filepath, std::ios::binary };
+    std::stringstream filecontentStream;
+    filecontentStream << infile.rdbuf();
+
+    Compiled::QuantumObject obj;
+    if (!obj.ParseFromString(filecontentStream.str())) {
+        throw std::runtime_error("Could not read quantum object.");
+    }
+
+    if (obj.type() != Compiled::ObjectType::QUANTUM_CIRCUIT) {
+        throw std::runtime_error("Wrong type of object read.");
+    }
+
+
+}
 
 QuantumCircuit::QubitsRef QuantumCircuit::createQubits(const size_t nQubit) {
     //auto pQ { std::make_shared<QuantumCircuitComponent::Qubits>(nQubit) };

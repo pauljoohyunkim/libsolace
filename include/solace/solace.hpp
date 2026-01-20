@@ -143,7 +143,7 @@ namespace Solace {
             /**
              * @brief Compile the generated qubits to a file.
              * 
-             * @param[in] filepath 
+             * @param[in] filepath output Qubits file. (*.qbit)
              */
             void compile(const std::filesystem::path& filepath) const;
 
@@ -226,7 +226,7 @@ namespace Solace {
             /**
              * @brief Compile the generated quantum gate to a file.
              * 
-             * @param[in] filepath output quantum gate file.
+             * @param[in] filepath output quantum gate file. (*.qgate)
              */
             void compile(const std::filesystem::path& filepath) const;
 
@@ -254,6 +254,8 @@ namespace Solace {
             size_t nQubit { 0 };
 
             Compiled::QuantumObject buildProto() const;
+            void loadFromProto(const Compiled::QuantumGate& obj);
+            void loadFromProto(const Compiled::SparseQuantumGate& obj);
 
             /**
              * @brief validates the quantum gate at initialization.

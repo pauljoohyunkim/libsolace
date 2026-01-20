@@ -32,6 +32,13 @@ class QuantumCircuit {
          */
         QuantumCircuit() = default;
 
+        /**
+         * @brief Constructor of quantum circuit. Reads from a previously "compiled" quantum circuit and loads from it.
+         * 
+         * @param[in] filepath the file path to compiled quantum circuit object.
+         */
+        QuantumCircuit(const std::filesystem::path& filepath);
+
         // TODO: Change so that there is a separation between the circuit and the implementation of quantum gates.
         // Should remove addQubits and replace them with something like createQubits, and later when running, allow "inserting qubit".
         // As for addQuantumGate, I think it will be fine, as the gates do not change according to run-time.
@@ -53,6 +60,12 @@ class QuantumCircuit {
          */
         QuantumGateRef addQuantumGate(const QuantumGate& gate);
 
+        /**
+         * @brief Apply quantum gate to Qubits component by reference number.
+         * 
+         * @param[in] g Reference to quantum gate in the quantum circuit.
+         * @param[in] q Reference to Qubits component in the quantum circuit.
+         */
         void applyQuantumGateToQubits(const QuantumGateRef g, const QubitsRef q);
 
         /**
@@ -79,6 +92,11 @@ class QuantumCircuit {
          */
         const QuantumGate& getGate(const QuantumGateRef g) { return gates.at(g); }
 
+        /**
+         * @brief Compile the quantum circuit into a file. This packages the quantum gates as well.
+         * 
+         * @param[in] filepath output quantum circuit file. (*.qc)
+         */
         void compile(const std::filesystem::path& filepath) const;
 
 #ifdef SOLACE_DEV_DEBUG
