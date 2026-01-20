@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include "solace/solace.hpp"
+#include "solace/circuit.hpp"
+#include "solace/common_gates.hpp"
 
 TEST(Compilation, SingleQubit) {
     const std::string filename { "./q.qbit" };
@@ -53,4 +55,30 @@ TEST(Compilation, QuantumGate1) {
 
     auto diff { t - t_load };
     ASSERT_TRUE(diff.norm() < 0.001);
+}
+
+TEST(Compilation, Circuit1) {
+    // A circuit that prepares the Bell state
+    Solace::QuantumCircuit qc;
+
+    // Need two qubits.
+    auto q0 { qc.createQubits() };
+    auto q1 { qc.createQubits() };
+
+    // Need two gates
+    auto H { qc.addQuantumGate(Solace::Gate::Hadamard()) };
+    auto CNOT { qc.addQuantumGate(Solace::Gate::CNOT()) };
+
+    // First, q0 goes through Hadamard
+    // TODO: Allow qc to directly take a qubits reference and quantum gates reference.
+    qc.getQubits(q0).applyQuantumGate(H);
+    
+    // Entangle the two qubits.
+    std::vector<Solace::QuantumCircuit::QubitsRef> q01_vec { q0, q1 };
+    auto q01 { qc.entangle(q01_vec) };
+
+    // Apply CNOT to the entalged state
+    qc.getQubits(q01).applyQuantumGate(CNOT);
+
+    qc.compile("bell.qc");
 }

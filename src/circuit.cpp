@@ -1,5 +1,7 @@
 #include <memory>
+#include <fstream>
 #include <unordered_set>
+#include "solace.pb.h"
 #include "solace/solace.hpp"
 #include "solace/circuit.hpp"
 
@@ -59,7 +61,43 @@ QuantumCircuit::QubitsRef QuantumCircuit::entangle(std::vector<QubitsRef>& qubit
 }
 
 void QuantumCircuit::compile(const std::filesystem::path& filepath) const {
-    
+    std::ofstream outfile { filepath, std::ios::binary };
+    Compiled::QuantumObject quantumObj;
+
+    auto protoCircuit { quantumObj.mutable_quantumcircuit() };
+    quantumObj.set_type(Compiled::ObjectType::QUANTUM_CIRCUIT);
+
+    // Gates
+    for (const auto& gate : gates) {
+        // Build proto from Core Solace side, then extract info.
+        const auto gateObjProto { gate.buildProto() };
+        auto addedGate { protoCircuit->add_gate() };
+        if (gateObjProto.type() == Compiled::ObjectType::QUANTUM_GATE) {
+            // Dense gate
+            *addedGate->mutable_quantumgate() = gateObjProto.quantumgate();
+        } else if (gateObjProto.type() == Compiled::ObjectType::SPARSE_QUANTUM_GATE) {
+            // Sparse gate
+            *addedGate->mutable_sparsequantumgate() = gateObjProto.sparsequantumgate();
+        } else {
+            // Not a gate. Throw error.
+            throw std::runtime_error("Compilation process expected a gate, but did not parse a gate.");
+        }
+    }
+
+    // Qubits
+    for (const auto& q : qubitSets) {
+        auto addedQubitset { protoCircuit->add_qubitset() };
+        addedQubitset->set_nqubit(q.nQubit);
+        addedQubitset->set_entangleto(q.entangleTo);
+        for (const auto gRef : q.appliedGates) {
+            addedQubitset->add_appliedgates(gRef);
+        }
+        for (const auto eFrom : q.entangledFrom) {
+            addedQubitset->add_entangledfrom(eFrom);
+        }
+    }
+
+    outfile << quantumObj.SerializeAsString();
 }
 
 }

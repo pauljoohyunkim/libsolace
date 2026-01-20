@@ -47,14 +47,15 @@ message SparseQuantumGate {
 
 // This is only for circuits.
 message QuantumCircuitGate {
+    ObjectType type = 1;
     oneof gate {
-        QuantumGate quantumGate = 1;
-        SparseQuantumGate sparseQuantumGate = 2;
+        QuantumGate quantumGate = 2;
+        SparseQuantumGate sparseQuantumGate = 3;
     }
 }
 
 message QuantumCircuitQubits {
-    uint32 nQubitSets = 1;
+    uint32 nQubit = 1;
     repeated uint32 appliedGates = 2;
     uint32 entangleTo = 3;
     repeated uint32 entangledFrom = 4;

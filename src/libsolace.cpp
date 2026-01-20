@@ -392,7 +392,6 @@ void QuantumGate::compile(const std::filesystem::path& filepath) const {
 }
 
 void QuantumGate::apply(Qubits& q) {
-    // TODO: Check the lengths.
     if (!isValidated) {
         throw std::runtime_error("Attempt to use invalid quantum gate.");
     }

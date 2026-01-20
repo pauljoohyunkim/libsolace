@@ -248,6 +248,7 @@ namespace Solace {
              */
             std::string label {};
         protected:
+            friend class QuantumCircuit;
             bool isValidated { false };
             QuantumGateTransformerFormat transformer { std::monostate() };
             size_t nQubit { 0 };
