@@ -14,7 +14,7 @@ QuantumCircuit::QubitsRef QuantumCircuit::createQubits(const size_t nQubit) {
     //auto pQ { std::make_shared<QuantumCircuitComponent::Qubits>(nQubit) };
     // Due to make_shared requiring the constructor to be public (but QuantumCircuitComponent::Qubits is not expected to be manually constructed), old-fashioned "new" keyword used.
     const auto ref { static_cast<QuantumCircuit::QubitsRef>(qubitSets.size()) };
-    qubitSets.push_back(QuantumCircuitComponent::Qubits(nQubit));
+    qubitSets.push_back(QuantumCircuitComponent::Qubits(*this, nQubit));
 
     return ref;
 }
@@ -35,7 +35,7 @@ QuantumCircuit::QubitsRef QuantumCircuit::entangle(std::vector<QubitsRef>& qubit
     }
 
     //auto pQ { std::shared_ptr<QuantumCircuitComponent::Qubits>(new QuantumCircuitComponent::Qubits(nQubit)) };
-    auto Q { QuantumCircuitComponent::Qubits(nQubit) };
+    auto Q { QuantumCircuitComponent::Qubits(*this, nQubit) };
     const auto ref { static_cast<QuantumCircuit::QubitsRef>(qubitSets.size()) };
     for (const auto& qRef : qubits) {
         auto& q { qubitSets.at(qRef) };

@@ -51,6 +51,7 @@ class QuantumCircuit {
         QubitsRef entangle(std::vector<QubitsRef>& qubits);
 
         QuantumCircuitComponent::Qubits& getQubits(const QubitsRef q) { return qubitSets.at(q); }
+        const QuantumGate& getGate(const QuantumGateRef g) { return gates.at(g); }
 
 #ifdef SOLACE_DEV_DEBUG
             std::vector<QuantumCircuitComponent::Qubits> getQubitSets() const { return qubitSets; }
@@ -82,6 +83,9 @@ namespace QuantumCircuitComponent {
              * @param[in] gate Gate to apply to qubits.
              */
             void applyQuantumGate(const QuantumCircuit::QuantumGateRef gate) { 
+                if (circuit.getGate(gate).getNQubit() != nQubit) {
+                    throw std::runtime_error("Gate size and qubits mismatch.");
+                }
                 appliedGates.push_back(gate);
             }
 
@@ -93,12 +97,13 @@ namespace QuantumCircuitComponent {
 #endif
         private:
             friend class Solace::QuantumCircuit;
-            Qubits(size_t nQubit=1) : nQubit(nQubit) { 
+            Qubits(QuantumCircuit& circuit, const size_t nQubit=1) : circuit(circuit), nQubit(nQubit) { 
                 if (nQubit == 0) {
                     throw std::runtime_error("Cannot create Qubits component of 0 qubits.");
                 }
             }
 
+            QuantumCircuit& circuit;
             const size_t nQubit;
             std::vector<QuantumCircuit::QuantumGateRef> appliedGates {};
             QuantumCircuit::QubitsRef entangleTo { 0 };     // 0 signifies no entangling to next node

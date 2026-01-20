@@ -48,7 +48,7 @@ TEST(CircuitTest, ApplyWrongNQubitsQuantumGateToQubits) {
     auto q { qc.createQubits() };
     
     // Apply Swap twice. Expect failure
-    //ASSERT_ANY_THROW(qc.getQubits(q).applyQuantumGate(H));
+    ASSERT_ANY_THROW(qc.getQubits(q).applyQuantumGate(H));
 
 }
 
