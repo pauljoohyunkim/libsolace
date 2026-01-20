@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <filesystem>
 #include "solace.hpp"
 
 namespace Solace {
@@ -75,6 +76,8 @@ class QuantumCircuit {
          * @return Reference to a quantum gate. Note that this is returned as a constant.
          */
         const QuantumGate& getGate(const QuantumGateRef g) { return gates.at(g); }
+
+        void compile(const std::filesystem::path& filepath) const;
 
 #ifdef SOLACE_DEV_DEBUG
             std::vector<QuantumCircuitComponent::Qubits> getQubitSets() const { return qubitSets; }

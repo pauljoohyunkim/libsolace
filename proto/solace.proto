@@ -15,6 +15,7 @@ enum ObjectType {
     QUBITS = 0;
     QUANTUM_GATE = 1;
     SPARSE_QUANTUM_GATE = 2;
+    QUANTUM_CIRCUIT = 3;
 }
 
 message QuantumObject {

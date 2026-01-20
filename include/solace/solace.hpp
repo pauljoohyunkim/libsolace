@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include "solace.pb.h"
 
 namespace Solace {
     // Forward Declaration
@@ -250,6 +251,8 @@ namespace Solace {
             bool isValidated { false };
             QuantumGateTransformerFormat transformer { std::monostate() };
             size_t nQubit { 0 };
+
+            Compiled::QuantumObject buildProto() const;
 
             /**
              * @brief validates the quantum gate at initialization.

@@ -58,4 +58,8 @@ QuantumCircuit::QubitsRef QuantumCircuit::entangle(std::vector<QubitsRef>& qubit
     return ref;
 }
 
+void QuantumCircuit::compile(const std::filesystem::path& filepath) const {
+    
+}
+
 }

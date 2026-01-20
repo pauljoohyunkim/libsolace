@@ -379,14 +379,42 @@ QuantumGate QuantumGate::operator*(const QuantumGate& gate) const {
 }
 
 void QuantumGate::compile(const std::filesystem::path& filepath) const {
-    int nRow;
-    int nCol;
     if (!isValidated) {
         throw std::runtime_error("Not validated for compilation");
     }
 
     std::ofstream outfile { filepath, std::ios::binary };
+    Compiled::QuantumObject quantumObj { buildProto() };
+
+    outfile << quantumObj.SerializeAsString();
+}
+
+void QuantumGate::apply(Qubits& q) {
+    // TODO: Check the lengths.
+    if (!isValidated) {
+        throw std::runtime_error("Attempt to use invalid quantum gate.");
+    }
+    if (nQubit != q.nQubit) {
+        throw std::runtime_error("Quantum gate and state vector are not compatible.");
+    }
+
+    // Multiply the transformer matrix within the class.
+    if (std::holds_alternative<QuantumGateTransformer>(transformer)) {
+        q.stateVector = std::get<QuantumGateTransformer>(transformer) * q.stateVector;
+    } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer)) {
+        q.stateVector = std::get<SparseQuantumGateTransformer>(transformer) * q.stateVector;
+    }
+    q.stateVector.normalize();
+}
+
+Compiled::QuantumObject QuantumGate::buildProto() const {
+    if (!isValidated) {
+        throw std::runtime_error("Not validated for proto building");
+    }
+
     Compiled::QuantumObject quantumObj;
+    int nRow;
+    int nCol;
 
     quantumObj.set_nqubit(nQubit);
 
@@ -421,28 +449,10 @@ void QuantumGate::compile(const std::filesystem::path& filepath) const {
             }
         }
     } else {
-        throw std::runtime_error("Gate is not filled for compilation.");
+        throw std::runtime_error("Gate is not filled for proto building / compilation.");
     }
 
-    outfile << quantumObj.SerializeAsString();
-}
-
-void QuantumGate::apply(Qubits& q) {
-    // TODO: Check the lengths.
-    if (!isValidated) {
-        throw std::runtime_error("Attempt to use invalid quantum gate.");
-    }
-    if (nQubit != q.nQubit) {
-        throw std::runtime_error("Quantum gate and state vector are not compatible.");
-    }
-
-    // Multiply the transformer matrix within the class.
-    if (std::holds_alternative<QuantumGateTransformer>(transformer)) {
-        q.stateVector = std::get<QuantumGateTransformer>(transformer) * q.stateVector;
-    } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer)) {
-        q.stateVector = std::get<SparseQuantumGateTransformer>(transformer) * q.stateVector;
-    }
-    q.stateVector.normalize();
+    return quantumObj;
 }
 
 void QuantumGate::validate() {
