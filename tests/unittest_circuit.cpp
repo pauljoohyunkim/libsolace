@@ -118,8 +118,9 @@ TEST(CircuitTest, RunBellStateCircuit) {
     // Now bind q0 and q1 with newly created Solace::Qubits
     Solace::Qubits actualQubit {};
     
-    // TODO: Create bind API on QuantumCircuit
     qc.bindQubit(q0, actualQubit);
     qc.bindQubit(q1, actualQubit);
+
+    qc.run();
     
 }

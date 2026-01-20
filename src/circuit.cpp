@@ -3,6 +3,7 @@
 #include <unordered_set>
 #include "solace.pb.h"
 #include "solace/solace.hpp"
+#include "solace/utility.hpp"
 #include "solace/circuit.hpp"
 
 namespace Solace {
@@ -159,7 +160,60 @@ void QuantumCircuit::bindQubit(const QubitsRef qRef, const Qubits& qubits) {
 }
 
 void QuantumCircuit::run() {
+    std::vector<bool> exhausted(qubitSets.size(), false);
+    std::vector<QubitsRef> initialQubitsRefs {};
 
+    // Get initial qubits
+    for (QubitsRef i = 0; i < qubitSets.size(); i++) {
+        if (qubitSets.at(i).isInitial()) {
+            initialQubitsRefs.push_back(i);
+        }
+    }
+
+    /*
+    Follow the following algorithm:
+    1. If working on qubits from entangled qubits, check if dependent qubits have been exhausted. (Error checking)
+    2. If there are nonexhausted qubit, apply the gates piled up mark that qubits as exhuasted.
+    */
+    for (QubitsRef i = 0; i < qubitSets.size(); i++) {
+        auto& qComponent { qubitSets.at(i) };
+
+        // Check if entangled
+        if (!qComponent.entangledFrom.empty()) {
+            // If entangled,
+            // Check if dependencies all have been bound,
+            // while computing entanglement.
+            std::vector<Qubits> qbts {};
+            for (auto j : qComponent.entangledFrom) {
+                if (!qubitSets.at(j).boundQubits.has_value()) {
+                    throw std::runtime_error("Dependency qubits is not calculated before.");
+                }
+                if (qubitSets.at(j).entangleTo != i) {
+                    throw std::runtime_error("Dependency qubits does not point to the entangled qubits.");
+                }
+                qbts.push_back(qubitSets.at(j).boundQubits.value());
+            }
+            auto entangled { Solace::entangle(qbts) };
+            qComponent.bindQubits(entangled);
+        } 
+
+        if (!qComponent.boundQubits.has_value()) {
+            // Default bind |0...0>
+            Qubits q { qComponent.nQubit };
+            qComponent.bindQubits(q);
+        }
+
+        // Apply gates
+        for (auto gRef : qComponent.appliedGates) {
+            Qubits q { qComponent.boundQubits.value() };
+            //Qubits Gq { gates.at(gRef) * q };
+            gates.at(gRef).apply(q);
+            qComponent.bindQubits(q);
+        }
+        
+        // Mark as exhausted.
+        exhausted.at(i) = true;
+    }
 }
 
 }
