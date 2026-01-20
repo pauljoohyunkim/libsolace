@@ -253,6 +253,8 @@ namespace Solace {
             QuantumGateTransformerFormat transformer { std::monostate() };
             size_t nQubit { 0 };
 
+            QuantumGate(const Compiled::QuantumGate& obj) { loadFromProto(obj); }
+            QuantumGate(const Compiled::SparseQuantumGate& obj) { loadFromProto(obj); }
             Compiled::QuantumObject buildProto() const;
             void loadFromProto(const Compiled::QuantumGate& obj);
             void loadFromProto(const Compiled::SparseQuantumGate& obj);

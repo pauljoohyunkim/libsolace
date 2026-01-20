@@ -21,7 +21,31 @@ QuantumCircuit::QuantumCircuit(const std::filesystem::path& filepath) {
         throw std::runtime_error("Wrong type of object read.");
     }
 
+    auto& qcProto { obj.quantumcircuit() };
 
+    // Load quantum gates.
+    for (const auto& gProto : qcProto.gate()) {
+        if (gProto.type() == Compiled::ObjectType::QUANTUM_GATE) {
+            addQuantumGate(QuantumGate(gProto.quantumgate()));
+        } else if (gProto.type() == Compiled::ObjectType::SPARSE_QUANTUM_GATE) {
+            addQuantumGate(QuantumGate(gProto.sparsequantumgate()));
+        } else {
+            throw std::runtime_error("Invalid quantum gate type when loading circuit.");
+        }
+    }
+
+    // Load Qubits and recover node information
+    for (const auto& qsProto : qcProto.qubitset()) {
+        auto index { createQubits(qsProto.nqubit()) };
+        auto& q { qubitSets.at(index) };
+        q.entangleTo = qsProto.entangleto();
+        for (const auto gRef : qsProto.appliedgates()) {
+            q.appliedGates.push_back(gRef);
+        }
+        for (const auto eFrom : qsProto.entangledfrom()) {
+            q.entangledFrom.push_back(eFrom);
+        }
+    }
 }
 
 QuantumCircuit::QubitsRef QuantumCircuit::createQubits(const size_t nQubit) {
@@ -93,9 +117,11 @@ void QuantumCircuit::compile(const std::filesystem::path& filepath) const {
         auto addedGate { protoCircuit->add_gate() };
         if (gateObjProto.type() == Compiled::ObjectType::QUANTUM_GATE) {
             // Dense gate
+            addedGate->set_type(Compiled::ObjectType::QUANTUM_GATE);
             *addedGate->mutable_quantumgate() = gateObjProto.quantumgate();
         } else if (gateObjProto.type() == Compiled::ObjectType::SPARSE_QUANTUM_GATE) {
             // Sparse gate
+            addedGate->set_type(Compiled::ObjectType::SPARSE_QUANTUM_GATE);
             *addedGate->mutable_sparsequantumgate() = gateObjProto.sparsequantumgate();
         } else {
             // Not a gate. Throw error.

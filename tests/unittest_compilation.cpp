@@ -81,4 +81,7 @@ TEST(Compilation, Circuit1) {
     qc.applyQuantumGateToQubits(CNOT, q01);
 
     qc.compile("bell.qc");
+
+    // Load the compiled circuit.
+    Solace::QuantumCircuit qc2 { "bell.qc" };
 }
