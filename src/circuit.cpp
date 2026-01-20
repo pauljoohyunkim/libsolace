@@ -147,4 +147,15 @@ void QuantumCircuit::compile(const std::filesystem::path& filepath) const {
     outfile << quantumObj.SerializeAsString();
 }
 
+void QuantumCircuit::bindQubit(const QubitsRef qRef, const Qubits& qubits) {
+    if (qRef >= qubitSets.size()) {
+        throw std::runtime_error("Qubits component of such reference number does not exist.");
+    }
+    auto& qComponent { qubitSets.at(qRef) };
+    if (!qComponent.isInitial()) {
+        throw std::runtime_error("Cannot bind to a non-initial Qubits component.");
+    }
+    qComponent.bindQubits(qubits);
+}
+
 }

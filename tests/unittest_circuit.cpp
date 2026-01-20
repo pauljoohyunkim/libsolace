@@ -92,3 +92,34 @@ TEST(CircuitTest, IllegalEntanglement_Duplicate) {
     std::vector<Solace::QuantumCircuit::QubitsRef> qbts {q0, q1};
     ASSERT_ANY_THROW(qc.entangle(qbts));
 }
+
+TEST(CircuitTest, RunBellStateCircuit) {
+    Solace::QuantumCircuit qc;
+
+    // Create two qubits.
+    auto q0 { qc.createQubits() };
+    auto q1 { qc.createQubits() };
+
+    // Hadamard gate and CNOT gate
+    auto H { qc.addQuantumGate(Solace::Gate::Hadamard()) };
+    auto CNOT { qc.addQuantumGate(Solace::Gate::CNOT()) };
+
+    // q0 goes through Hadamard
+    qc.applyQuantumGateToQubits(H, q0);
+
+    // Entangle two qubits.
+    std::vector<Solace::QuantumCircuit::QubitsRef> q01_vec { q0, q1 };
+    auto q01 { qc.entangle(q01_vec) };
+    
+    // Apply CNOT gate to the entangled pair of qubits.
+    qc.applyQuantumGateToQubits(CNOT, q01);
+
+    // End of circuit
+    // Now bind q0 and q1 with newly created Solace::Qubits
+    Solace::Qubits actualQubit {};
+    
+    // TODO: Create bind API on QuantumCircuit
+    qc.bindQubit(q0, actualQubit);
+    qc.bindQubit(q1, actualQubit);
+    
+}

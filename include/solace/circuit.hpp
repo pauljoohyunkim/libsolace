@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <optional>
 #include <filesystem>
 #include "solace.hpp"
 
@@ -96,6 +97,8 @@ class QuantumCircuit {
          */
         void compile(const std::filesystem::path& filepath) const;
 
+        void bindQubit(const QubitsRef qRef, const Qubits& qubits);
+
 #ifdef SOLACE_DEV_DEBUG
             std::vector<QuantumCircuitComponent::Qubits> getQubitSets() const { return qubitSets; }
             std::vector<QuantumGate> getGates() const { return gates; }
@@ -171,11 +174,20 @@ namespace QuantumCircuitComponent {
                 }
             }
 
+            void bindQubits(const Solace::Qubits& q) { 
+                if (q.getNQubit() != nQubit) {
+                    throw std::runtime_error("Cannot bind Qubits with Qubits circuit component of different number of qubits.");
+                }
+                boundQubits = q;
+            }
+
             QuantumCircuit& circuit;
             const size_t nQubit;
             std::vector<QuantumCircuit::QuantumGateRef> appliedGates {};
             QuantumCircuit::QubitsRef entangleTo { 0 };     // 0 signifies no entangling to next node
             std::vector<QuantumCircuit::QubitsRef> entangledFrom {};
+
+            std::optional<Solace::Qubits> boundQubits { std::nullopt };
     };
 }
 
