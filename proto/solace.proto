@@ -60,5 +60,4 @@ message QuantumCircuitQubits {
 message QuantumCircuit {
     repeated QuantumCircuitGate gate = 1;
     repeated QuantumCircuitQubits qubitSet = 2;
-    repeated QuantumCircuitQubits intermediateQubitSet = 2;
 }
