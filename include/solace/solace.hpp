@@ -61,7 +61,7 @@ namespace Solace {
              * @brief Constructor of qubits. Initialized to the first entry in state vector being 1.
              * @param[in] n Number of qubits. Default is 1.
              */
-            Qubits(const int n=1) : stateVector(StateVector::Zero(1<<n)) { validateLength(); stateVector(0) = 1.0; }
+            Qubits(const size_t n=1) : stateVector(StateVector::Zero(1<<n)) { validateLength(); stateVector(0) = 1.0; }
 
             /**
              * @brief Constructor of qubits. Initialized to the entries given. Will be normalized.

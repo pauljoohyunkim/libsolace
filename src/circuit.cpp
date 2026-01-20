@@ -160,15 +160,17 @@ void QuantumCircuit::bindQubit(const QubitsRef qRef, const Qubits& qubits) {
 }
 
 void QuantumCircuit::run() {
+    // For debugging, this expression for GDB might be useful:
+    // p *qComponent.boundQubits.value().stateVector.data()@(1<<qComponent.boundQubits.value().nQubit)
     std::vector<bool> exhausted(qubitSets.size(), false);
-    std::vector<QubitsRef> initialQubitsRefs {};
+    //std::vector<QubitsRef> initialQubitsRefs {};
 
-    // Get initial qubits
-    for (QubitsRef i = 0; i < qubitSets.size(); i++) {
-        if (qubitSets.at(i).isInitial()) {
-            initialQubitsRefs.push_back(i);
-        }
-    }
+    //// Get initial qubits
+    //for (QubitsRef i = 0; i < qubitSets.size(); i++) {
+    //    if (qubitSets.at(i).isInitial()) {
+    //        initialQubitsRefs.push_back(i);
+    //    }
+    //}
 
     /*
     Follow the following algorithm:
@@ -190,6 +192,9 @@ void QuantumCircuit::run() {
                 }
                 if (qubitSets.at(j).entangleTo != i) {
                     throw std::runtime_error("Dependency qubits does not point to the entangled qubits.");
+                }
+                if (exhausted.at(j) == false) {
+                    throw std::runtime_error("Cannot entangle qubits when previous (potentially intermediate) qubits components have not been visited.");
                 }
                 qbts.push_back(qubitSets.at(j).boundQubits.value());
             }
