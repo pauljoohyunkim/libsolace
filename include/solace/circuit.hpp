@@ -97,7 +97,19 @@ class QuantumCircuit {
          */
         void compile(const std::filesystem::path& filepath) const;
 
+        /**
+         * @brief Bind Solace::Qubits to Qubits component on circuit before running.
+         * 
+         * @param[in] qRef reference number to Qubits circuit component
+         * @param[in] qubits Solace::Qubits from the core library.
+         */
         void bindQubit(const QubitsRef qRef, const Qubits& qubits);
+
+        /**
+         * @brief Run the quantum circuit. If some initial qubits are left unbound, then they will be assigned default state vector |0...0>.
+         * 
+         */
+        void run();
 
 #ifdef SOLACE_DEV_DEBUG
             std::vector<QuantumCircuitComponent::Qubits> getQubitSets() const { return qubitSets; }

@@ -158,4 +158,8 @@ void QuantumCircuit::bindQubit(const QubitsRef qRef, const Qubits& qubits) {
     qComponent.bindQubits(qubits);
 }
 
+void QuantumCircuit::run() {
+
+}
+
 }
