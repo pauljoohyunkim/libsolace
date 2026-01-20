@@ -13,8 +13,18 @@ namespace Solace {
  */
 class QuantumCircuit {
     public:
+        /**
+         * @brief Reference to a Qubits component. Typedef to uint32_t essentially.
+         * 
+         */
         using QubitsRef = uint32_t;
+
+        /**
+         * @brief Reference to a quantum gate. Typedef to uin32_t essentially.
+         * 
+         */
         using QuantumGateRef = uint32_t;
+
         /**
          * @brief Construct a Quantum Circuit/Computer instance.
          * 
@@ -46,11 +56,24 @@ class QuantumCircuit {
          * @brief Entangle multiple Qubits component into one. Qubits that got entangled should not be used.
          * 
          * @param[in] qubits A vector of pointers to qubits components.
-         * @return A new pointer to newly generated qubits.
+         * @return A reference number to newly generated qubits.
          */
         QubitsRef entangle(std::vector<QubitsRef>& qubits);
 
+        /**
+         * @brief Get the Qubits object by "QubitsRef" reference number
+         * 
+         * @param[in] q QubitsRef number for referring to previously created Qubits component.
+         * @return Reference to Qubits component.
+         */
         QuantumCircuitComponent::Qubits& getQubits(const QubitsRef q) { return qubitSets.at(q); }
+        
+        /**
+         * @brief Get the Gate object by "QuantumGateRef" reference number
+         * 
+         * @param[in] g QuantumGateRef number for referring to previously added gate.
+         * @return Reference to a quantum gate. Note that this is returned as a constant.
+         */
         const QuantumGate& getGate(const QuantumGateRef g) { return gates.at(g); }
 
 #ifdef SOLACE_DEV_DEBUG
