@@ -100,5 +100,5 @@ clean:
 	$(RM) -r $(DOCS)/html
 	$(RM) $(DEMOS)/*.bin
 	$(RM) $(PROTOFILES)
-	$(RM) *.qbit *.qgate
+	$(RM) *.qbit *.qgate *.qc
 
