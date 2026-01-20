@@ -53,6 +53,8 @@ class QuantumCircuit {
          */
         QuantumGateRef addQuantumGate(const QuantumGate& gate);
 
+        void applyQuantumGateToQubits(const QuantumGateRef g, const QubitsRef q);
+
         /**
          * @brief Entangle multiple Qubits component into one. Qubits that got entangled should not be used.
          * 

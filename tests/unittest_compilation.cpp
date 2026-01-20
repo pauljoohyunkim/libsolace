@@ -78,7 +78,7 @@ TEST(Compilation, Circuit1) {
     auto q01 { qc.entangle(q01_vec) };
 
     // Apply CNOT to the entalged state
-    qc.getQubits(q01).applyQuantumGate(CNOT);
+    qc.applyQuantumGateToQubits(CNOT, q01);
 
     qc.compile("bell.qc");
 }

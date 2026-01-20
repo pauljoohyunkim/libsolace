@@ -29,6 +29,14 @@ QuantumCircuit::QuantumGateRef QuantumCircuit::addQuantumGate(const QuantumGate&
     return ref;
 }
 
+void QuantumCircuit::applyQuantumGateToQubits(const QuantumGateRef g, const QubitsRef q) { 
+    auto& qubits { qubitSets.at(q) };
+    if (!qubits.isTerminal()) {
+        throw std::runtime_error("Cannot apply gate when it is not a terminal qubit set.");
+    }
+    qubits.applyQuantumGate(g);
+}
+
 QuantumCircuit::QubitsRef QuantumCircuit::entangle(std::vector<QubitsRef>& qubits) {
     size_t nQubit { 0 };
     // Find the total number of qubits, while checking if any of them have already been entangled.
