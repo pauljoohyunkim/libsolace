@@ -6,7 +6,7 @@ A tiny C++ library for emulating quantum computing.
 This project is created as a tool for researching quantum computing and designing quantum algorithms.
 
 I want to stress the fact that this project is not meant to be the winner of "Who can build the best and
-most efficient quantum emulator"; Microsoft's QDK seems to be a robust solution at the moment.
+most efficient quantum emulator"; Microsoft's QDK or IBM's Qiskit seem to be a robust solution at the moment.
 Rather this is a **demonstrative tool** with maximum liberty in terms of licenses for education and research.
 
 ## Dependency
