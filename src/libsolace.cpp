@@ -34,7 +34,7 @@ Qubits::Qubits(const std::filesystem::path& filepath) {
         throw std::runtime_error("Wrong type of object read.");
     }
 
-    stateVector = StateVector(1 << obj.nqubit());
+    stateVector = StateVector(1 << obj.qubits().nqubit());
     validateLength();
     for (auto i = 0; i < obj.qubits().vector().entry_size(); i++) {
         auto entry { obj.qubits().vector().entry(i) };
@@ -161,7 +161,7 @@ void Qubits::compile(const std::filesystem::path& filepath) const {
     Compiled::QuantumObject quantumObj;
 
     quantumObj.set_type(Compiled::ObjectType::QUBITS);
-    quantumObj.set_nqubit(nQubit);
+    quantumObj.mutable_qubits()->set_nqubit(nQubit);
     
     const auto qubitsV { quantumObj.mutable_qubits()->mutable_vector() };
     for (auto cs : stateVector) {
@@ -211,8 +211,9 @@ QuantumGate::QuantumGate(const std::filesystem::path& filepath) {
         throw std::runtime_error("Wrong type of object read.");
     }
 
-    const auto dim { 1 << obj.nqubit() };
+    size_t dim;
     if (obj.type() == Compiled::ObjectType::QUANTUM_GATE) {
+        dim = 1 << obj.quantumgate().nqubit();
         transformer = QuantumGateTransformer(dim, dim);
         auto& t { std::get<QuantumGateTransformer>(transformer) };
         for (auto i = 0; i < obj.quantumgate().matrix_size(); i++) {
@@ -224,6 +225,7 @@ QuantumGate::QuantumGate(const std::filesystem::path& filepath) {
         }
     } else {
         // Check if the number of row indices, column indices and nonzero vals are equal.
+        dim = 1 << obj.sparsequantumgate().nqubit();
         auto sparseQuantumGate { obj.sparsequantumgate() };
         if (sparseQuantumGate.rowindices_size() != sparseQuantumGate.colindices_size() || sparseQuantumGate.colindices_size() != sparseQuantumGate.nonzerovals().entry_size()) {
             throw std::runtime_error("Malformed sparse quantum gate object.");
@@ -416,11 +418,10 @@ Compiled::QuantumObject QuantumGate::buildProto() const {
     int nRow;
     int nCol;
 
-    quantumObj.set_nqubit(nQubit);
-
     if (std::holds_alternative<QuantumGateTransformer>(transformer)) {
         quantumObj.set_type(Compiled::ObjectType::QUANTUM_GATE);
         auto quantumGateM { quantumObj.mutable_quantumgate() };
+        quantumGateM->set_nqubit(nQubit);
         const auto& t { std::get<QuantumGateTransformer>(transformer) };
         nRow = t.rows();
         nCol = t.cols();
@@ -435,6 +436,7 @@ Compiled::QuantumObject QuantumGate::buildProto() const {
     } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer)) {
         quantumObj.set_type(Compiled::ObjectType::SPARSE_QUANTUM_GATE);
         auto quantumGateM { quantumObj.mutable_sparsequantumgate() };
+        quantumGateM->set_nqubit(nQubit);
         const auto& t { std::get<SparseQuantumGateTransformer>(transformer) };
         for (auto k = 0; k < t.outerSize(); k++) {
             for (SparseQuantumGateTransformer::InnerIterator it(t, k); it; ++it) {
