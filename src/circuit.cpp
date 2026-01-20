@@ -1,4 +1,5 @@
 #include <memory>
+#include <unordered_set>
 #include "solace/solace.hpp"
 #include "solace/circuit.hpp"
 
@@ -28,17 +29,23 @@ QuantumCircuit::QuantumGateRef QuantumCircuit::addQuantumGate(const QuantumGate&
 
 QuantumCircuit::QubitsRef QuantumCircuit::entangle(std::vector<QubitsRef>& qubits) {
     size_t nQubit { 0 };
-    // TODO: Check for any duplicates.
     // Find the total number of qubits, while checking if any of them have already been entangled.
-    for (const auto& qRef : qubits) {
-        const auto& q { qubitSets.at(qRef) };
-        if (!q.isTerminal()) {
-            throw std::runtime_error("Already entangled Qubits component passed.");
+    {
+        std::unordered_set<QuantumCircuit::QubitsRef> seenRefs {};
+        for (const auto& qRef : qubits) {
+            if (seenRefs.count(qRef)) {
+                throw std::runtime_error("Duplicate Qubits component detected.");
+            }
+            seenRefs.insert(qRef);
+
+            const auto& q { qubitSets.at(qRef) };
+            if (!q.isTerminal()) {
+                throw std::runtime_error("Already entangled Qubits component passed.");
+            }
+            nQubit += q.nQubit;
         }
-        nQubit += q.nQubit;
     }
 
-    //auto pQ { std::shared_ptr<QuantumCircuitComponent::Qubits>(new QuantumCircuitComponent::Qubits(nQubit)) };
     auto Q { QuantumCircuitComponent::Qubits(*this, nQubit) };
     const auto ref { static_cast<QuantumCircuit::QubitsRef>(qubitSets.size()) };
     for (const auto& qRef : qubits) {
