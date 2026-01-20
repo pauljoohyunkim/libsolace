@@ -395,6 +395,7 @@ Compiled::QuantumObject QuantumGate::buildProto() const {
         quantumObj.set_type(Compiled::ObjectType::QUANTUM_GATE);
         auto quantumGateM { quantumObj.mutable_quantumgate() };
         quantumGateM->set_nqubit(nQubit);
+        quantumGateM->set_label(label);
         const auto& t { std::get<QuantumGateTransformer>(transformer) };
         nRow = t.rows();
         nCol = t.cols();
@@ -410,6 +411,7 @@ Compiled::QuantumObject QuantumGate::buildProto() const {
         quantumObj.set_type(Compiled::ObjectType::SPARSE_QUANTUM_GATE);
         auto quantumGateM { quantumObj.mutable_sparsequantumgate() };
         quantumGateM->set_nqubit(nQubit);
+        quantumGateM->set_label(label);
         const auto& t { std::get<SparseQuantumGateTransformer>(transformer) };
         for (auto k = 0; k < t.outerSize(); k++) {
             for (SparseQuantumGateTransformer::InnerIterator it(t, k); it; ++it) {
@@ -441,6 +443,7 @@ void QuantumGate::loadFromProto(const Compiled::QuantumGate& obj) {
             t(i, j) = val;
         }
     }
+    label = obj.label();
     validate();
 }
 
@@ -461,6 +464,7 @@ void QuantumGate::loadFromProto(const Compiled::SparseQuantumGate& obj) {
         t.insert(row, col) = std::complex<double>(val.real(), val.imag());
     }
     t.makeCompressed();
+    label = obj.label();
     validate();
 }
 

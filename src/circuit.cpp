@@ -39,6 +39,7 @@ QuantumCircuit::QuantumCircuit(const std::filesystem::path& filepath) {
         auto index { createQubits(qsProto.nqubit()) };
         auto& q { qubitSets.at(index) };
         q.entangleTo = qsProto.entangleto();
+        q.label = qsProto.label();
         for (const auto gRef : qsProto.appliedgates()) {
             q.appliedGates.push_back(gRef);
         }
@@ -132,6 +133,7 @@ void QuantumCircuit::compile(const std::filesystem::path& filepath) const {
     // Qubits
     for (const auto& q : qubitSets) {
         auto addedQubitset { protoCircuit->add_qubitset() };
+        addedQubitset->set_label(q.label);
         addedQubitset->set_nqubit(q.nQubit);
         addedQubitset->set_entangleto(q.entangleTo);
         for (const auto gRef : q.appliedGates) {

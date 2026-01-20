@@ -65,17 +65,25 @@ TEST(Compilation, Circuit1) {
     auto q0 { qc.createQubits() };
     auto q1 { qc.createQubits() };
 
+    qc.getQubits(q0).label = "q0";
+    qc.getQubits(q1).label = "q1";
+
     // Need two gates
-    auto H { qc.addQuantumGate(Solace::Gate::Hadamard()) };
-    auto CNOT { qc.addQuantumGate(Solace::Gate::CNOT()) };
+    auto Hadamard { Solace::Gate::Hadamard() };
+    Hadamard.label = "H";
+    auto H { qc.addQuantumGate(Hadamard) };
+    auto CNOTGate { Solace::Gate::CNOT() };
+    CNOTGate.label = "CNOT";
+    auto CNOT { qc.addQuantumGate(CNOTGate) };
 
     // First, q0 goes through Hadamard
     // TODO: Allow qc to directly take a qubits reference and quantum gates reference.
-    qc.getQubits(q0).applyQuantumGate(H);
+    qc.applyQuantumGateToQubits(H, q0);
     
     // Entangle the two qubits.
     std::vector<Solace::QuantumCircuit::QubitsRef> q01_vec { q0, q1 };
     auto q01 { qc.entangle(q01_vec) };
+    qc.getQubits(q01).label = "q0 ^ q1";
 
     // Apply CNOT to the entalged state
     qc.applyQuantumGateToQubits(CNOT, q01);

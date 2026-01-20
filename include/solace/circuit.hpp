@@ -15,13 +15,13 @@ namespace Solace {
 class QuantumCircuit {
     public:
         /**
-         * @brief Reference to a Qubits component. Typedef to uint32_t essentially.
+         * @brief Reference to a Qubits component.
          * 
          */
         using QubitsRef = uint32_t;
 
         /**
-         * @brief Reference to a quantum gate. Typedef to uin32_t essentially.
+         * @brief Reference to a quantum gate.
          * 
          */
         using QuantumGateRef = uint32_t;
@@ -39,9 +39,6 @@ class QuantumCircuit {
          */
         QuantumCircuit(const std::filesystem::path& filepath);
 
-        // TODO: Change so that there is a separation between the circuit and the implementation of quantum gates.
-        // Should remove addQubits and replace them with something like createQubits, and later when running, allow "inserting qubit".
-        // As for addQuantumGate, I think it will be fine, as the gates do not change according to run-time.
         // TODO: Support classical feedback in the future.
 
         /**
@@ -162,6 +159,12 @@ namespace QuantumCircuitComponent {
 #endif
         private:
             friend class Solace::QuantumCircuit;
+            /**
+             * @brief Construct a new Qubits component for circuit.
+             * 
+             * @param circuit Reference to Quantum circuit that this component is bound to.
+             * @param nQubit Number of qubits this component holds.
+             */
             Qubits(QuantumCircuit& circuit, const size_t nQubit=1) : circuit(circuit), nQubit(nQubit) { 
                 if (nQubit == 0) {
                     throw std::runtime_error("Cannot create Qubits component of 0 qubits.");

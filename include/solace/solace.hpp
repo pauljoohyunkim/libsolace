@@ -253,18 +253,45 @@ namespace Solace {
             QuantumGateTransformerFormat transformer { std::monostate() };
             size_t nQubit { 0 };
 
+            /**
+             * @brief Construct a new Quantum Gate object from QuantumGate protobuf object
+             * 
+             * @param[in] obj QuantumGate protobuf object
+             */
             QuantumGate(const Compiled::QuantumGate& obj) { loadFromProto(obj); }
+
+            /**
+             * @brief Construct a new Quantum Gate object from SparseQuantumGate protobuf object
+             * 
+             * @param[in] obj SparseQuantumGate protobuf object
+             */
             QuantumGate(const Compiled::SparseQuantumGate& obj) { loadFromProto(obj); }
+
+            /**
+             * @brief Build proto object from the class.
+             * 
+             * @return protobuf QuantumObject that can be serialized.
+             */
             Compiled::QuantumObject buildProto() const;
+
+            /**
+             * @brief Load the object from protobuf QuantumGate object.
+             * 
+             * @param[in] obj QuantumGate protobuf object
+             */
             void loadFromProto(const Compiled::QuantumGate& obj);
+
+            /**
+             * @brief Load the object from protobuf SparseQuantumGate object.
+             * 
+             * @param[in] obj SparseQuantumGate protobuf object
+             */
             void loadFromProto(const Compiled::SparseQuantumGate& obj);
 
             /**
              * @brief validates the quantum gate at initialization.
              */
             void validate();
-
-
     };
 
 }

@@ -36,6 +36,7 @@ message Qubits {
 message QuantumGate {
     uint32 nQubit = 1;
     repeated ComplexVector matrix = 2;
+    string label = 3;
 }
 
 message SparseQuantumGate {
@@ -43,6 +44,7 @@ message SparseQuantumGate {
     repeated uint32 rowIndices = 2;
     repeated uint32 colIndices = 3;
     ComplexVector nonZeroVals = 4;
+    string label = 5;
 }
 
 // This is only for circuits.
@@ -59,6 +61,7 @@ message QuantumCircuitQubits {
     repeated uint32 appliedGates = 2;
     uint32 entangleTo = 3;
     repeated uint32 entangledFrom = 4;
+    string label = 5;
 }
 
 message QuantumCircuit {
