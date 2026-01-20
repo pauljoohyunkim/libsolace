@@ -106,11 +106,30 @@ namespace QuantumCircuitComponent {
              * @param[in] gate Gate to apply to qubits.
              */
             void applyQuantumGate(const QuantumCircuit::QuantumGateRef gate) { 
+                if (!isTerminal()) {
+                    throw std::runtime_error("This gate is already entangled and you cannot operate on it.");
+                }
                 if (circuit.getGate(gate).getNQubit() != nQubit) {
                     throw std::runtime_error("Gate size and qubits mismatch.");
                 }
                 appliedGates.push_back(gate);
             }
+
+            /**
+             * @brief Check if the Qubits component is one of the initial components in the circuit.
+             * 
+             * @return true if it is an initial Qubits component (that is, not entangled from other qubits.)
+             * @return false if it is made from entangling other Qubits components.
+             */
+            bool isInitial() const { return entangledFrom.size() == 0; }
+
+            /**
+             * @brief Check if the Qubits component is one of the last in the tree, that is, it does not have any other Qubits that are created by entangling it.
+             * 
+             * @return true if it can be output.
+             * @return false if it is used for creating another entangled qubits component. This component should not have been used.
+             */
+            bool isTerminal() const { return entangleTo == 0; }
 
 
 #ifdef SOLACE_DEV_DEBUG

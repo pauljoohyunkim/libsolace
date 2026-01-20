@@ -72,3 +72,15 @@ TEST(CircuitTest, EntangleQubits) {
     ASSERT_EQ(qc.getQubits(q0).getEntangledFrom().size(), 0);
     ASSERT_EQ(qc.getQubits(q1).getEntangledFrom().size(), 0);
 }
+
+TEST(CircuitTest, IllegalEntanglement) {
+    Solace::QuantumCircuit qc;
+    auto q0 { qc.createQubits(1) };
+    auto q1 { qc.createQubits(2) };
+    std::vector<Solace::QuantumCircuit::QubitsRef> qbts {q0, q1};
+    auto q0q1 { qc.entangle(qbts) };
+    
+    // q0 and q1 cannot be used again, so it should throw error.
+    std::vector<Solace::QuantumCircuit::QubitsRef> qbts2 {q0q1, q0};
+    ASSERT_ANY_THROW(qc.entangle(qbts2));
+}

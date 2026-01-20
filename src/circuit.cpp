@@ -28,9 +28,13 @@ QuantumCircuit::QuantumGateRef QuantumCircuit::addQuantumGate(const QuantumGate&
 
 QuantumCircuit::QubitsRef QuantumCircuit::entangle(std::vector<QubitsRef>& qubits) {
     size_t nQubit { 0 };
-    // Find the total number of qubits
+    // TODO: Check for any duplicates.
+    // Find the total number of qubits, while checking if any of them have already been entangled.
     for (const auto& qRef : qubits) {
         const auto& q { qubitSets.at(qRef) };
+        if (!q.isTerminal()) {
+            throw std::runtime_error("Already entangled Qubits component passed.");
+        }
         nQubit += q.nQubit;
     }
 
