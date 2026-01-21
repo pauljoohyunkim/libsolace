@@ -156,7 +156,7 @@ QuantumCircuit::QubitsRef QuantumCircuit::markForObservation(const QubitsRef q) 
     auto& qPOComponent { qubitSets.at(qPO) };
 
     // Linkage
-    qComponent.outLink = qPO;
+    qComponent.outLink = QuantumCircuitComponent::Qubits::ObservationScheme(qPO);
     qPOComponent.inLink = q;
 
     return qPO;
