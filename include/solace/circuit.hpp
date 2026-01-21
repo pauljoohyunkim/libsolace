@@ -125,7 +125,9 @@ class QuantumCircuit {
          * @brief Run the quantum circuit. If some initial qubits are left unbound, then they will be assigned default state vector |0...0>.
          * 
          */
+        #if 0
         void run();
+        #endif
 
 #ifdef SOLACE_DEV_DEBUG
             std::vector<QuantumCircuitComponent::Qubits> getQubitSets() const { return qubitSets; }
@@ -169,24 +171,24 @@ namespace QuantumCircuitComponent {
             /**
              * @brief Check if the Qubits component is one of the initial components in the circuit.
              * 
-             * @return true if it is an initial Qubits component (that is, not entangled from other qubits.)
+             * @return true if it is an initial Qubits component (that is, neither entangled from other qubits nor from being observed.)
              * @return false if it is made from entangling other Qubits components.
              */
-            bool isInitial() const { return entangledFrom.size() == 0; }
+            bool isInitial() const { return std::holds_alternative<std::monostate>(inLink); }
 
             /**
-             * @brief Check if the Qubits component is one of the last in the tree, that is, it does not have any other Qubits that are created by entangling it.
+             * @brief Check if the Qubits component is one of the last in the tree, that is, it does not have any other Qubits that are created from it.
              * 
              * @return true if it can be output.
              * @return false if it is used for creating another entangled qubits component. This component should not have been used.
              */
-            bool isTerminal() const { return entangleTo == 0; }
+            bool isTerminal() const { return std::holds_alternative<std::monostate>(outLink); }
 
 
 #ifdef SOLACE_DEV_DEBUG
             std::vector<QuantumCircuit::QuantumGateRef> getAppliedGates() const { return appliedGates; }
-            QuantumCircuit::QubitsRef getEntangleTo() const { return entangleTo; }
-            std::vector<QuantumCircuit::QubitsRef> getEntangledFrom() const { return entangledFrom; }
+            QuantumCircuit::QubitsRef getEntangleTo() const { return std::get<QuantumCircuit::QubitsRef>(outLink); }
+            std::vector<QuantumCircuit::QubitsRef> getEntangledFrom() const { return std::get<std::vector<QuantumCircuit::QubitsRef>>(inLink); }
 #endif
         private:
             friend class Solace::QuantumCircuit;
@@ -209,11 +211,27 @@ namespace QuantumCircuitComponent {
                 boundQubits = q;
             }
 
+
             QuantumCircuit& circuit;
             const size_t nQubit;
             std::vector<QuantumCircuit::QuantumGateRef> appliedGates {};
-            QuantumCircuit::QubitsRef entangleTo { 0 };     // 0 signifies no entangling to next node
-            std::vector<QuantumCircuit::QubitsRef> entangledFrom {};
+
+            struct PartialObservationScheme {
+                unsigned int bitmask;       // If bitmask = 0 or 0b11...1, then it will be forced to act like a full observation.
+                QuantumCircuit::QubitsRef observedTo;
+                QuantumCircuit::QubitsRef unobservedTo;
+            };
+
+            // Full or partial observation
+            using ObservationScheme = std::variant<QuantumCircuit::QubitsRef, PartialObservationScheme>;
+
+            // None, entangledFrom, observedFrom
+            std::variant<std::monostate, std::vector<QuantumCircuit::QubitsRef>, QuantumCircuit::QubitsRef> inLink { std::monostate() };
+            // None, entangleTo, observe output to
+            std::variant<std::monostate, QuantumCircuit::QubitsRef, ObservationScheme> outLink { std::monostate() };
+
+            //QuantumCircuit::QubitsRef entangleTo { 0 };     // 0 signifies no entangling to next node
+            //std::vector<QuantumCircuit::QubitsRef> entangledFrom {};
 
             std::optional<Solace::Qubits> boundQubits { std::nullopt };
     };

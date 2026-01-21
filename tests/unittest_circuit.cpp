@@ -62,15 +62,15 @@ TEST(CircuitTest, EntangleQubits) {
     std::vector<Solace::QuantumCircuit::QubitsRef> qbts { q0, q1 };
     auto q0q1 { qc.entangle(qbts) };
 
-    ASSERT_EQ(qc.getQubits(q0q1).getEntangleTo(), 0);
+    ASSERT_ANY_THROW(qc.getQubits(q0q1).getEntangleTo());
     auto entangledFrom { qc.getQubits(q0q1).getEntangledFrom() };
     ASSERT_EQ(entangledFrom.size(), 2);
     ASSERT_EQ(entangledFrom.at(0) , q0);
     ASSERT_EQ(entangledFrom.at(1) , q1);
     ASSERT_EQ(qc.getQubits(q0).getEntangleTo(), q0q1);
     ASSERT_EQ(qc.getQubits(q1).getEntangleTo(), q0q1);
-    ASSERT_EQ(qc.getQubits(q0).getEntangledFrom().size(), 0);
-    ASSERT_EQ(qc.getQubits(q1).getEntangledFrom().size(), 0);
+    ASSERT_ANY_THROW(qc.getQubits(q0).getEntangledFrom());
+    ASSERT_ANY_THROW(qc.getQubits(q1).getEntangledFrom());
 }
 
 TEST(CircuitTest, IllegalEntanglement_AlreadyEntangled) {
@@ -93,6 +93,7 @@ TEST(CircuitTest, IllegalEntanglement_Duplicate) {
     ASSERT_ANY_THROW(qc.entangle(qbts));
 }
 
+#if 0
 TEST(CircuitTest, RunBellStateCircuit) {
     Solace::QuantumCircuit qc;
 
@@ -124,3 +125,4 @@ TEST(CircuitTest, RunBellStateCircuit) {
     qc.run();
     
 }
+#endif

@@ -56,11 +56,40 @@ message QuantumCircuitGate {
     }
 }
 
+enum LinkageType { 
+    NONE = 0;
+    ENTANGLEMENT = 1;
+    OBSERVATION = 2;
+}
+
+message QuantumCircuitEntangleFrom {
+    repeated uint32 entangledFrom = 30;
+}
+
+message QuantumCircuitQubitsObservationScheme {
+    uint32 bitmask = 1;
+    uint32 observedTo = 2;
+    optional uint32 unobservedTo = 3;
+}
+
 message QuantumCircuitQubits {
     uint32 nQubit = 1;
     repeated uint32 appliedGates = 2;
-    uint32 entangleTo = 3;
-    repeated uint32 entangledFrom = 4;
+    /*
+        There are two types of nontrivial linkages: entanglement and observation.
+        Entanglement is many-to-one.
+        Observation is either one-to-one or one-to-two.
+    */
+    LinkageType inLinkageType = 3;
+    oneof inLinkage {
+        QuantumCircuitEntangleFrom entangledFrom = 30;
+        uint32 observedFrom = 31;
+    }
+    LinkageType outLinkageType = 4;
+    oneof outLinkage {
+        uint32 entangleTo = 40;
+        QuantumCircuitQubitsObservationScheme observationScheme = 41;
+    }
     string label = 5;
 }
 

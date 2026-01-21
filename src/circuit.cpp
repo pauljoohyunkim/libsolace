@@ -37,16 +37,54 @@ QuantumCircuit::QuantumCircuit(const std::filesystem::path& filepath) {
 
     // Load Qubits and recover node information
     for (const auto& qsProto : qcProto.qubitset()) {
+        // nQubit
         auto index { createQubits(qsProto.nqubit()) };
         auto& q { qubitSets.at(index) };
-        q.entangleTo = qsProto.entangleto();
-        q.label = qsProto.label();
+        // appliedGates
         for (const auto gRef : qsProto.appliedgates()) {
             q.appliedGates.push_back(gRef);
         }
-        for (const auto eFrom : qsProto.entangledfrom()) {
-            q.entangledFrom.push_back(eFrom);
+        // inLinkageType & inLinkage
+        if (qsProto.inlinkagetype() == Compiled::LinkageType::NONE) {
+            q.inLink = std::monostate();
+        } else if (qsProto.inlinkagetype() == Compiled::LinkageType::ENTANGLEMENT) {
+            q.inLink = std::vector<QuantumCircuit::QubitsRef>();
+            auto& entangledFrom { std::get<std::vector<QuantumCircuit::QubitsRef>>(q.inLink) };
+            for (const auto eFrom : qsProto.entangledfrom().entangledfrom()) {
+                entangledFrom.push_back(eFrom);
+            }
+        } else if (qsProto.inlinkagetype() == Compiled::LinkageType::OBSERVATION) {
+            q.inLink = qsProto.observedfrom();
+        } else {
+            // Not possible.
+            throw std::runtime_error("Invalid inLinkageType from protobuf.");
         }
+
+        // outLinkageType & outLinkage
+        if (qsProto.outlinkagetype() == Compiled::LinkageType::NONE) {
+            q.outLink = std::monostate();
+        } else if (qsProto.outlinkagetype() == Compiled::LinkageType::ENTANGLEMENT) {
+            q.outLink = qsProto.entangleto();
+        } else if (qsProto.outlinkagetype() == Compiled::LinkageType::OBSERVATION) {
+            // Full or Partial
+            if (qsProto.observationscheme().bitmask() == 0) {
+                // Full
+                q.outLink = qsProto.observationscheme().observedto();
+            } else {
+                // Partial
+                q.outLink = QuantumCircuitComponent::Qubits::PartialObservationScheme {
+                    .bitmask = qsProto.observationscheme().bitmask(),
+                    .observedTo = qsProto.observationscheme().observedto(),
+                    .unobservedTo = qsProto.observationscheme().unobservedto()
+                };
+            }
+        } else {
+            // Not possible.
+            throw std::runtime_error("Invalid outLinkageType from protobuf.");
+        }
+        
+        //label
+        q.label = qsProto.label();
     }
 }
 
@@ -95,10 +133,12 @@ QuantumCircuit::QubitsRef QuantumCircuit::entangle(std::vector<QubitsRef>& qubit
 
     auto Q { QuantumCircuitComponent::Qubits(*this, nQubit) };
     const auto ref { static_cast<QuantumCircuit::QubitsRef>(qubitSets.size()) };
+    Q.inLink = std::vector<QuantumCircuit::QubitsRef>();
+    auto& entangledFrom { std::get<std::vector<QuantumCircuit::QubitsRef>>(Q.inLink) };
     for (const auto& qRef : qubits) {
         auto& q { qubitSets.at(qRef) };
-        Q.entangledFrom.push_back(qRef);
-        q.entangleTo = ref;
+        entangledFrom.push_back(qRef);
+        q.outLink = ref;
     }
     qubitSets.push_back(Q);
 
@@ -134,16 +174,76 @@ void QuantumCircuit::compile(const std::filesystem::path& filepath) const {
     // Qubits
     for (const auto& q : qubitSets) {
         auto addedQubitset { protoCircuit->add_qubitset() };
-        addedQubitset->set_label(q.label);
+        // nQubit
         addedQubitset->set_nqubit(q.nQubit);
-        addedQubitset->set_entangleto(q.entangleTo);
+        // appliedGates
         for (const auto gRef : q.appliedGates) {
             addedQubitset->add_appliedgates(gRef);
         }
-        for (const auto eFrom : q.entangledFrom) {
-            addedQubitset->add_entangledfrom(eFrom);
+
+        // inLinkageType: NONE, ENTANGLEMENT, OBSERVATION
+        if (std::holds_alternative<std::monostate>(q.inLink)) {
+            // NONE
+            addedQubitset->set_inlinkagetype(Compiled::LinkageType::NONE);
+        } else if (std::holds_alternative<std::vector<QuantumCircuit::QubitsRef>>(q.inLink)) {
+            // ENTANGLEMENT
+            addedQubitset->set_inlinkagetype(Compiled::LinkageType::ENTANGLEMENT);
+            const auto& entangleFrom { std::get<std::vector<QuantumCircuit::QubitsRef>>(q.inLink) };
+            for (const auto eFrom : entangleFrom) {
+                addedQubitset->mutable_entangledfrom()->add_entangledfrom(eFrom);
+            }
+        } else if (std::holds_alternative<QuantumCircuit::QubitsRef>(q.inLink)) {
+            // OBSERVATION
+            addedQubitset->set_inlinkagetype(Compiled::LinkageType::OBSERVATION);
+            const auto observedFrom { std::get<QuantumCircuit::QubitsRef>(q.inLink) };
+            addedQubitset->set_observedfrom(observedFrom);
+        } else {
+            // Not possible.
+            throw std::runtime_error("Unidentified inLink type detected.");
         }
+        
+        // outLinkageType: NONE, ENTANGLEMENT, OBSERVATION
+        if (std::holds_alternative<std::monostate>(q.outLink)) {
+            // NONE
+            addedQubitset->set_outlinkagetype(Compiled::LinkageType::NONE);
+        } else if (std::holds_alternative<QuantumCircuit::QubitsRef>(q.outLink)) {
+            // ENTANGLEMENT
+            addedQubitset->set_outlinkagetype(Compiled::LinkageType::ENTANGLEMENT);
+            const auto entangleTo { std::get<QuantumCircuit::QubitsRef>(q.outLink) };
+            addedQubitset->set_entangleto(entangleTo);
+        } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationScheme>(q.outLink)) {
+            // OBSERVATION
+            addedQubitset->set_outlinkagetype(Compiled::LinkageType::OBSERVATION);
+            const auto& observationOut { std::get<QuantumCircuitComponent::Qubits::ObservationScheme>(q.outLink) };
+            // Check if full or partial observation.
+            if (std::holds_alternative<QuantumCircuit::QubitsRef>(observationOut)) {
+                // Full observation
+                const auto observeTo { std::get<QuantumCircuit::QubitsRef>(observationOut) };
+                addedQubitset->mutable_observationscheme()->set_bitmask(0);
+                addedQubitset->mutable_observationscheme()->set_observedto(observeTo);
+            } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::PartialObservationScheme>(observationOut)) {
+                // Partial observation, unless bitmask is 0 or 0b11...1, in which case, it is full
+                const auto& partialObservationScheme { std::get<QuantumCircuitComponent::Qubits::PartialObservationScheme>(observationOut) };
+                if (partialObservationScheme.bitmask == 0 || partialObservationScheme.bitmask == (1 << q.nQubit)-1) {
+                    // Full observation, but "badly" phrased... Let's correct it for the poor user
+                    addedQubitset->mutable_observationscheme()->set_bitmask(0);
+                    addedQubitset->mutable_observationscheme()->set_observedto(partialObservationScheme.observedTo);
+                } else {
+                    // Partial observation scheme. Users are on their own.
+                    addedQubitset->mutable_observationscheme()->set_bitmask(partialObservationScheme.bitmask);
+                    addedQubitset->mutable_observationscheme()->set_observedto(partialObservationScheme.observedTo);
+                    addedQubitset->mutable_observationscheme()->set_unobservedto(partialObservationScheme.unobservedTo);
+                }
+            } else {
+                // Not possible.
+                throw std::runtime_error("Unidentified outLink type detected.");
+            }
+        }
+        
+        addedQubitset->set_label(q.label);
     }
+
+    quantumObj.PrintDebugString();
 
     outfile << quantumObj.SerializeAsString();
 }
@@ -165,6 +265,7 @@ void QuantumCircuit::setQubitLabel(const QubitsRef qRef, const std::string& labe
     qubitSets.at(qRef).label = labelStr;
 }
 
+#if 0
 void QuantumCircuit::run() {
     // For debugging, this expression for GDB might be useful:
     // p *qComponent.boundQubits.value().stateVector.data()@(1<<qComponent.boundQubits.value().nQubit)
@@ -218,5 +319,6 @@ void QuantumCircuit::run() {
         exhausted.at(i) = true;
     }
 }
+#endif
 
 }
