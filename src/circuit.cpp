@@ -145,6 +145,23 @@ QuantumCircuit::QubitsRef QuantumCircuit::entangle(std::vector<QubitsRef>& qubit
     return ref;
 }
 
+QuantumCircuit::QubitsRef QuantumCircuit::markForObservation(const QubitsRef q) {
+    auto& qComponent { qubitSets.at(q) };
+    if (!qComponent.isTerminal()) {
+        throw std::runtime_error("Marking a non-terminal Qubits component!");
+    }
+
+    // qPO = q Post-Observation
+    QubitsRef qPO { createQubits(qComponent.nQubit) };
+    auto& qPOComponent { qubitSets.at(qPO) };
+
+    // Linkage
+    qComponent.outLink = qPO;
+    qPOComponent.inLink = q;
+
+    return qPO;
+}
+
 void QuantumCircuit::compile(const std::filesystem::path& filepath) const {
     std::ofstream outfile { filepath, std::ios::binary };
     Compiled::QuantumObject quantumObj;

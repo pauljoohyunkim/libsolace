@@ -75,6 +75,14 @@ class QuantumCircuit {
         QubitsRef entangle(std::vector<QubitsRef>& qubits);
 
         /**
+         * @brief Mark a qubits component for full observation
+         * 
+         * @param[in] q Reference to Qubits component in the quantum circuit.
+         * @return new reference to Qubits component after observation. Previous q cannot be used again.
+         */
+        QubitsRef markForObservation(const QubitsRef q);
+
+        /**
          * @brief Get the Qubits object by "QubitsRef" reference number
          * 
          * @param[in] q QubitsRef number for referring to previously created Qubits component.
