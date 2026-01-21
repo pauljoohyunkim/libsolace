@@ -54,7 +54,12 @@ QuantumCircuit::QuantumCircuit(const std::filesystem::path& filepath) {
                 entangledFrom.push_back(eFrom);
             }
         } else if (qsProto.inlinkagetype() == Compiled::LinkageType::OBSERVATION) {
-            q.inLink = qsProto.observedfrom();
+            const auto observationLinkageType { qsProto.observationfrom().observationfromtype() };
+            if (observationLinkageType == Compiled::LINK_BY_OBSERVATION) {
+                q.inLink = QuantumCircuitComponent::Qubits::ObservedFrom{qsProto.observationfrom().observationfrom()};
+            } else if (observationLinkageType == Compiled::LINK_BY_UNOBSERVATION) {
+                q.inLink = QuantumCircuitComponent::Qubits::UnobservedFrom{qsProto.observationfrom().unobservationfrom()};
+            }
         } else {
             // Not possible.
             throw std::runtime_error("Invalid inLinkageType from protobuf.");
@@ -156,8 +161,8 @@ QuantumCircuit::QubitsRef QuantumCircuit::markForObservation(const QubitsRef q) 
     auto& qPOComponent { qubitSets.at(qPO) };
 
     // Linkage
-    qComponent.outLink = QuantumCircuitComponent::Qubits::ObservationScheme(qPO);
-    qPOComponent.inLink = q;
+    qComponent.outLink = QuantumCircuitComponent::Qubits::ObservationToScheme(qPO);
+    qPOComponent.inLink = QuantumCircuitComponent::Qubits::ObservedFrom { q };
 
     return qPO;
 }
@@ -209,11 +214,21 @@ void QuantumCircuit::compile(const std::filesystem::path& filepath) const {
             for (const auto eFrom : entangleFrom) {
                 addedQubitset->mutable_entangledfrom()->add_entangledfrom(eFrom);
             }
-        } else if (std::holds_alternative<QuantumCircuit::QubitsRef>(q.inLink)) {
+        } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationFromScheme>(q.inLink)) {
             // OBSERVATION
             addedQubitset->set_inlinkagetype(Compiled::LinkageType::OBSERVATION);
-            const auto observedFrom { std::get<QuantumCircuit::QubitsRef>(q.inLink) };
-            addedQubitset->set_observedfrom(observedFrom);
+            const auto observedFrom { std::get<QuantumCircuitComponent::Qubits::ObservationFromScheme>(q.inLink) };
+
+            // Check if inLink is by observation or "unobservation"
+            if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservedFrom>(observedFrom)) {
+                const auto q { std::get<QuantumCircuitComponent::Qubits::ObservedFrom>(observedFrom).q };
+                addedQubitset->mutable_observationfrom()->set_observationfromtype(Compiled::LINK_BY_OBSERVATION);
+                addedQubitset->mutable_observationfrom()->set_observationfrom(q);
+            } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::UnobservedFrom>(observedFrom)) {
+                const auto q { std::get<QuantumCircuitComponent::Qubits::UnobservedFrom>(observedFrom).q };
+                addedQubitset->mutable_observationfrom()->set_observationfromtype(Compiled::LINK_BY_UNOBSERVATION);
+                addedQubitset->mutable_observationfrom()->set_unobservationfrom(q);
+            }
         } else {
             // Not possible.
             throw std::runtime_error("Unidentified inLink type detected.");
@@ -228,10 +243,10 @@ void QuantumCircuit::compile(const std::filesystem::path& filepath) const {
             addedQubitset->set_outlinkagetype(Compiled::LinkageType::ENTANGLEMENT);
             const auto entangleTo { std::get<QuantumCircuit::QubitsRef>(q.outLink) };
             addedQubitset->set_entangleto(entangleTo);
-        } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationScheme>(q.outLink)) {
+        } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationToScheme>(q.outLink)) {
             // OBSERVATION
             addedQubitset->set_outlinkagetype(Compiled::LinkageType::OBSERVATION);
-            const auto& observationOut { std::get<QuantumCircuitComponent::Qubits::ObservationScheme>(q.outLink) };
+            const auto& observationOut { std::get<QuantumCircuitComponent::Qubits::ObservationToScheme>(q.outLink) };
             // Check if full or partial observation.
             if (std::holds_alternative<QuantumCircuit::QubitsRef>(observationOut)) {
                 // Full observation

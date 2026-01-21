@@ -228,13 +228,22 @@ namespace QuantumCircuitComponent {
                 QuantumCircuit::QubitsRef unobservedTo;
             };
 
+            struct ObservedFrom {
+                QuantumCircuit::QubitsRef q;
+            };
+
+            struct UnobservedFrom {
+                QuantumCircuit::QubitsRef q;
+            };
+
+            using ObservationFromScheme = std::variant<ObservedFrom, UnobservedFrom>;
             // Full or partial observation
-            using ObservationScheme = std::variant<QuantumCircuit::QubitsRef, PartialObservationScheme>;
+            using ObservationToScheme = std::variant<QuantumCircuit::QubitsRef, PartialObservationScheme>;
 
             // None, entangledFrom, observedFrom
-            std::variant<std::monostate, std::vector<QuantumCircuit::QubitsRef>, QuantumCircuit::QubitsRef> inLink { std::monostate() };
+            std::variant<std::monostate, std::vector<QuantumCircuit::QubitsRef>, ObservationFromScheme> inLink { std::monostate() };
             // None, entangleTo, observe output to
-            std::variant<std::monostate, QuantumCircuit::QubitsRef, ObservationScheme> outLink { std::monostate() };
+            std::variant<std::monostate, QuantumCircuit::QubitsRef, ObservationToScheme> outLink { std::monostate() };
 
             //QuantumCircuit::QubitsRef entangleTo { 0 };     // 0 signifies no entangling to next node
             //std::vector<QuantumCircuit::QubitsRef> entangledFrom {};

@@ -66,7 +66,20 @@ message QuantumCircuitEntangleFrom {
     repeated uint32 entangledFrom = 30;
 }
 
-message QuantumCircuitQubitsObservationScheme {
+enum ObservationLinkageType {
+    LINK_BY_OBSERVATION = 0;
+    LINK_BY_UNOBSERVATION = 1;
+}
+
+message QuantumCircuitObservationFrom {
+    ObservationLinkageType observationFromType = 1;
+    oneof observationLink {
+        uint32 observationFrom = 2;
+        uint32 unobservationFrom = 3;
+    }
+}
+
+message QuantumCircuitQubitsObservationTo {
     uint32 bitmask = 1;
     uint32 observedTo = 2;
     optional uint32 unobservedTo = 3;
@@ -83,12 +96,12 @@ message QuantumCircuitQubits {
     LinkageType inLinkageType = 3;
     oneof inLinkage {
         QuantumCircuitEntangleFrom entangledFrom = 30;
-        uint32 observedFrom = 31;
+        QuantumCircuitObservationFrom observationFrom = 31;
     }
     LinkageType outLinkageType = 4;
     oneof outLinkage {
         uint32 entangleTo = 40;
-        QuantumCircuitQubitsObservationScheme observationScheme = 41;
+        QuantumCircuitQubitsObservationTo observationScheme = 41;
     }
     string label = 5;
 }
