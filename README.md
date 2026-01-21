@@ -3,10 +3,10 @@ A tiny C++ library for emulating quantum computing.
 
 ## Purpose
 
-This project is created as a tool for researching quantum computing and designing quantum algorithms.
+This project is created as a tool for learning/researching quantum computing and designing quantum algorithms.
 
 I want to stress the fact that this project is not meant to be the winner of "Who can build the best and
-most efficient quantum emulator"; Microsoft's QDK or IBM's Qiskit seem to be a robust solution at the moment.
+most efficient quantum emulator"; Microsoft's QDK or IBM's Qiskit seem to be robust solutions at the moment.
 Rather this is a **demonstrative tool** with maximum liberty in terms of licenses for education and research.
 
 ## Dependency
@@ -15,8 +15,11 @@ Here are the packages you need:
 * Make
 * Eigen (C++ header-only library for linear algebra)
     * You could install the package, or simply download/clone it. The only thing that changes is the include path for Eigen library.
+    * You can set the path for Eigen library by supplying the `make` command with `EIGEN=...` option. (See below.)
 * Protobuf
     * This is used for precompilation of qubits, quantum gates, and any other quantum object that might be invented!
+* Gtest (Optional)
+    * If you are running unit test.
 
 ## Quick Catch-up!
 There is a pdf document called [solace.pdf](manual/solace.pdf), where it outlines the basic concepts of quantum computing hastily. Maybe it could be worth reading if you are not familiar with how it works at all.
@@ -33,6 +36,18 @@ make docs
 You should see a new directory called [docs/html](docs/html) where you can access the Doxygen documentation at [index.html](index.html).
 
 ## Quickstart/Tutorial
+### Unit test
+To see if this library works as expected, run the unit test.
+```
+make clean
+make unittest -j$(nproc)        # Parallelize build process
+./tests/unittest
+```
+Note that there is a very small but nonzero chance that unit test fails even though it is supposed to work on your machine.
+This is due to probablistic nature of observation in some of the tests.
+Run the unit test again and see if it happens again.
+
+### Demos
 I provide you five demo codes in [demos](demos) directory.
 The examples should serve as a series of short easy-to-follow tutorials.
 You can build them by running the following:
