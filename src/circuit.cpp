@@ -282,7 +282,6 @@ void QuantumCircuit::setQubitLabel(const QubitsRef qRef, const std::string& labe
     qubitSets.at(qRef).label = labelStr;
 }
 
-#if 0
 void QuantumCircuit::run() {
     // For debugging, this expression for GDB might be useful:
     // p *qComponent.boundQubits.value().stateVector.data()@(1<<qComponent.boundQubits.value().nQubit)
@@ -297,16 +296,18 @@ void QuantumCircuit::run() {
         auto& qComponent { qubitSets.at(i) };
 
         // Check if entangled
-        if (!qComponent.entangledFrom.empty()) {
+        if (std::holds_alternative<std::vector<QuantumCircuit::QubitsRef>>(qComponent.inLink)) {
             // If entangled,
             // Check if dependencies all have been bound,
             // while computing entanglement.
+            const auto& entangledFrom { std::get<std::vector<QuantumCircuit::QubitsRef>>(qComponent.inLink) };
             std::vector<Qubits> qbts {};
-            for (auto j : qComponent.entangledFrom) {
+            for (auto j : entangledFrom) {
                 if (!qubitSets.at(j).boundQubits.has_value()) {
                     throw std::runtime_error("Dependency qubits is not calculated before.");
                 }
-                if (qubitSets.at(j).entangleTo != i) {
+                // If either not "entangle to" or entangleto points to a different qubits,
+                if (!std::holds_alternative<QubitsRef>(qubitSets.at(j).outLink) || std::get<QubitsRef>(qubitSets.at(j).outLink) != i) {
                     throw std::runtime_error("Dependency qubits does not point to the entangled qubits.");
                 }
                 if (exhausted.at(j) == false) {
@@ -336,6 +337,5 @@ void QuantumCircuit::run() {
         exhausted.at(i) = true;
     }
 }
-#endif
 
 }

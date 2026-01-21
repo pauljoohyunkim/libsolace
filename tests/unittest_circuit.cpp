@@ -93,7 +93,6 @@ TEST(CircuitTest, IllegalEntanglement_Duplicate) {
     ASSERT_ANY_THROW(qc.entangle(qbts));
 }
 
-#if 0
 TEST(CircuitTest, RunBellStateCircuit) {
     Solace::QuantumCircuit qc;
 
@@ -125,4 +124,3 @@ TEST(CircuitTest, RunBellStateCircuit) {
     qc.run();
     
 }
-#endif

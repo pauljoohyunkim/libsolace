@@ -133,9 +133,7 @@ class QuantumCircuit {
          * @brief Run the quantum circuit. If some initial qubits are left unbound, then they will be assigned default state vector |0...0>.
          * 
          */
-        #if 0
         void run();
-        #endif
 
 #ifdef SOLACE_DEV_DEBUG
             std::vector<QuantumCircuitComponent::Qubits> getQubitSets() const { return qubitSets; }
