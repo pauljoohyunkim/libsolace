@@ -5,7 +5,7 @@ INCLUDE=include
 EIGEN=/usr/include/eigen3
 #EIGEN=C:/msys64/mingw64/include/eigen3
 OPTIMIZATION?=-O3
-override CXXFLAGS+=-g $(OPTIMIZATION) -Wall -I$(INCLUDE) -I$(EIGEN) `pkg-config --cflags protobuf`
+override CXXFLAGS+=-g $(OPTIMIZATION) -Wall -pedantic -I$(INCLUDE) -I$(EIGEN) `pkg-config --cflags protobuf`
 LDFLAGS=`pkg-config --libs protobuf`
 SRC=src
 OBJ=obj
@@ -100,5 +100,5 @@ clean:
 	$(RM) -r $(DOCS)/html
 	$(RM) $(DEMOS)/*.bin
 	$(RM) $(PROTOFILES)
-	$(RM) *.qbit *.qgate
+	$(RM) *.qbit *.qgate *.qc
 

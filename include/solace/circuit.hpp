@@ -3,9 +3,140 @@
 
 #include <vector>
 #include <string>
+#include <optional>
+#include <filesystem>
 #include "solace.hpp"
 
 namespace Solace {
+
+/**
+ * @brief A description of the wiring of the input qubits and quantum logic gates, rather than the actual qubits and gates.
+ * 
+ */
+class QuantumCircuit {
+    public:
+        /**
+         * @brief Reference to a Qubits component.
+         * 
+         */
+        using QubitsRef = uint32_t;
+
+        /**
+         * @brief Reference to a quantum gate.
+         * 
+         */
+        using QuantumGateRef = uint32_t;
+
+        /**
+         * @brief Construct a Quantum Circuit/Computer instance.
+         * 
+         */
+        QuantumCircuit() = default;
+
+        /**
+         * @brief Constructor of quantum circuit. Reads from a previously "compiled" quantum circuit and loads from it.
+         * 
+         * @param[in] filepath the file path to compiled quantum circuit object.
+         */
+        QuantumCircuit(const std::filesystem::path& filepath);
+
+        // TODO: Support classical feedback in the future.
+
+        /**
+         * @brief Create a Qubits circuit component
+         * 
+         * @param[in] nQubit Number of qubits.
+         * @return Reference number to the qubits component created.
+         */
+        QubitsRef createQubits(const size_t nQubit=1);
+
+        /**
+         * @brief Add quantum gate definition to circuit. Each gate can be reused. The copy of the gate will be added to the circuit.
+         * 
+         * @param[in] gate Quantum gate
+         * @return Reference number to the gate.
+         */
+        QuantumGateRef addQuantumGate(const QuantumGate& gate);
+
+        /**
+         * @brief Apply quantum gate to Qubits component by reference number.
+         * 
+         * @param[in] g Reference to quantum gate in the quantum circuit.
+         * @param[in] q Reference to Qubits component in the quantum circuit.
+         */
+        void applyQuantumGateToQubits(const QuantumGateRef g, const QubitsRef q);
+
+        /**
+         * @brief Entangle multiple Qubits component into one. Qubits that got entangled should not be used.
+         * 
+         * @param[in] qubits A vector of pointers to qubits components.
+         * @return A reference number to newly generated qubits.
+         */
+        QubitsRef entangle(std::vector<QubitsRef>& qubits);
+
+        /**
+         * @brief Get the Qubits object by "QubitsRef" reference number
+         * 
+         * @param[in] q QubitsRef number for referring to previously created Qubits component.
+         * @return Reference to Qubits component.
+         */
+        QuantumCircuitComponent::Qubits& getQubits(const QubitsRef q) { return qubitSets.at(q); }
+        
+        /**
+         * @brief Get the Gate object by "QuantumGateRef" reference number
+         * 
+         * @param[in] g QuantumGateRef number for referring to previously added gate.
+         * @return Reference to a quantum gate. Note that this is returned as a constant.
+         */
+        const QuantumGate& getGate(const QuantumGateRef g) { return gates.at(g); }
+
+        /**
+         * @brief Compile the quantum circuit into a file. This packages the quantum gates as well.
+         * 
+         * @param[in] filepath output quantum circuit file. (*.qc)
+         */
+        void compile(const std::filesystem::path& filepath) const;
+
+        /**
+         * @brief Bind Solace::Qubits to Qubits component on circuit before running.
+         * 
+         * @param[in] qRef reference number to Qubits circuit component
+         * @param[in] qubits Solace::Qubits from the core library.
+         */
+        void bindQubit(const QubitsRef qRef, const Qubits& qubits);
+
+        /**
+         * @brief Set the label for Qubits component.
+         * 
+         * @param[in] qRef reference number to Qubits circuit component
+         * @param[in] labelStr label string
+         */
+        void setQubitLabel(const QubitsRef qRef, const std::string& labelStr);
+
+        /**
+         * @brief Set the label for Quantum Gate.
+         * 
+         * @param[in] gRef reference number to quantum gate circuit component
+         * @param[in] labelStr label string
+         */
+        void setQuantumGateLabel(const QuantumGateRef gRef, const std::string& labelStr) { gates.at(gRef).label = labelStr; }
+
+        /**
+         * @brief Run the quantum circuit. If some initial qubits are left unbound, then they will be assigned default state vector |0...0>.
+         * 
+         */
+        void run();
+
+#ifdef SOLACE_DEV_DEBUG
+            std::vector<QuantumCircuitComponent::Qubits> getQubitSets() const { return qubitSets; }
+            std::vector<QuantumGate> getGates() const { return gates; }
+#endif
+    private:
+        std::vector<QuantumCircuitComponent::Qubits> qubitSets {};
+        std::vector<QuantumGate> gates {};
+    
+
+};
 
 namespace QuantumCircuitComponent {
     /**
@@ -25,87 +156,68 @@ namespace QuantumCircuitComponent {
              * 
              * @param[in] gate Gate to apply to qubits.
              */
-            void applyQuantumGate(const std::shared_ptr<QuantumGate>& gate) { 
-                if (nQubit != gate->getNQubit()) {
-                    throw std::runtime_error("Wrong dimension when applying gate to qubit(s)!");
+            void applyQuantumGate(const QuantumCircuit::QuantumGateRef gate) { 
+                if (!isTerminal()) {
+                    throw std::runtime_error("This gate is already entangled and you cannot operate on it.");
+                }
+                if (circuit.getGate(gate).getNQubit() != nQubit) {
+                    throw std::runtime_error("Gate size and qubits mismatch.");
                 }
                 appliedGates.push_back(gate);
             }
 
+            /**
+             * @brief Check if the Qubits component is one of the initial components in the circuit.
+             * 
+             * @return true if it is an initial Qubits component (that is, not entangled from other qubits.)
+             * @return false if it is made from entangling other Qubits components.
+             */
+            bool isInitial() const { return entangledFrom.size() == 0; }
+
+            /**
+             * @brief Check if the Qubits component is one of the last in the tree, that is, it does not have any other Qubits that are created by entangling it.
+             * 
+             * @return true if it can be output.
+             * @return false if it is used for creating another entangled qubits component. This component should not have been used.
+             */
+            bool isTerminal() const { return entangleTo == 0; }
+
 
 #ifdef SOLACE_DEV_DEBUG
-            std::vector<std::shared_ptr<QuantumGate>> getAppliedGates() const { return appliedGates; }
-            std::shared_ptr<Qubits> getEntangleTo() const { return entangleTo; }
-            std::vector<std::shared_ptr<Qubits>> getEntangledFrom() const { return entangledFrom; }
+            std::vector<QuantumCircuit::QuantumGateRef> getAppliedGates() const { return appliedGates; }
+            QuantumCircuit::QubitsRef getEntangleTo() const { return entangleTo; }
+            std::vector<QuantumCircuit::QubitsRef> getEntangledFrom() const { return entangledFrom; }
 #endif
         private:
             friend class Solace::QuantumCircuit;
-            Qubits(size_t nQubit=1) : nQubit(nQubit) { 
+            /**
+             * @brief Construct a new Qubits component for circuit.
+             * 
+             * @param circuit Reference to Quantum circuit that this component is bound to.
+             * @param nQubit Number of qubits this component holds.
+             */
+            Qubits(QuantumCircuit& circuit, const size_t nQubit=1) : circuit(circuit), nQubit(nQubit) { 
                 if (nQubit == 0) {
                     throw std::runtime_error("Cannot create Qubits component of 0 qubits.");
                 }
             }
 
+            void bindQubits(const Solace::Qubits& q) { 
+                if (q.getNQubit() != nQubit) {
+                    throw std::runtime_error("Cannot bind Qubits with Qubits circuit component of different number of qubits.");
+                }
+                boundQubits = q;
+            }
+
+            QuantumCircuit& circuit;
             const size_t nQubit;
-            std::vector<std::shared_ptr<QuantumGate>> appliedGates {};
-            std::shared_ptr<Qubits> entangleTo { nullptr };
-            std::vector<std::shared_ptr<Qubits>> entangledFrom {};
+            std::vector<QuantumCircuit::QuantumGateRef> appliedGates {};
+            QuantumCircuit::QubitsRef entangleTo { 0 };     // 0 signifies no entangling to next node
+            std::vector<QuantumCircuit::QubitsRef> entangledFrom {};
+
+            std::optional<Solace::Qubits> boundQubits { std::nullopt };
     };
 }
-
-/**
- * @brief A description of the wiring of the input qubits and quantum logic gates, rather than the actual qubits and gates.
- * 
- */
-class QuantumCircuit {
-    public:
-        /**
-         * @brief Construct a Quantum Circuit/Computer instance.
-         * 
-         */
-        QuantumCircuit() = default;
-
-        // TODO: Change so that there is a separation between the circuit and the implementation of quantum gates.
-        // Should remove addQubits and replace them with something like createQubits, and later when running, allow "inserting qubit".
-        // As for addQuantumGate, I think it will be fine, as the gates do not change according to run-time.
-        // TODO: Support classical feedback in the future.
-
-        /**
-         * @brief Create a Qubits circuit component
-         * 
-         * @param[in] nQubit Number of qubits.
-         * @return Pointer to qubits component created.
-         */
-        std::shared_ptr<QuantumCircuitComponent::Qubits> createQubits(const size_t nQubit=1);
-
-        /**
-         * @brief Add quantum gate definition to circuit. Each gate can be reused. The copy of the gate will be added to the circuit.
-         * 
-         * @param[in] gate Quantum gate
-         * @return Pointer to gate.
-         */
-        std::shared_ptr<QuantumGate> addQuantumGate(const QuantumGate& gate);
-
-        /**
-         * @brief Entangle multiple Qubits component into one. Qubits that got entangled should not be used.
-         * 
-         * @param[in] qubits A vector of pointers to qubits components.
-         * @return A new pointer to newly generated qubits.
-         */
-        std::shared_ptr<QuantumCircuitComponent::Qubits> entangle(std::vector<std::shared_ptr<QuantumCircuitComponent::Qubits>>& qubits);
-
-#ifdef SOLACE_DEV_DEBUG
-            std::vector<std::shared_ptr<QuantumCircuitComponent::Qubits>> getQubitSets() const { return qubitSets; }
-            std::vector<std::shared_ptr<QuantumCircuitComponent::Qubits>> getIntermediateQubitSets() const { return intermediateQubitSets; }
-            std::vector<std::shared_ptr<QuantumGate>> getGates() const { return gates; }
-#endif
-    private:
-        std::vector<std::shared_ptr<QuantumCircuitComponent::Qubits>> qubitSets {};
-        std::vector<std::shared_ptr<QuantumCircuitComponent::Qubits>> intermediateQubitSets {};
-        std::vector<std::shared_ptr<QuantumGate>> gates {};
-    
-
-};
 
 }
 
