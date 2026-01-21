@@ -70,11 +70,11 @@ TEST(Compilation, Circuit1) {
 
     // Need two gates
     auto Hadamard { Solace::Gate::Hadamard() };
-    Hadamard.label = "H";
     auto H { qc.addQuantumGate(Hadamard) };
+    qc.setQuantumGateLabel(H, "Hadamard");
     auto CNOTGate { Solace::Gate::CNOT() };
-    CNOTGate.label = "CNOT";
     auto CNOT { qc.addQuantumGate(CNOTGate) };
+    qc.setQuantumGateLabel(CNOT, "CNOT");
 
     // First, q0 goes through Hadamard
     // TODO: Allow qc to directly take a qubits reference and quantum gates reference.

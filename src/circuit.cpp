@@ -159,18 +159,16 @@ void QuantumCircuit::bindQubit(const QubitsRef qRef, const Qubits& qubits) {
     qComponent.bindQubits(qubits);
 }
 
+void QuantumCircuit::setQubitLabel(const QubitsRef qRef, const std::string& labelStr) {
+    // Due to C++ freaking out about QuantumCircuitComponent::Qubits not being declared,
+    // I decided to set the header, as forward declaring QuantumCircuitComponent::Qubits does not seem to help much.
+    qubitSets.at(qRef).label = labelStr;
+}
+
 void QuantumCircuit::run() {
     // For debugging, this expression for GDB might be useful:
     // p *qComponent.boundQubits.value().stateVector.data()@(1<<qComponent.boundQubits.value().nQubit)
     std::vector<bool> exhausted(qubitSets.size(), false);
-    //std::vector<QubitsRef> initialQubitsRefs {};
-
-    //// Get initial qubits
-    //for (QubitsRef i = 0; i < qubitSets.size(); i++) {
-    //    if (qubitSets.at(i).isInitial()) {
-    //        initialQubitsRefs.push_back(i);
-    //    }
-    //}
 
     /*
     Follow the following algorithm:

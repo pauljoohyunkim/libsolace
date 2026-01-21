@@ -106,6 +106,22 @@ class QuantumCircuit {
         void bindQubit(const QubitsRef qRef, const Qubits& qubits);
 
         /**
+         * @brief Set the label for Qubits component.
+         * 
+         * @param[in] qRef reference number to Qubits circuit component
+         * @param[in] labelStr label string
+         */
+        void setQubitLabel(const QubitsRef qRef, const std::string& labelStr);
+
+        /**
+         * @brief Set the label for Quantum Gate.
+         * 
+         * @param[in] gRef reference number to quantum gate circuit component
+         * @param[in] labelStr label string
+         */
+        void setQuantumGateLabel(const QuantumGateRef gRef, const std::string& labelStr) { gates.at(gRef).label = labelStr; }
+
+        /**
          * @brief Run the quantum circuit. If some initial qubits are left unbound, then they will be assigned default state vector |0...0>.
          * 
          */
