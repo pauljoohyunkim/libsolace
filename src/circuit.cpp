@@ -80,9 +80,9 @@ QuantumCircuit::QuantumCircuit(const std::filesystem::path& filepath) {
             } else {
                 // Partial
                 q.outLink = QuantumCircuitComponent::Qubits::PartialObservationScheme {
-                    .bitmask = qsProto.observationscheme().bitmask(),
-                    .observedTo = qsProto.observationscheme().observedto(),
-                    .unobservedTo = qsProto.observationscheme().unobservedto()
+                    qsProto.observationscheme().bitmask(),
+                    qsProto.observationscheme().observedto(),
+                    qsProto.observationscheme().unobservedto()
                 };
             }
         } else {
@@ -264,7 +264,7 @@ void QuantumCircuit::compile(const std::filesystem::path& filepath) const {
             } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::PartialObservationScheme>(observationOut)) {
                 // Partial observation, unless bitmask is 0 or 0b11...1, in which case, it is full
                 const auto& partialObservationScheme { std::get<QuantumCircuitComponent::Qubits::PartialObservationScheme>(observationOut) };
-                if (partialObservationScheme.bitmask == 0 || partialObservationScheme.bitmask == (1 << q.nQubit)-1) {
+                if (partialObservationScheme.bitmask == 0 || partialObservationScheme.bitmask == (1U << q.nQubit)-1) {
                     // Full observation, but "badly" phrased... Let's correct it for the poor user
                     addedQubitset->mutable_observationscheme()->set_bitmask(0);
                     addedQubitset->mutable_observationscheme()->set_observedto(partialObservationScheme.observedTo);
