@@ -28,8 +28,8 @@ TEST(CircuitTest, ApplyQuantumGateToQubits) {
     auto q { qc.createQubits() };
     
     // Apply Hadamard twice.
-    qc.getQubits(q).applyQuantumGate(H);
-    qc.getQubits(q).applyQuantumGate(H);
+    qc.applyQuantumGateToQubits(H, q);
+    qc.applyQuantumGateToQubits(H, q);
 
     auto appliedGates { qc.getQubits(q).getAppliedGates() };
 
@@ -48,7 +48,7 @@ TEST(CircuitTest, ApplyWrongNQubitsQuantumGateToQubits) {
     auto q { qc.createQubits() };
     
     // Apply Swap twice. Expect failure
-    ASSERT_ANY_THROW(qc.getQubits(q).applyQuantumGate(H));
+    ASSERT_ANY_THROW(qc.applyQuantumGateToQubits(H, q));
 
 }
 
@@ -57,7 +57,7 @@ TEST(CircuitTest, EntangleQubits) {
     auto H { qc.addQuantumGate(Solace::Gate::Hadamard()) };
     auto q0 { qc.createQubits(1) };
     auto q1 { qc.createQubits(2) };
-    qc.getQubits(q0).applyQuantumGate(H);
+    qc.applyQuantumGateToQubits(H, q0);
 
     std::vector<Solace::QuantumCircuit::QubitsRef> qbts { q0, q1 };
     auto q0q1 { qc.entangle(qbts) };

@@ -170,6 +170,25 @@ namespace QuantumCircuitComponent {
              */
             std::string label {};
 
+#ifdef SOLACE_DEV_DEBUG
+            std::vector<QuantumCircuit::QuantumGateRef> getAppliedGates() const { return appliedGates; }
+            QuantumCircuit::QubitsRef getEntangleTo() const { return std::get<QuantumCircuit::QubitsRef>(outLink); }
+            std::vector<QuantumCircuit::QubitsRef> getEntangledFrom() const { return std::get<std::vector<QuantumCircuit::QubitsRef>>(inLink); }
+#endif
+        private:
+            friend class Solace::QuantumCircuit;
+            /**
+             * @brief Construct a new Qubits component for circuit.
+             * 
+             * @param circuit Reference to Quantum circuit that this component is bound to.
+             * @param nQubit Number of qubits this component holds.
+             */
+            Qubits(QuantumCircuit& circuit, const size_t nQubit=1) : circuit(circuit), nQubit(nQubit) { 
+                if (nQubit == 0) {
+                    throw std::runtime_error("Cannot create Qubits component of 0 qubits.");
+                }
+            }
+
             /**
              * @brief Specify which quantum gate to apply to on the set of qubits. Will not compute until Quantum Circuit's run() method is called.
              * 
@@ -200,26 +219,6 @@ namespace QuantumCircuitComponent {
              * @return false if it is used for creating another entangled qubits component. This component should not have been used.
              */
             bool isTerminal() const { return std::holds_alternative<std::monostate>(outLink); }
-
-
-#ifdef SOLACE_DEV_DEBUG
-            std::vector<QuantumCircuit::QuantumGateRef> getAppliedGates() const { return appliedGates; }
-            QuantumCircuit::QubitsRef getEntangleTo() const { return std::get<QuantumCircuit::QubitsRef>(outLink); }
-            std::vector<QuantumCircuit::QubitsRef> getEntangledFrom() const { return std::get<std::vector<QuantumCircuit::QubitsRef>>(inLink); }
-#endif
-        private:
-            friend class Solace::QuantumCircuit;
-            /**
-             * @brief Construct a new Qubits component for circuit.
-             * 
-             * @param circuit Reference to Quantum circuit that this component is bound to.
-             * @param nQubit Number of qubits this component holds.
-             */
-            Qubits(QuantumCircuit& circuit, const size_t nQubit=1) : circuit(circuit), nQubit(nQubit) { 
-                if (nQubit == 0) {
-                    throw std::runtime_error("Cannot create Qubits component of 0 qubits.");
-                }
-            }
 
             void bindQubits(const Solace::Qubits& q) { 
                 if (q.getNQubit() != nQubit) {
