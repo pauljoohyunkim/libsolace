@@ -352,12 +352,14 @@ void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitStat
     /*
     Follow the following algorithm:
     1. If working on qubits from entangled qubits, check if dependent qubits have been exhausted. (Error checking)
-    2. If there are nonexhausted qubit, apply the gates piled up mark that qubits as exhuasted.
+    2. If outLink is set to full observation or partial observation, observe the qubit then assign the values at out qubits. The for loop will eventually parse it as normal
+    (as it will have inLink set to observation)
+    3. If there are nonexhausted qubit, apply the gates piled up mark that qubits as exhuasted.
     */
     for (QubitsRef i = 0; i < qubitSets.size(); i++) {
         auto& qComponent { qubitSets.at(i) };
 
-        // Check if entangled
+        // Check if entangled (inLink)
         if (std::holds_alternative<std::vector<QuantumCircuit::QubitsRef>>(qComponent.inLink)) {
             // If entangled,
             // Check if dependencies all have been bound,
@@ -380,7 +382,44 @@ void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitStat
             }
             auto entangled { Solace::entangle(qbts) };
             qComponent.bindQubits(entangled);
-        } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationFromScheme>(qComponent.inLink)) {
+        }
+
+        if (!qComponent.boundQubits.has_value()) {
+            // Default bind |0...0>
+            Qubits q { qComponent.nQubit };
+            qComponent.bindQubits(q);
+        }
+
+        // Apply gates
+        for (auto gRef : qComponent.appliedGates) {
+            Qubits q { qComponent.boundQubits.value() };
+            //Qubits Gq { gates.at(gRef) * q };
+            gates.at(gRef).apply(q);
+            qComponent.bindQubits(q);
+        }
+
+        // Check if marked for observation (outLink)
+        if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationToScheme>(qComponent.outLink)) {
+            auto& outLink { std::get<QuantumCircuitComponent::Qubits::ObservationToScheme>(qComponent.outLink) };
+            // For both full observation and partial observation, take the current Qubits, observe, and assign new Qubits to "observeTo" (and "unobserveTo").
+            if (std::holds_alternative<QubitsRef>(outLink)) {
+                QubitsRef observedQuibitComponentRef { std::get<QubitsRef>(outLink) };
+                // Full observation
+                auto qubitsForObservation { qComponent.boundQubits.value() };
+                auto observation { qubitsForObservation.observe() };
+                if (m) {
+                    (*m)[observedQuibitComponentRef] = observation;
+                }
+                qubitSets.at(observedQuibitComponentRef).bindQubits(qubitsForObservation);
+
+            } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::PartialObservationScheme>(outLink)) {
+                // Partial observation
+                throw std::runtime_error("Not yet supported!");
+            }
+        }
+        
+        /*
+        if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationFromScheme>(qComponent.inLink)) {
             auto& inLink { std::get<QuantumCircuitComponent::Qubits::ObservationFromScheme>(qComponent.inLink) };
             if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservedFrom>(inLink)) {
                 auto& observedQComponent { qubitSets.at(std::get<QuantumCircuitComponent::Qubits::ObservedFrom>(inLink).q) };
@@ -399,20 +438,8 @@ void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitStat
                 throw std::runtime_error("Partial observation is not yet supported!!!!");
             }
         }
+        */
 
-        if (!qComponent.boundQubits.has_value()) {
-            // Default bind |0...0>
-            Qubits q { qComponent.nQubit };
-            qComponent.bindQubits(q);
-        }
-
-        // Apply gates
-        for (auto gRef : qComponent.appliedGates) {
-            Qubits q { qComponent.boundQubits.value() };
-            //Qubits Gq { gates.at(gRef) * q };
-            gates.at(gRef).apply(q);
-            qComponent.bindQubits(q);
-        }
         
         // Mark as exhausted.
         exhausted.at(i) = true;
