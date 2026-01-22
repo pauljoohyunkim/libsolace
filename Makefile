@@ -38,7 +38,8 @@ DEMO_BINS=$(DEMOS)/01_hadamard.bin \
 		  $(DEMOS)/02_hadamard2.bin \
 		  $(DEMOS)/03_hadamard3.bin \
 		  $(DEMOS)/04_grover.bin \
-		  $(DEMOS)/05_grover2.bin
+		  $(DEMOS)/05_grover2.bin \
+		  $(DEMOS)/06_bell.bin
 
 objs: $(OBJS)
 

@@ -28,8 +28,8 @@ TEST(CircuitTest, ApplyQuantumGateToQubits) {
     auto q { qc.createQubits() };
     
     // Apply Hadamard twice.
-    qc.getQubits(q).applyQuantumGate(H);
-    qc.getQubits(q).applyQuantumGate(H);
+    qc.applyQuantumGateToQubits(H, q);
+    qc.applyQuantumGateToQubits(H, q);
 
     auto appliedGates { qc.getQubits(q).getAppliedGates() };
 
@@ -48,7 +48,7 @@ TEST(CircuitTest, ApplyWrongNQubitsQuantumGateToQubits) {
     auto q { qc.createQubits() };
     
     // Apply Swap twice. Expect failure
-    ASSERT_ANY_THROW(qc.getQubits(q).applyQuantumGate(H));
+    ASSERT_ANY_THROW(qc.applyQuantumGateToQubits(H, q));
 
 }
 
@@ -57,20 +57,20 @@ TEST(CircuitTest, EntangleQubits) {
     auto H { qc.addQuantumGate(Solace::Gate::Hadamard()) };
     auto q0 { qc.createQubits(1) };
     auto q1 { qc.createQubits(2) };
-    qc.getQubits(q0).applyQuantumGate(H);
+    qc.applyQuantumGateToQubits(H, q0);
 
     std::vector<Solace::QuantumCircuit::QubitsRef> qbts { q0, q1 };
     auto q0q1 { qc.entangle(qbts) };
 
-    ASSERT_EQ(qc.getQubits(q0q1).getEntangleTo(), 0);
+    ASSERT_ANY_THROW(qc.getQubits(q0q1).getEntangleTo());
     auto entangledFrom { qc.getQubits(q0q1).getEntangledFrom() };
     ASSERT_EQ(entangledFrom.size(), 2);
     ASSERT_EQ(entangledFrom.at(0) , q0);
     ASSERT_EQ(entangledFrom.at(1) , q1);
     ASSERT_EQ(qc.getQubits(q0).getEntangleTo(), q0q1);
     ASSERT_EQ(qc.getQubits(q1).getEntangleTo(), q0q1);
-    ASSERT_EQ(qc.getQubits(q0).getEntangledFrom().size(), 0);
-    ASSERT_EQ(qc.getQubits(q1).getEntangledFrom().size(), 0);
+    ASSERT_ANY_THROW(qc.getQubits(q0).getEntangledFrom());
+    ASSERT_ANY_THROW(qc.getQubits(q1).getEntangledFrom());
 }
 
 TEST(CircuitTest, IllegalEntanglement_AlreadyEntangled) {
@@ -121,6 +121,13 @@ TEST(CircuitTest, RunBellStateCircuit) {
     qc.bindQubit(q0, actualQubit);
     qc.bindQubit(q1, actualQubit);
 
+    qc.markForObservation(q01);
+
+    auto qc2 { qc };
+
     qc.run();
+
+    std::unordered_map<Solace::QuantumCircuit::QubitsRef, Solace::ObservedQubitState> observationResult {};
+    qc2.run(observationResult);
     
 }

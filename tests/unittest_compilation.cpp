@@ -88,6 +88,9 @@ TEST(Compilation, Circuit1) {
     // Apply CNOT to the entalged state
     qc.applyQuantumGateToQubits(CNOT, q01);
 
+    // Mark for full observation
+    qc.markForObservation(q01);
+
     qc.compile("bell.qc");
 
     // Load the compiled circuit.

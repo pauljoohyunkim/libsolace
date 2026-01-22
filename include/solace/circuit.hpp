@@ -5,6 +5,7 @@
 #include <string>
 #include <optional>
 #include <filesystem>
+#include <unordered_map>
 #include "solace.hpp"
 
 namespace Solace {
@@ -72,7 +73,23 @@ class QuantumCircuit {
          * @param[in] qubits A vector of pointers to qubits components.
          * @return A reference number to newly generated qubits.
          */
+        QubitsRef entangle(std::vector<QubitsRef>&& qubits);
+
+        /**
+         * @brief Entangle multiple Qubits component into one. Qubits that got entangled should not be used.
+         * 
+         * @param[in] qubits A vector of pointers to qubits components.
+         * @return A reference number to newly generated qubits.
+         */
         QubitsRef entangle(std::vector<QubitsRef>& qubits);
+
+        /**
+         * @brief Mark a qubits component for full observation
+         * 
+         * @param[in] q Reference to Qubits component in the quantum circuit.
+         * @return new reference to Qubits component after observation. Previous q cannot be used again.
+         */
+        QubitsRef markForObservation(const QubitsRef q);
 
         /**
          * @brief Get the Qubits object by "QubitsRef" reference number
@@ -123,9 +140,18 @@ class QuantumCircuit {
 
         /**
          * @brief Run the quantum circuit. If some initial qubits are left unbound, then they will be assigned default state vector |0...0>.
+         * None of the observation results will be returned.
          * 
          */
-        void run();
+        void run() { runInternal(nullptr); }
+
+        /**
+         * @brief Run the quantum circuit. If some initial qubits are left unbound, then they will be assigned default state vector |0...0>.
+         * Observation results will be written on the provided unordered_map
+         * 
+         * @param[in] m Unordered map from reference number to Qubits component to ObservedState.
+         */
+        void run(std::unordered_map<QubitsRef, ObservedQubitState>& m) { runInternal(&m); }
 
 #ifdef SOLACE_DEV_DEBUG
             std::vector<QuantumCircuitComponent::Qubits> getQubitSets() const { return qubitSets; }
@@ -135,6 +161,7 @@ class QuantumCircuit {
         std::vector<QuantumCircuitComponent::Qubits> qubitSets {};
         std::vector<QuantumGate> gates {};
     
+        void runInternal(std::unordered_map<QubitsRef, ObservedQubitState>* m=nullptr);
 
 };
 
@@ -150,6 +177,25 @@ namespace QuantumCircuitComponent {
              * 
              */
             std::string label {};
+
+#ifdef SOLACE_DEV_DEBUG
+            std::vector<QuantumCircuit::QuantumGateRef> getAppliedGates() const { return appliedGates; }
+            QuantumCircuit::QubitsRef getEntangleTo() const { return std::get<QuantumCircuit::QubitsRef>(outLink); }
+            std::vector<QuantumCircuit::QubitsRef> getEntangledFrom() const { return std::get<std::vector<QuantumCircuit::QubitsRef>>(inLink); }
+#endif
+        private:
+            friend class Solace::QuantumCircuit;
+            /**
+             * @brief Construct a new Qubits component for circuit.
+             * 
+             * @param circuit Reference to Quantum circuit that this component is bound to.
+             * @param nQubit Number of qubits this component holds.
+             */
+            Qubits(QuantumCircuit& circuit, const size_t nQubit=1) : circuit(circuit), nQubit(nQubit) { 
+                if (nQubit == 0) {
+                    throw std::runtime_error("Cannot create Qubits component of 0 qubits.");
+                }
+            }
 
             /**
              * @brief Specify which quantum gate to apply to on the set of qubits. Will not compute until Quantum Circuit's run() method is called.
@@ -169,38 +215,18 @@ namespace QuantumCircuitComponent {
             /**
              * @brief Check if the Qubits component is one of the initial components in the circuit.
              * 
-             * @return true if it is an initial Qubits component (that is, not entangled from other qubits.)
+             * @return true if it is an initial Qubits component (that is, neither entangled from other qubits nor from being observed.)
              * @return false if it is made from entangling other Qubits components.
              */
-            bool isInitial() const { return entangledFrom.size() == 0; }
+            bool isInitial() const { return std::holds_alternative<std::monostate>(inLink); }
 
             /**
-             * @brief Check if the Qubits component is one of the last in the tree, that is, it does not have any other Qubits that are created by entangling it.
+             * @brief Check if the Qubits component is one of the last in the tree, that is, it does not have any other Qubits that are created from it.
              * 
              * @return true if it can be output.
              * @return false if it is used for creating another entangled qubits component. This component should not have been used.
              */
-            bool isTerminal() const { return entangleTo == 0; }
-
-
-#ifdef SOLACE_DEV_DEBUG
-            std::vector<QuantumCircuit::QuantumGateRef> getAppliedGates() const { return appliedGates; }
-            QuantumCircuit::QubitsRef getEntangleTo() const { return entangleTo; }
-            std::vector<QuantumCircuit::QubitsRef> getEntangledFrom() const { return entangledFrom; }
-#endif
-        private:
-            friend class Solace::QuantumCircuit;
-            /**
-             * @brief Construct a new Qubits component for circuit.
-             * 
-             * @param circuit Reference to Quantum circuit that this component is bound to.
-             * @param nQubit Number of qubits this component holds.
-             */
-            Qubits(QuantumCircuit& circuit, const size_t nQubit=1) : circuit(circuit), nQubit(nQubit) { 
-                if (nQubit == 0) {
-                    throw std::runtime_error("Cannot create Qubits component of 0 qubits.");
-                }
-            }
+            bool isTerminal() const { return std::holds_alternative<std::monostate>(outLink); }
 
             void bindQubits(const Solace::Qubits& q) { 
                 if (q.getNQubit() != nQubit) {
@@ -209,11 +235,33 @@ namespace QuantumCircuitComponent {
                 boundQubits = q;
             }
 
+
             QuantumCircuit& circuit;
             const size_t nQubit;
             std::vector<QuantumCircuit::QuantumGateRef> appliedGates {};
-            QuantumCircuit::QubitsRef entangleTo { 0 };     // 0 signifies no entangling to next node
-            std::vector<QuantumCircuit::QubitsRef> entangledFrom {};
+
+            struct PartialObservationScheme {
+                unsigned int bitmask;       // If bitmask = 0 or 0b11...1, then it will be forced to act like a full observation.
+                QuantumCircuit::QubitsRef observedTo;
+                QuantumCircuit::QubitsRef unobservedTo;
+            };
+
+            struct ObservedFrom {
+                QuantumCircuit::QubitsRef q;
+            };
+
+            struct UnobservedFrom {
+                QuantumCircuit::QubitsRef q;
+            };
+
+            using ObservationFromScheme = std::variant<ObservedFrom, UnobservedFrom>;
+            // Full or partial observation
+            using ObservationToScheme = std::variant<QuantumCircuit::QubitsRef, PartialObservationScheme>;
+
+            // None, entangledFrom, observedFrom
+            std::variant<std::monostate, std::vector<QuantumCircuit::QubitsRef>, ObservationFromScheme> inLink { std::monostate() };
+            // None, entangleTo, observe output to
+            std::variant<std::monostate, QuantumCircuit::QubitsRef, ObservationToScheme> outLink { std::monostate() };
 
             std::optional<Solace::Qubits> boundQubits { std::nullopt };
     };
