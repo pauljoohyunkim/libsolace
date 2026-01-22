@@ -37,3 +37,6 @@ Think of them as tutorials.
         * On my machine (on top of WSL2 at the moment) it seems like loading generally takes a little bit longer, possibly due to loading the values happening one entry at a time.
 
     * For durability of storage, you might consider saving it onto RAM disk. If your gate is sparse, definitely use sparse gate instead of a general gate.
+* [06_bell.cpp](06_bell.cpp)
+    * This example shows how to build a quantum circuit and run it later by binding qubits.
+    * Note that at the time of writing, partial measurement and VQE is not supported. (This may change later.)
