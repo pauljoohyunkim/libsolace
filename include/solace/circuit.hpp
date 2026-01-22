@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <utility>
 #include <optional>
 #include <filesystem>
 #include <unordered_map>
@@ -90,6 +91,17 @@ class QuantumCircuit {
          * @return new reference to Qubits component after observation. Previous q cannot be used again.
          */
         QubitsRef markForObservation(const QubitsRef q);
+
+        /**
+         * @brief Mark a qubits component for partial observation
+         * 
+         * @param[in] q Reference to Qubits component in the quantum circuit.
+         * @param[in] bitmask Bitmask for partial observation
+         * @return std::pair<QubitsRef, QubitsRef> new references to Qubits components after observation.
+         * The former representing the observed and the latter representing the unobserved.
+         * Previous q cannot be used again.
+         */
+        std::pair<QubitsRef, QubitsRef> markForObservation(const QubitsRef q, const unsigned int bitmask);
 
         /**
          * @brief Get the Qubits object by "QubitsRef" reference number

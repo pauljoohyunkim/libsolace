@@ -6,6 +6,16 @@
 #include "solace/utility.hpp"
 #include "solace/circuit.hpp"
 
+// Kernighan's algorithm
+static inline unsigned int countSetBits(unsigned int n) {
+    unsigned int count = 0;
+    while (n > 0) {
+        n &= (n - 1);
+        count++;
+    }
+    return count;
+}
+
 namespace Solace {
 
 QuantumCircuit::QuantumCircuit(const std::filesystem::path& filepath) {
@@ -173,6 +183,35 @@ QuantumCircuit::QubitsRef QuantumCircuit::markForObservation(const QubitsRef q) 
     qPOComponent.inLink = QuantumCircuitComponent::Qubits::ObservedFrom { q };
 
     return qPO;
+}
+
+std::pair<QuantumCircuit::QubitsRef, QuantumCircuit::QubitsRef> QuantumCircuit::markForObservation(const QubitsRef q, const unsigned int bitmask) {
+    auto& qComponent { qubitSets.at(q) };
+    if (!qComponent.isTerminal()) {
+        throw std::runtime_error("Marking a non-terminal Qubits component!");
+    }
+    if (bitmask >= (1U << qComponent.nQubit)) {
+        throw std::runtime_error("Invalid bitmask for the number of bits.");
+    }
+
+    // qO = q Observed
+    // qU = q Unobserved
+    const auto observedCount { countSetBits(bitmask) };
+    QubitsRef qO { createQubits(observedCount) };
+    QubitsRef qU { createQubits(qComponent.nQubit-observedCount) };
+    auto& qOComponent { qubitSets.at(qO) };
+    auto& qUComponent { qubitSets.at(qU) };
+
+    // Linkage
+    qComponent.outLink = QuantumCircuitComponent::Qubits::PartialObservationScheme {
+        bitmask,
+        qO,
+        qU
+    };
+    qOComponent.inLink = QuantumCircuitComponent::Qubits::ObservedFrom { q };
+    qUComponent.inLink = QuantumCircuitComponent::Qubits::UnobservedFrom { q };
+
+    return { qO, qU };
 }
 
 void QuantumCircuit::compile(const std::filesystem::path& filepath) const {
