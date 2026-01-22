@@ -300,7 +300,7 @@ void QuantumCircuit::setQubitLabel(const QubitsRef qRef, const std::string& labe
     qubitSets.at(qRef).label = labelStr;
 }
 
-void QuantumCircuit::run() {
+void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitState>* m) {
     // For debugging, this expression for GDB might be useful:
     // p *qComponent.boundQubits.value().stateVector.data()@(1<<qComponent.boundQubits.value().nQubit)
     std::vector<bool> exhausted(qubitSets.size(), false);
@@ -344,7 +344,11 @@ void QuantumCircuit::run() {
                 // Assert that dependency already has value, as it should have been visited before.
                 auto observedQubits { observedQComponent.boundQubits.value() };
                 // TODO: For now, throw away the measurement, though the state vector is now modified.
-                observedQubits.observe();
+                auto observation { observedQubits.observe() };
+                if (m) {
+                    // If given map, write to map.
+                    (*m)[i] = observation;
+                }
                 qComponent.bindQubits(observedQubits);
             } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::UnobservedFrom>(inLink)) {
                 // TODO: Implement this

@@ -5,6 +5,7 @@
 #include <string>
 #include <optional>
 #include <filesystem>
+#include <unordered_map>
 #include "solace.hpp"
 
 namespace Solace {
@@ -131,9 +132,18 @@ class QuantumCircuit {
 
         /**
          * @brief Run the quantum circuit. If some initial qubits are left unbound, then they will be assigned default state vector |0...0>.
+         * None of the observation results will be returned.
          * 
          */
-        void run();
+        void run() { runInternal(nullptr); }
+
+        /**
+         * @brief Run the quantum circuit. If some initial qubits are left unbound, then they will be assigned default state vector |0...0>.
+         * Observation results will be written on the provided unordered_map
+         * 
+         * @param[in] m Unordered map from reference number to Qubits component to ObservedState.
+         */
+        void run(std::unordered_map<QubitsRef, ObservedQubitState>& m) { runInternal(&m); }
 
 #ifdef SOLACE_DEV_DEBUG
             std::vector<QuantumCircuitComponent::Qubits> getQubitSets() const { return qubitSets; }
@@ -143,6 +153,7 @@ class QuantumCircuit {
         std::vector<QuantumCircuitComponent::Qubits> qubitSets {};
         std::vector<QuantumGate> gates {};
     
+        void runInternal(std::unordered_map<QubitsRef, ObservedQubitState>* m=nullptr);
 
 };
 
@@ -244,9 +255,6 @@ namespace QuantumCircuitComponent {
             std::variant<std::monostate, std::vector<QuantumCircuit::QubitsRef>, ObservationFromScheme> inLink { std::monostate() };
             // None, entangleTo, observe output to
             std::variant<std::monostate, QuantumCircuit::QubitsRef, ObservationToScheme> outLink { std::monostate() };
-
-            //QuantumCircuit::QubitsRef entangleTo { 0 };     // 0 signifies no entangling to next node
-            //std::vector<QuantumCircuit::QubitsRef> entangledFrom {};
 
             std::optional<Solace::Qubits> boundQubits { std::nullopt };
     };

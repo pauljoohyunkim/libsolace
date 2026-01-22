@@ -123,6 +123,11 @@ TEST(CircuitTest, RunBellStateCircuit) {
 
     qc.markForObservation(q01);
 
+    auto qc2 { qc };
+
     qc.run();
+
+    std::unordered_map<Solace::QuantumCircuit::QubitsRef, Solace::ObservedQubitState> observationResult {};
+    qc2.run(observationResult);
     
 }
