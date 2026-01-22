@@ -41,6 +41,7 @@ QuantumCircuit::QuantumCircuit(const std::filesystem::path& filepath) {
         auto index { createQubits(qsProto.nqubit()) };
         auto& q { qubitSets.at(index) };
         // appliedGates
+        q.appliedGates.reserve(qsProto.appliedgates_size());
         for (const auto gRef : qsProto.appliedgates()) {
             q.appliedGates.push_back(gRef);
         }
@@ -50,6 +51,7 @@ QuantumCircuit::QuantumCircuit(const std::filesystem::path& filepath) {
         } else if (qsProto.inlinkagetype() == Compiled::LinkageType::ENTANGLEMENT) {
             q.inLink = std::vector<QuantumCircuit::QubitsRef>();
             auto& entangledFrom { std::get<std::vector<QuantumCircuit::QubitsRef>>(q.inLink) };
+            entangledFrom.reserve(qsProto.entangledfrom().entangledfrom_size());
             for (const auto eFrom : qsProto.entangledfrom().entangledfrom()) {
                 entangledFrom.push_back(eFrom);
             }
@@ -140,6 +142,7 @@ QuantumCircuit::QubitsRef QuantumCircuit::entangle(std::vector<QubitsRef>& qubit
     const auto ref { static_cast<QuantumCircuit::QubitsRef>(qubitSets.size()) };
     Q.inLink = std::vector<QuantumCircuit::QubitsRef>();
     auto& entangledFrom { std::get<std::vector<QuantumCircuit::QubitsRef>>(Q.inLink) };
+    entangledFrom.reserve(qubits.size());
     for (const auto& qRef : qubits) {
         auto& q { qubitSets.at(qRef) };
         entangledFrom.push_back(qRef);
@@ -317,6 +320,7 @@ void QuantumCircuit::run() {
             // while computing entanglement.
             const auto& entangledFrom { std::get<std::vector<QuantumCircuit::QubitsRef>>(qComponent.inLink) };
             std::vector<Qubits> qbts {};
+            qbts.reserve(entangledFrom.size());
             for (auto j : entangledFrom) {
                 if (!qubitSets.at(j).boundQubits.has_value()) {
                     throw std::runtime_error("Dependency qubits is not calculated before.");
