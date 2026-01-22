@@ -332,7 +332,21 @@ void QuantumCircuit::run() {
             }
             auto entangled { Solace::entangle(qbts) };
             qComponent.bindQubits(entangled);
-        } 
+        } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationFromScheme>(qComponent.inLink)) {
+            auto& inLink { std::get<QuantumCircuitComponent::Qubits::ObservationFromScheme>(qComponent.inLink) };
+            if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservedFrom>(inLink)) {
+                auto& observedQComponent { qubitSets.at(std::get<QuantumCircuitComponent::Qubits::ObservedFrom>(inLink).q) };
+                // Extract (make copy) as Solace::Qubits, observe, then put the collapsed state vector into the new component
+                // Assert that dependency already has value, as it should have been visited before.
+                auto observedQubits { observedQComponent.boundQubits.value() };
+                // TODO: For now, throw away the measurement, though the state vector is now modified.
+                observedQubits.observe();
+                qComponent.bindQubits(observedQubits);
+            } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::UnobservedFrom>(inLink)) {
+                // TODO: Implement this
+                throw std::runtime_error("Partial observation is not yet supported!!!!");
+            }
+        }
 
         if (!qComponent.boundQubits.has_value()) {
             // Default bind |0...0>

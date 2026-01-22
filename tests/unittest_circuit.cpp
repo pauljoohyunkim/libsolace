@@ -121,6 +121,8 @@ TEST(CircuitTest, RunBellStateCircuit) {
     qc.bindQubit(q0, actualQubit);
     qc.bindQubit(q1, actualQubit);
 
+    qc.markForObservation(q01);
+
     qc.run();
     
 }
