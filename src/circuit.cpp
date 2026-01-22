@@ -350,11 +350,11 @@ void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitStat
     std::vector<bool> exhausted(qubitSets.size(), false);
 
     /*
-    Follow the following algorithm:
+    Follow the following steps (Note the inLink -> applying gates -> outLink)
     1. If working on qubits from entangled qubits, check if dependent qubits have been exhausted. (Error checking)
-    2. If outLink is set to full observation or partial observation, observe the qubit then assign the values at out qubits. The for loop will eventually parse it as normal
+    2. If there are nonexhausted qubit, apply the gates piled up mark that qubits as exhuasted.
+    3. If outLink is set to full observation or partial observation, observe the qubit then assign the values at out qubits. The for loop will eventually parse it as normal
     (as it will have inLink set to observation)
-    3. If there are nonexhausted qubit, apply the gates piled up mark that qubits as exhuasted.
     */
     for (QubitsRef i = 0; i < qubitSets.size(); i++) {
         auto& qComponent { qubitSets.at(i) };
@@ -399,6 +399,7 @@ void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitStat
         }
 
         // Check if marked for observation (outLink)
+        // TODO: Check if inLink of observationTo and unobservationTo are correct.
         if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationToScheme>(qComponent.outLink)) {
             auto& outLink { std::get<QuantumCircuitComponent::Qubits::ObservationToScheme>(qComponent.outLink) };
             // For both full observation and partial observation, take the current Qubits, observe, and assign new Qubits to "observeTo" (and "unobserveTo").
@@ -414,7 +415,21 @@ void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitStat
 
             } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::PartialObservationScheme>(outLink)) {
                 // Partial observation
-                throw std::runtime_error("Not yet supported!");
+                auto partialObservationScheme { std::get<QuantumCircuitComponent::Qubits::PartialObservationScheme>(outLink) };
+                auto qubitsForObservation { qComponent.boundQubits.value() };
+                auto pObservationResult { qubitsForObservation.observe(partialObservationScheme.bitmask) };
+                
+                QubitsRef observedTo { partialObservationScheme.observedTo };
+                QubitsRef unobservedTo { partialObservationScheme.unobservedTo };
+
+                if (m) {
+                    (*m)[observedTo] = pObservationResult.first;
+                }
+                qubitSets.at(observedTo).bindQubits(qubitsForObservation);
+                qubitSets.at(unobservedTo).bindQubits(pObservationResult.second.value());
+            } else {
+                // Not possible
+                throw std::runtime_error("Cannot determine if full or partial observation.");
             }
         }
         
