@@ -119,6 +119,10 @@ void QuantumCircuit::applyQuantumGateToQubits(const QuantumGateRef g, const Qubi
     qubits.applyQuantumGate(g);
 }
 
+QuantumCircuit::QubitsRef QuantumCircuit::entangle(std::vector<QubitsRef>&& qubits) {
+    return entangle(qubits);
+}
+
 QuantumCircuit::QubitsRef QuantumCircuit::entangle(std::vector<QubitsRef>& qubits) {
     size_t nQubit { 0 };
     // Find the total number of qubits, while checking if any of them have already been entangled.
@@ -151,6 +155,7 @@ QuantumCircuit::QubitsRef QuantumCircuit::entangle(std::vector<QubitsRef>& qubit
     qubitSets.push_back(Q);
 
     return ref;
+
 }
 
 QuantumCircuit::QubitsRef QuantumCircuit::markForObservation(const QubitsRef q) {

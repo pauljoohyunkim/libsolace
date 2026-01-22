@@ -73,6 +73,14 @@ class QuantumCircuit {
          * @param[in] qubits A vector of pointers to qubits components.
          * @return A reference number to newly generated qubits.
          */
+        QubitsRef entangle(std::vector<QubitsRef>&& qubits);
+
+        /**
+         * @brief Entangle multiple Qubits component into one. Qubits that got entangled should not be used.
+         * 
+         * @param[in] qubits A vector of pointers to qubits components.
+         * @return A reference number to newly generated qubits.
+         */
         QubitsRef entangle(std::vector<QubitsRef>& qubits);
 
         /**
