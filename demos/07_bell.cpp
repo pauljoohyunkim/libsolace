@@ -1,6 +1,6 @@
 /**
  * This example introduces
- * 1. How to create create a circuit using QuantumCircuit API and run the circuit.
+ * 1. How to create a circuit using QuantumCircuit API and run the circuit.
  */
 
  #include "solace/solace.hpp"
@@ -52,7 +52,7 @@
 
     // For the sake of demonstration, I will manually bind the first qubit with |0> and rely on automatic binding on second qubit.
     // Essentially, q0 = |0> = q1
-    qc.bindQubit(q0, Solace::Qubits(1));
+    qc.bindQubits(q0, Solace::Qubits(1));
     // Skip binding q1 for demonstration. (Even though at runtime, it will be bound to default state vector.)
 
     // An ordered map to store result.
