@@ -39,6 +39,8 @@ Think of them as tutorials.
     * For durability of storage, you might consider saving it onto RAM disk. If your gate is sparse, definitely use sparse gate instead of a general gate.
 * [06_wstate.cpp](06_wstate.cpp)
     * This example shows how partial observation is done.
-* [07_bell.cpp](07_bell.cpp)
+* [07_bell_circuit.cpp](07_bell_circuit.cpp)
     * This example shows how to build a quantum circuit and run it later by binding qubits.
     * Note that at the time of writing, VQE is not supported. (This may change later.)
+* [08_wstate_circuit.cpp](08_wstate_circuit.cpp)
+    * This example is another circuit, but with partial observation.
