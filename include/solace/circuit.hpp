@@ -161,6 +161,8 @@ class QuantumCircuit {
          * @brief Check the QuantumCircuit object for (trivial) structural errors.
          * Users might not need this, but this is provided in case there is some sort of memory corruption.
          * Will throw if it detects error.
+         * Essentially provides "compile" level check at application level.
+         * This check is done automatically at run(), compile(), and loading from file.
          * 
          */
         void check() const;

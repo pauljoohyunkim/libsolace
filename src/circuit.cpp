@@ -104,6 +104,8 @@ QuantumCircuit::QuantumCircuit(const std::filesystem::path& filepath) {
         q.label = qsProto.label();
         #undef q
     }
+
+    check();
 }
 
 QuantumCircuit::QubitsRef QuantumCircuit::createQubits(const size_t nQubit) {
@@ -225,6 +227,8 @@ std::pair<QuantumCircuit::QubitsRef, QuantumCircuit::QubitsRef> QuantumCircuit::
 }
 
 void QuantumCircuit::compile(const std::filesystem::path& filepath) const {
+    check();
+
     std::ofstream outfile { filepath, std::ios::binary };
     Compiled::QuantumObject quantumObj;
 
@@ -423,7 +427,7 @@ void QuantumCircuit::check() const {
                     const auto targetQRef { std::get<QubitsRef>(observationToScheme) };
                     const auto& targetQComponent { qubitSets.at(targetQRef) };
 
-                    // Check if inLink of the target is full observation.
+                    // Check if inLink of the target is observation.
                     if (!std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationFromScheme>(targetQComponent.inLink)) {
                         throw std::runtime_error("InLink of target is not observation");
                     }
@@ -437,14 +441,61 @@ void QuantumCircuit::check() const {
                     if (targetObservedFromQRef != currentQRef) {
                         throw std::runtime_error("Observation target does not point back to dependency.");
                     }
+                    // Check qubits
+                    if (qComponent.nQubit != targetQComponent.nQubit) {
+                        throw std::runtime_error("Observation target does not have the same nQubit as dependency.");
+                    }
                 } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::PartialObservationScheme>(observationToScheme)) {
                     // Partial observation
+                    const auto& partialObservationScheme { std::get<QuantumCircuitComponent::Qubits::PartialObservationScheme>(observationToScheme) };
 
+                    // Check bitmask
+                    if (partialObservationScheme.bitmask >= (1U << qComponent.nQubit)) {
+                        throw std::runtime_error("Bitmask is invalid for current Qubits component.");
+                    }
+                    // Check if bitmask = 0 or bitmask = 0b11...1, then it should have been full observation.
+                    if (partialObservationScheme.bitmask == 0 || partialObservationScheme.bitmask == ((1U << qComponent.nQubit)-1)) {
+                        throw std::runtime_error("Bitmask is given as either 0 or 0b11...1, which should have been encoded as full observation");
+                    }
+
+                    const auto& observedToQComponent { qubitSets.at(partialObservationScheme.observedTo) };
+                    const auto& unobservedToQComponent { qubitSets.at(partialObservationScheme.unobservedTo) };
+                    // Check if inLink of observedTo is observation.
+                    if (!std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationFromScheme>(observedToQComponent.inLink)) {
+                        throw std::runtime_error("InLink of observedTo is not observation");
+                    }
+                    const auto& observedToObservationFrom { std::get<QuantumCircuitComponent::Qubits::ObservationFromScheme>(observedToQComponent.inLink) };
+                    // Check if inLink of observedTo is observedFrom.
+                    if (!std::holds_alternative<QuantumCircuitComponent::Qubits::ObservedFrom>(observedToObservationFrom)) {
+                        throw std::runtime_error("InLink of observedTo is not observedFrom");
+                    }
+                    // Check if observedTo points back to dependency.
+                    if (std::get<QuantumCircuitComponent::Qubits::ObservedFrom>(observedToObservationFrom).q != currentQRef) {
+                        throw std::runtime_error("ObservedTo does not point back to dependency.");
+                    }
+
+                    // Check if inLink of unobservedTo is observation.
+                    if (!std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationFromScheme>(unobservedToQComponent.inLink)) {
+                        throw std::runtime_error("InLink of unobserved is not observation");
+                    }
+                    const auto& unobservedToUnobservationFrom { std::get<QuantumCircuitComponent::Qubits::ObservationFromScheme>(unobservedToQComponent.inLink) };
+                    // Check if inLink of unobservedTo is observedFrom.
+                    if (!std::holds_alternative<QuantumCircuitComponent::Qubits::UnobservedFrom>(unobservedToUnobservationFrom)) {
+                        throw std::runtime_error("InLink of unobservedTo is not unobservedFrom");
+                    }
+                    // Check if unobservedTo points back to dependency.
+                    if (std::get<QuantumCircuitComponent::Qubits::UnobservedFrom>(unobservedToUnobservationFrom).q != currentQRef) {
+                        throw std::runtime_error("UnobservedTo does not point back to dependency.");
+                    }
+                    // Check nQubit
+                    if (qComponent.nQubit != observedToQComponent.nQubit + unobservedToQComponent.nQubit) {
+                        throw std::runtime_error("Partial measurement asserts that observed nQubit and unobserved nQubit to sum to original nQubit.");
+                    }
+                    
                 } else {
                     // Error
                     throw std::runtime_error("Observation type is invalid.");
                 }
-                // TODO: Check nQubits
             }
         }
 
