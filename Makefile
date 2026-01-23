@@ -5,7 +5,7 @@ INCLUDE=include
 EIGEN=/usr/include/eigen3
 #EIGEN=C:/msys64/mingw64/include/eigen3
 OPTIMIZATION?=-O3
-override CXXFLAGS+=-g $(OPTIMIZATION) -Wall -I$(INCLUDE) -I$(EIGEN) `pkg-config --cflags protobuf`
+override CXXFLAGS+=-g $(OPTIMIZATION) -Wall -pedantic -I$(INCLUDE) -I$(EIGEN) `pkg-config --cflags protobuf`
 LDFLAGS=`pkg-config --libs protobuf`
 SRC=src
 OBJ=obj
@@ -19,23 +19,30 @@ PROTO=proto
 
 OBJS=$(OBJ)/solace_proto.o \
 	 $(OBJ)/libsolace.o \
-	 $(OBJ)/utility.o
+	 $(OBJ)/utility.o \
+	 $(OBJ)/circuit.o
 
 DBG_OBJS=$(OBJ)/solace_proto.o \
 		 $(OBJ)/unittest.o \
 		 $(OBJ)/libsolace_dbg.o \
 		 $(OBJ)/utility_dbg.o \
+		 $(OBJ)/circuit_dbg.o \
 		 $(OBJ)/unittest_qubit.o \
 		 $(OBJ)/unittest_gate.o \
 		 $(OBJ)/unittest_common_gates.o \
 		 $(OBJ)/unittest_utility.o \
-		 $(OBJ)/unittest_compilation.o
+		 $(OBJ)/unittest_compilation.o \
+		 $(OBJ)/unittest_circuit.o
 
 DEMO_BINS=$(DEMOS)/01_hadamard.bin \
 		  $(DEMOS)/02_hadamard2.bin \
 		  $(DEMOS)/03_hadamard3.bin \
 		  $(DEMOS)/04_grover.bin \
-		  $(DEMOS)/05_grover2.bin
+		  $(DEMOS)/05_grover2.bin \
+		  $(DEMOS)/06_wstate.bin \
+		  $(DEMOS)/07_bell_circuit.bin \
+		  $(DEMOS)/08_wstate_circuit.bin \
+		  $(DEMOS)/09_grover_circuit.bin
 
 objs: $(OBJS)
 
@@ -79,7 +86,7 @@ $(SRC)/solace.pb.cc $(INCLUDE)/solace.pb.h &: $(PROTO)/solace.proto
 	mv $(SRC)/solace.pb.h $(INCLUDE)/solace.pb.h
 
 
-$(TESTS)/unittest: CXXFLAGS += -DBE_A_QUANTUM_CHEATER `pkg-config --cflags gtest`
+$(TESTS)/unittest: CXXFLAGS += -DBE_A_QUANTUM_CHEATER -DSOLACE_DEV_DEBUG `pkg-config --cflags gtest`
 $(TESTS)/unittest: $(DBG_OBJS)
 	$(CXX) $(CXXFLAGS) $^ -o $@ `pkg-config --libs gtest` $(LDFLAGS)
 
@@ -97,5 +104,5 @@ clean:
 	$(RM) -r $(DOCS)/html
 	$(RM) $(DEMOS)/*.bin
 	$(RM) $(PROTOFILES)
-	$(RM) *.qbit *.qgate
+	$(RM) *.qbit *.qgate *.qc
 

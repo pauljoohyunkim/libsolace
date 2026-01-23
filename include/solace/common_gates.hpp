@@ -96,10 +96,8 @@ namespace Solace::Gate {
                 const std::complex<double> v { 1/std::sqrt(2), 0.0 };
                 transformer = Solace::QuantumGateTransformer(2,2);
                 auto& t { std::get<Solace::QuantumGateTransformer>(transformer) };
-                t(0, 0) = v;
-                t(0, 1) = v;
-                t(1, 0) = v;
-                t(1, 1) = -v;
+                t << v, v,
+                     v, -v;
 
                 /*
                 // You could define the column vectors that each state maps to as well.
