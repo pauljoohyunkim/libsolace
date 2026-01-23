@@ -49,7 +49,7 @@ QuantumCircuit::QuantumCircuit(const std::filesystem::path& filepath) {
     for (const auto& qsProto : qcProto.qubitset()) {
         // nQubit
         auto index { createQubits(qsProto.nqubit()) };
-        auto& q { qubitSets.at(index) };
+        #define q (qubitSets.at(index))
         // appliedGates
         q.appliedGates.reserve(qsProto.appliedgates_size());
         for (const auto gRef : qsProto.appliedgates()) {
@@ -102,6 +102,7 @@ QuantumCircuit::QuantumCircuit(const std::filesystem::path& filepath) {
         
         //label
         q.label = qsProto.label();
+        #undef q
     }
 }
 
@@ -138,7 +139,7 @@ QuantumCircuit::QubitsRef QuantumCircuit::entangle(std::vector<QubitsRef>& qubit
     // Find the total number of qubits, while checking if any of them have already been entangled.
     {
         std::unordered_set<QuantumCircuit::QubitsRef> seenRefs {};
-        for (const auto& qRef : qubits) {
+        for (const auto qRef : qubits) {
             if (seenRefs.count(qRef)) {
                 throw std::runtime_error("Duplicate Qubits component detected.");
             }
@@ -169,24 +170,29 @@ QuantumCircuit::QubitsRef QuantumCircuit::entangle(std::vector<QubitsRef>& qubit
 }
 
 QuantumCircuit::QubitsRef QuantumCircuit::markForObservation(const QubitsRef q) {
-    auto& qComponent { qubitSets.at(q) };
+    #define qComponent (qubitSets.at(q))
+
     if (!qComponent.isTerminal()) {
         throw std::runtime_error("Marking a non-terminal Qubits component!");
     }
 
     // qPO = q Post-Observation
     QubitsRef qPO { createQubits(qComponent.nQubit) };
-    auto& qPOComponent { qubitSets.at(qPO) };
+    #define qPOComponent (qubitSets.at(qPO))
 
     // Linkage
     qComponent.outLink = QuantumCircuitComponent::Qubits::ObservationToScheme(qPO);
     qPOComponent.inLink = QuantumCircuitComponent::Qubits::ObservedFrom { q };
 
     return qPO;
+
+    #undef qComponent
+    #undef qPOComponent
 }
 
 std::pair<QuantumCircuit::QubitsRef, QuantumCircuit::QubitsRef> QuantumCircuit::markForObservation(const QubitsRef q, const unsigned int bitmask) {
-    auto& qComponent { qubitSets.at(q) };
+    #define qComponent (qubitSets.at(q))
+
     if (!qComponent.isTerminal()) {
         throw std::runtime_error("Marking a non-terminal Qubits component!");
     }
@@ -199,19 +205,23 @@ std::pair<QuantumCircuit::QubitsRef, QuantumCircuit::QubitsRef> QuantumCircuit::
     const auto observedCount { countSetBits(bitmask) };
     QubitsRef qO { createQubits(observedCount) };
     QubitsRef qU { createQubits(qComponent.nQubit-observedCount) };
-    auto& qOComponent { qubitSets.at(qO) };
-    auto& qUComponent { qubitSets.at(qU) };
+    #define qOComponent (qubitSets.at(qO))
+    #define qUComponent (qubitSets.at(qU))
 
     // Linkage
-    qComponent.outLink = QuantumCircuitComponent::Qubits::PartialObservationScheme {
-        bitmask,
-        qO,
-        qU
-    };
+    qComponent.outLink = QuantumCircuitComponent::Qubits::ObservationToScheme{
+        QuantumCircuitComponent::Qubits::PartialObservationScheme{
+            bitmask,
+            qO,
+            qU}};
     qOComponent.inLink = QuantumCircuitComponent::Qubits::ObservedFrom { q };
     qUComponent.inLink = QuantumCircuitComponent::Qubits::UnobservedFrom { q };
 
     return { qO, qU };
+
+    #undef qComponent
+    #undef qOComponent
+    #undef qUComponent
 }
 
 void QuantumCircuit::compile(const std::filesystem::path& filepath) const {

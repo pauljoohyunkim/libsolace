@@ -131,3 +131,31 @@ TEST(CircuitTest, RunBellStateCircuit) {
     qc2.run(observationResult);
     
 }
+
+TEST(CircuitTest, PartialObserve) {
+    // Create a simple circuit of simply partial-observing the first qubit. Will be reading W-state
+
+    Solace::QuantumCircuit qc {};
+
+    // W state has three qubits.
+    auto q0 { qc.createQubits(3) };
+
+    // Partial read the first qubit.
+    auto q0_read { qc.markForObservation(q0, 0b100) };
+
+    // End of circuit.
+    // Binding W state.
+    Solace::StateVector wSv(8);
+    wSv << 0,
+           1,
+           1,
+           0,
+           1,
+           0,
+           0,
+           0;
+    Solace::Qubits w { wSv };
+    qc.bindQubit(q0, w);
+
+    qc.run();
+}
