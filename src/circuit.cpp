@@ -6,6 +6,16 @@
 #include "solace/utility.hpp"
 #include "solace/circuit.hpp"
 
+// Kernighan's algorithm
+static inline unsigned int countSetBits(unsigned int n) {
+    unsigned int count = 0;
+    while (n > 0) {
+        n &= (n - 1);
+        count++;
+    }
+    return count;
+}
+
 namespace Solace {
 
 QuantumCircuit::QuantumCircuit(const std::filesystem::path& filepath) {
@@ -39,7 +49,7 @@ QuantumCircuit::QuantumCircuit(const std::filesystem::path& filepath) {
     for (const auto& qsProto : qcProto.qubitset()) {
         // nQubit
         auto index { createQubits(qsProto.nqubit()) };
-        auto& q { qubitSets.at(index) };
+        #define q (qubitSets.at(index))
         // appliedGates
         q.appliedGates.reserve(qsProto.appliedgates_size());
         for (const auto gRef : qsProto.appliedgates()) {
@@ -92,6 +102,7 @@ QuantumCircuit::QuantumCircuit(const std::filesystem::path& filepath) {
         
         //label
         q.label = qsProto.label();
+        #undef q
     }
 }
 
@@ -128,7 +139,7 @@ QuantumCircuit::QubitsRef QuantumCircuit::entangle(std::vector<QubitsRef>& qubit
     // Find the total number of qubits, while checking if any of them have already been entangled.
     {
         std::unordered_set<QuantumCircuit::QubitsRef> seenRefs {};
-        for (const auto& qRef : qubits) {
+        for (const auto qRef : qubits) {
             if (seenRefs.count(qRef)) {
                 throw std::runtime_error("Duplicate Qubits component detected.");
             }
@@ -159,20 +170,58 @@ QuantumCircuit::QubitsRef QuantumCircuit::entangle(std::vector<QubitsRef>& qubit
 }
 
 QuantumCircuit::QubitsRef QuantumCircuit::markForObservation(const QubitsRef q) {
-    auto& qComponent { qubitSets.at(q) };
+    #define qComponent (qubitSets.at(q))
+
     if (!qComponent.isTerminal()) {
         throw std::runtime_error("Marking a non-terminal Qubits component!");
     }
 
     // qPO = q Post-Observation
     QubitsRef qPO { createQubits(qComponent.nQubit) };
-    auto& qPOComponent { qubitSets.at(qPO) };
+    #define qPOComponent (qubitSets.at(qPO))
 
     // Linkage
     qComponent.outLink = QuantumCircuitComponent::Qubits::ObservationToScheme(qPO);
     qPOComponent.inLink = QuantumCircuitComponent::Qubits::ObservedFrom { q };
 
     return qPO;
+
+    #undef qComponent
+    #undef qPOComponent
+}
+
+std::pair<QuantumCircuit::QubitsRef, QuantumCircuit::QubitsRef> QuantumCircuit::markForObservation(const QubitsRef q, const unsigned int bitmask) {
+    #define qComponent (qubitSets.at(q))
+
+    if (!qComponent.isTerminal()) {
+        throw std::runtime_error("Marking a non-terminal Qubits component!");
+    }
+    if (bitmask >= (1U << qComponent.nQubit)) {
+        throw std::runtime_error("Invalid bitmask for the number of bits.");
+    }
+
+    // qO = q Observed
+    // qU = q Unobserved
+    const auto observedCount { countSetBits(bitmask) };
+    QubitsRef qO { createQubits(observedCount) };
+    QubitsRef qU { createQubits(qComponent.nQubit-observedCount) };
+    #define qOComponent (qubitSets.at(qO))
+    #define qUComponent (qubitSets.at(qU))
+
+    // Linkage
+    qComponent.outLink = QuantumCircuitComponent::Qubits::ObservationToScheme{
+        QuantumCircuitComponent::Qubits::PartialObservationScheme{
+            bitmask,
+            qO,
+            qU}};
+    qOComponent.inLink = QuantumCircuitComponent::Qubits::ObservedFrom { q };
+    qUComponent.inLink = QuantumCircuitComponent::Qubits::UnobservedFrom { q };
+
+    return { qO, qU };
+
+    #undef qComponent
+    #undef qOComponent
+    #undef qUComponent
 }
 
 void QuantumCircuit::compile(const std::filesystem::path& filepath) const {
@@ -288,7 +337,7 @@ void QuantumCircuit::compile(const std::filesystem::path& filepath) const {
     outfile << quantumObj.SerializeAsString();
 }
 
-void QuantumCircuit::bindQubit(const QubitsRef qRef, const Qubits& qubits) {
+void QuantumCircuit::bindQubits(const QubitsRef qRef, const Qubits& qubits) {
     if (qRef >= qubitSets.size()) {
         throw std::runtime_error("Qubits component of such reference number does not exist.");
     }
@@ -297,6 +346,12 @@ void QuantumCircuit::bindQubit(const QubitsRef qRef, const Qubits& qubits) {
         throw std::runtime_error("Cannot bind to a non-initial Qubits component.");
     }
     qComponent.bindQubits(qubits);
+}
+
+void QuantumCircuit::unbindAllQubits() {
+    for (auto& q : qubitSets) {
+        q.boundQubits = std::nullopt;
+    }
 }
 
 void QuantumCircuit::setQubitLabel(const QubitsRef qRef, const std::string& labelStr) {
@@ -311,14 +366,16 @@ void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitStat
     std::vector<bool> exhausted(qubitSets.size(), false);
 
     /*
-    Follow the following algorithm:
+    Follow the following steps (Note the inLink -> applying gates -> outLink)
     1. If working on qubits from entangled qubits, check if dependent qubits have been exhausted. (Error checking)
     2. If there are nonexhausted qubit, apply the gates piled up mark that qubits as exhuasted.
+    3. If outLink is set to full observation or partial observation, observe the qubit then assign the values at out qubits. The for loop will eventually parse it as normal
+    (as it will have inLink set to observation)
     */
     for (QubitsRef i = 0; i < qubitSets.size(); i++) {
         auto& qComponent { qubitSets.at(i) };
 
-        // Check if entangled
+        // Check if entangled (inLink)
         if (std::holds_alternative<std::vector<QuantumCircuit::QubitsRef>>(qComponent.inLink)) {
             // If entangled,
             // Check if dependencies all have been bound,
@@ -341,7 +398,59 @@ void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitStat
             }
             auto entangled { Solace::entangle(qbts) };
             qComponent.bindQubits(entangled);
-        } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationFromScheme>(qComponent.inLink)) {
+        }
+
+        if (!qComponent.boundQubits.has_value()) {
+            // Default bind |0...0>
+            Qubits q { qComponent.nQubit };
+            qComponent.bindQubits(q);
+        }
+
+        // Apply gates
+        for (auto gRef : qComponent.appliedGates) {
+            Qubits q { qComponent.boundQubits.value() };
+            //Qubits Gq { gates.at(gRef) * q };
+            gates.at(gRef).apply(q);
+            qComponent.bindQubits(q);
+        }
+
+        // Check if marked for observation (outLink)
+        // TODO: Check if inLink of observationTo and unobservationTo are correct.
+        if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationToScheme>(qComponent.outLink)) {
+            auto& outLink { std::get<QuantumCircuitComponent::Qubits::ObservationToScheme>(qComponent.outLink) };
+            // For both full observation and partial observation, take the current Qubits, observe, and assign new Qubits to "observeTo" (and "unobserveTo").
+            if (std::holds_alternative<QubitsRef>(outLink)) {
+                QubitsRef observedQuibitComponentRef { std::get<QubitsRef>(outLink) };
+                // Full observation
+                auto qubitsForObservation { qComponent.boundQubits.value() };
+                auto observation { qubitsForObservation.observe() };
+                if (m) {
+                    (*m)[observedQuibitComponentRef] = observation;
+                }
+                qubitSets.at(observedQuibitComponentRef).bindQubits(qubitsForObservation);
+
+            } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::PartialObservationScheme>(outLink)) {
+                // Partial observation
+                auto partialObservationScheme { std::get<QuantumCircuitComponent::Qubits::PartialObservationScheme>(outLink) };
+                auto qubitsForObservation { qComponent.boundQubits.value() };
+                auto pObservationResult { qubitsForObservation.observe(partialObservationScheme.bitmask) };
+                
+                QubitsRef observedTo { partialObservationScheme.observedTo };
+                QubitsRef unobservedTo { partialObservationScheme.unobservedTo };
+
+                if (m) {
+                    (*m)[observedTo] = pObservationResult.first;
+                }
+                qubitSets.at(observedTo).bindQubits(qubitsForObservation);
+                qubitSets.at(unobservedTo).bindQubits(pObservationResult.second.value());
+            } else {
+                // Not possible
+                throw std::runtime_error("Cannot determine if full or partial observation.");
+            }
+        }
+        
+        /*
+        if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationFromScheme>(qComponent.inLink)) {
             auto& inLink { std::get<QuantumCircuitComponent::Qubits::ObservationFromScheme>(qComponent.inLink) };
             if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservedFrom>(inLink)) {
                 auto& observedQComponent { qubitSets.at(std::get<QuantumCircuitComponent::Qubits::ObservedFrom>(inLink).q) };
@@ -360,20 +469,8 @@ void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitStat
                 throw std::runtime_error("Partial observation is not yet supported!!!!");
             }
         }
+        */
 
-        if (!qComponent.boundQubits.has_value()) {
-            // Default bind |0...0>
-            Qubits q { qComponent.nQubit };
-            qComponent.bindQubits(q);
-        }
-
-        // Apply gates
-        for (auto gRef : qComponent.appliedGates) {
-            Qubits q { qComponent.boundQubits.value() };
-            //Qubits Gq { gates.at(gRef) * q };
-            gates.at(gRef).apply(q);
-            qComponent.bindQubits(q);
-        }
         
         // Mark as exhausted.
         exhausted.at(i) = true;

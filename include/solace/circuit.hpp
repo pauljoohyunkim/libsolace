@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <utility>
 #include <optional>
 #include <filesystem>
 #include <unordered_map>
@@ -92,6 +93,17 @@ class QuantumCircuit {
         QubitsRef markForObservation(const QubitsRef q);
 
         /**
+         * @brief Mark a qubits component for partial observation
+         * 
+         * @param[in] q Reference to Qubits component in the quantum circuit.
+         * @param[in] bitmask Bitmask for partial observation
+         * @return std::pair<QubitsRef, QubitsRef> new references to Qubits components after observation.
+         * The former representing the observed and the latter representing the unobserved.
+         * Previous q cannot be used again.
+         */
+        std::pair<QubitsRef, QubitsRef> markForObservation(const QubitsRef q, const unsigned int bitmask);
+
+        /**
          * @brief Get the Qubits object by "QubitsRef" reference number
          * 
          * @param[in] q QubitsRef number for referring to previously created Qubits component.
@@ -120,7 +132,14 @@ class QuantumCircuit {
          * @param[in] qRef reference number to Qubits circuit component
          * @param[in] qubits Solace::Qubits from the core library.
          */
-        void bindQubit(const QubitsRef qRef, const Qubits& qubits);
+        void bindQubits(const QubitsRef qRef, const Qubits& qubits);
+
+        /**
+         * @brief Unbind all Qubits circuit component from Solace::Qubits
+         * Essentially, resetting for next run.
+         * 
+         */
+        void unbindAllQubits();
 
         /**
          * @brief Set the label for Qubits component.
