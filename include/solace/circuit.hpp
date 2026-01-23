@@ -132,7 +132,14 @@ class QuantumCircuit {
          * @param[in] qRef reference number to Qubits circuit component
          * @param[in] qubits Solace::Qubits from the core library.
          */
-        void bindQubit(const QubitsRef qRef, const Qubits& qubits);
+        void bindQubits(const QubitsRef qRef, const Qubits& qubits);
+
+        /**
+         * @brief Unbind all Qubits circuit component from Solace::Qubits
+         * Essentially, resetting for next run.
+         * 
+         */
+        void unbindAllQubits();
 
         /**
          * @brief Set the label for Qubits component.

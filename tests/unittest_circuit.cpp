@@ -118,8 +118,8 @@ TEST(CircuitTest, RunBellStateCircuit) {
     // Now bind q0 and q1 with newly created Solace::Qubits
     Solace::Qubits actualQubit {};
     
-    qc.bindQubit(q0, actualQubit);
-    qc.bindQubit(q1, actualQubit);
+    qc.bindQubits(q0, actualQubit);
+    qc.bindQubits(q1, actualQubit);
 
     qc.markForObservation(q01);
 
@@ -155,7 +155,17 @@ TEST(CircuitTest, PartialObserve) {
            0,
            0;
     Solace::Qubits w { wSv };
-    qc.bindQubit(q0, w);
 
-    qc.run();
+    // Testing 100 times. The result must be either 0 or 4
+    for (auto i = 0; i < 100; i++) {
+        qc.bindQubits(q0, w);
+
+        std::unordered_map<Solace::QuantumCircuit::QubitsRef, Solace::ObservedQubitState> observationResult {};
+
+        qc.run(observationResult);
+
+        ASSERT_TRUE(observationResult[q0_read.first] == 0 || observationResult[q0_read.first] == 4);
+        // Unbind for the next run
+        qc.unbindAllQubits();
+    }
 }
