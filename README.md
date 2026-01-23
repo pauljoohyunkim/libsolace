@@ -150,9 +150,9 @@ I, in fact, highly welcome fixes for bugs that *arise from my erroneous understa
 after all, I did not get a doctorate in quantum computing or anything.
 
 ### TODO
-* Implement a class (such as "QuantumSystem" or "QuantumComputer") such that it can generate the quantum circuit diagram if built using its API.
+* Add functionality to QuantumCircuit so that it can generate the quantum circuit diagram if built using its API.
 * Implement command line tools for interacting with compiled quantum objects (entangle, merge, inspect, etc.)
-* Write a Tex document outlining the basic principles of how quantum computing works and how this library emulates it.
 * From floating point error, if too many gates are combined (either by matrix multiplication or tensor product), the constructor might start flagging as an invalid gate. Fix this by QR factorization if this becomes an actual problem.
     * Note that this is not an issue when applying those gates to qubit sets as the state vectors are normalized at every application.
-
+* Currently, quite many of the unit tests are trivial compilation checks.
+Take a few days to create more in-depth unit tests.
