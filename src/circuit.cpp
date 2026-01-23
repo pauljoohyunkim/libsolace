@@ -526,7 +526,6 @@ void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitStat
             // If entangled,
             // Check if dependencies all have been bound,
             // while computing entanglement.
-            // TODO: This check must be done after "default binding" of the initial qubits component!!!!!
             const auto& entangledFrom { std::get<std::vector<QuantumCircuit::QubitsRef>>(qComponent.inLink) };
             std::vector<Qubits> qbts {};
             qbts.reserve(entangledFrom.size());
@@ -548,9 +547,13 @@ void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitStat
         }
 
         if (!qComponent.boundQubits.has_value()) {
-            // Default bind |0...0>
-            Qubits q { qComponent.nQubit };
-            qComponent.bindQubits(q);
+            if (qComponent.isInitial()) {
+                // Default bind |0...0>
+                Qubits q { qComponent.nQubit };
+                qComponent.bindQubits(q);
+            } else {
+                throw std::runtime_error("Runtime error: an unbound Qubits component encountered.");
+            }
         }
 
         // Apply gates
@@ -562,7 +565,6 @@ void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitStat
         }
 
         // Check if marked for observation (outLink)
-        // TODO: Check if inLink of observationTo and unobservationTo are correct.
         if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationToScheme>(qComponent.outLink)) {
             auto& outLink { std::get<QuantumCircuitComponent::Qubits::ObservationToScheme>(qComponent.outLink) };
             // For both full observation and partial observation, take the current Qubits, observe, and assign new Qubits to "observeTo" (and "unobserveTo").
@@ -595,29 +597,6 @@ void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitStat
                 throw std::runtime_error("Cannot determine if full or partial observation.");
             }
         }
-        
-        /*
-        if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationFromScheme>(qComponent.inLink)) {
-            auto& inLink { std::get<QuantumCircuitComponent::Qubits::ObservationFromScheme>(qComponent.inLink) };
-            if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservedFrom>(inLink)) {
-                auto& observedQComponent { qubitSets.at(std::get<QuantumCircuitComponent::Qubits::ObservedFrom>(inLink).q) };
-                // Extract (make copy) as Solace::Qubits, observe, then put the collapsed state vector into the new component
-                // Assert that dependency already has value, as it should have been visited before.
-                auto observedQubits { observedQComponent.boundQubits.value() };
-                // TODO: For now, throw away the measurement, though the state vector is now modified.
-                auto observation { observedQubits.observe() };
-                if (m) {
-                    // If given map, write to map.
-                    (*m)[i] = observation;
-                }
-                qComponent.bindQubits(observedQubits);
-            } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::UnobservedFrom>(inLink)) {
-                // TODO: Implement this
-                throw std::runtime_error("Partial observation is not yet supported!!!!");
-            }
-        }
-        */
-
         
         // Mark as exhausted.
         exhausted.at(i) = true;
