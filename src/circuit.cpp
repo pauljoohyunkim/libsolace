@@ -413,7 +413,40 @@ void QuantumCircuit::check() const {
             }
         }
 
-        // TODO: Observation Check
+        // Observation Check
+        {
+            if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationToScheme>(qComponent.outLink)) {
+                // outLink = Observation
+                const auto& observationToScheme { std::get<QuantumCircuitComponent::Qubits::ObservationToScheme>(qComponent.outLink) };
+                if (std::holds_alternative<QubitsRef>(observationToScheme)) {
+                    // Full observation
+                    const auto targetQRef { std::get<QubitsRef>(observationToScheme) };
+                    const auto& targetQComponent { qubitSets.at(targetQRef) };
+
+                    // Check if inLink of the target is full observation.
+                    if (!std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationFromScheme>(targetQComponent.inLink)) {
+                        throw std::runtime_error("InLink of target is not observation");
+                    }
+                    // Check if inLink is observedFrom, not unobservedFrom
+                    const auto& targetObservationFromScheme { std::get<QuantumCircuitComponent::Qubits::ObservationFromScheme>(targetQComponent.inLink) };
+                    if (!std::holds_alternative<QuantumCircuitComponent::Qubits::ObservedFrom>(targetObservationFromScheme)) {
+                        throw std::runtime_error("InLink of target is unobservation, even though current component expects full observation.");
+                    }
+                    // Check if target points back to current
+                    const auto targetObservedFromQRef { std::get<QuantumCircuitComponent::Qubits::ObservedFrom>(targetObservationFromScheme).q };
+                    if (targetObservedFromQRef != currentQRef) {
+                        throw std::runtime_error("Observation target does not point back to dependency.");
+                    }
+                } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::PartialObservationScheme>(observationToScheme)) {
+                    // Partial observation
+
+                } else {
+                    // Error
+                    throw std::runtime_error("Observation type is invalid.");
+                }
+                // TODO: Check nQubits
+            }
+        }
 
         exhausted.at(currentQRef) = true;
     }
