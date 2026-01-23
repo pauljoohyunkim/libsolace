@@ -403,7 +403,16 @@ void QuantumCircuit::check() const {
             }
         }
 
-        // TODO: Gate Application Check
+        // Gate Application Check
+        {
+            for (QuantumGateRef gRef : qComponent.appliedGates) {
+                const QuantumGate& gate { gates.at(gRef) };
+                if (gate.nQubit != qComponent.nQubit) {
+                    throw std::runtime_error("The gate is not applicable to this qubits component.");
+                }
+            }
+        }
+
         // TODO: Observation Check
 
         exhausted.at(currentQRef) = true;
