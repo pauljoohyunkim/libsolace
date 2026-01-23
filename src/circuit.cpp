@@ -104,6 +104,8 @@ QuantumCircuit::QuantumCircuit(const std::filesystem::path& filepath) {
         q.label = qsProto.label();
         #undef q
     }
+
+    check();
 }
 
 QuantumCircuit::QubitsRef QuantumCircuit::createQubits(const size_t nQubit) {
@@ -225,6 +227,8 @@ std::pair<QuantumCircuit::QubitsRef, QuantumCircuit::QubitsRef> QuantumCircuit::
 }
 
 void QuantumCircuit::compile(const std::filesystem::path& filepath) const {
+    check();
+
     std::ofstream outfile { filepath, std::ios::binary };
     Compiled::QuantumObject quantumObj;
 
@@ -360,7 +364,149 @@ void QuantumCircuit::setQubitLabel(const QubitsRef qRef, const std::string& labe
     qubitSets.at(qRef).label = labelStr;
 }
 
+void QuantumCircuit::check() const {
+    // Visit qubit components in a similar fashion as the runInternal function without explicit computation.
+
+    // Tracks which qubits have been visited already.
+    // Since runInternal loops over each of the qubitSets, it should be set to true one after the other.
+    std::vector<bool> exhausted(qubitSets.size(), false);
+
+    // 1. Check entanglement logic
+    // 2. Check gate application
+    // 3. Check observation logic
+    for (QubitsRef currentQRef = 0; currentQRef < qubitSets.size(); currentQRef++) {
+        const auto& qComponent { qubitSets.at(currentQRef) };
+        // Entanglement check
+        {
+            if (std::holds_alternative<std::vector<QubitsRef>>(qComponent.inLink)) {
+                // inLink = Entanglement
+                const auto& entangledFromQRefs { std::get<std::vector<QubitsRef>>(qComponent.inLink) };
+
+                size_t nQubitFromDependencies { 0 };
+                for (const auto dependencyQRef : entangledFromQRefs) {
+                    const auto& dependencyComponent { qubitSets.at(dependencyQRef) };
+                    // Check if dependency is marked exhausted.
+                    if (!exhausted.at(dependencyQRef)) {
+                        throw std::runtime_error("Dependency is not computed for entanglement.");
+                    }
+                    // Check if outLink is entanglement.
+                    if (!std::holds_alternative<QubitsRef>(dependencyComponent.outLink)) {
+                        throw std::runtime_error("Entanglement expected from dependency.");
+                    }
+                    // Check if dependency outLink points to currentQRef.
+                    const auto dependencyPointToQRef { std::get<QubitsRef>(dependencyComponent.outLink) };
+                    if (dependencyPointToQRef != currentQRef) {
+                        throw std::runtime_error("Dependency does not entangle to its supposed output.");
+                    }
+                    nQubitFromDependencies += dependencyComponent.nQubit;
+                }
+                // Check if current nQubit corresponds to nQubit sum of dependencies.
+                if (nQubitFromDependencies != qComponent.nQubit) {
+                    throw std::runtime_error("Number of qubits for entangled component must be sum of number of qubits of dependencies.");
+                }
+            }
+        }
+
+        // Gate Application Check
+        {
+            for (QuantumGateRef gRef : qComponent.appliedGates) {
+                const QuantumGate& gate { gates.at(gRef) };
+                if (gate.nQubit != qComponent.nQubit) {
+                    throw std::runtime_error("The gate is not applicable to this qubits component.");
+                }
+            }
+        }
+
+        // Observation Check
+        {
+            if (std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationToScheme>(qComponent.outLink)) {
+                // outLink = Observation
+                const auto& observationToScheme { std::get<QuantumCircuitComponent::Qubits::ObservationToScheme>(qComponent.outLink) };
+                if (std::holds_alternative<QubitsRef>(observationToScheme)) {
+                    // Full observation
+                    const auto targetQRef { std::get<QubitsRef>(observationToScheme) };
+                    const auto& targetQComponent { qubitSets.at(targetQRef) };
+
+                    // Check if inLink of the target is observation.
+                    if (!std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationFromScheme>(targetQComponent.inLink)) {
+                        throw std::runtime_error("InLink of target is not observation");
+                    }
+                    // Check if inLink is observedFrom, not unobservedFrom
+                    const auto& targetObservationFromScheme { std::get<QuantumCircuitComponent::Qubits::ObservationFromScheme>(targetQComponent.inLink) };
+                    if (!std::holds_alternative<QuantumCircuitComponent::Qubits::ObservedFrom>(targetObservationFromScheme)) {
+                        throw std::runtime_error("InLink of target is unobservation, even though current component expects full observation.");
+                    }
+                    // Check if target points back to current
+                    const auto targetObservedFromQRef { std::get<QuantumCircuitComponent::Qubits::ObservedFrom>(targetObservationFromScheme).q };
+                    if (targetObservedFromQRef != currentQRef) {
+                        throw std::runtime_error("Observation target does not point back to dependency.");
+                    }
+                    // Check qubits
+                    if (qComponent.nQubit != targetQComponent.nQubit) {
+                        throw std::runtime_error("Observation target does not have the same nQubit as dependency.");
+                    }
+                } else if (std::holds_alternative<QuantumCircuitComponent::Qubits::PartialObservationScheme>(observationToScheme)) {
+                    // Partial observation
+                    const auto& partialObservationScheme { std::get<QuantumCircuitComponent::Qubits::PartialObservationScheme>(observationToScheme) };
+
+                    // Check bitmask
+                    if (partialObservationScheme.bitmask >= (1U << qComponent.nQubit)) {
+                        throw std::runtime_error("Bitmask is invalid for current Qubits component.");
+                    }
+                    // Check if bitmask = 0 or bitmask = 0b11...1, then it should have been full observation.
+                    if (partialObservationScheme.bitmask == 0 || partialObservationScheme.bitmask == ((1U << qComponent.nQubit)-1)) {
+                        throw std::runtime_error("Bitmask is given as either 0 or 0b11...1, which should have been encoded as full observation");
+                    }
+
+                    const auto& observedToQComponent { qubitSets.at(partialObservationScheme.observedTo) };
+                    const auto& unobservedToQComponent { qubitSets.at(partialObservationScheme.unobservedTo) };
+                    // Check if inLink of observedTo is observation.
+                    if (!std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationFromScheme>(observedToQComponent.inLink)) {
+                        throw std::runtime_error("InLink of observedTo is not observation");
+                    }
+                    const auto& observedToObservationFrom { std::get<QuantumCircuitComponent::Qubits::ObservationFromScheme>(observedToQComponent.inLink) };
+                    // Check if inLink of observedTo is observedFrom.
+                    if (!std::holds_alternative<QuantumCircuitComponent::Qubits::ObservedFrom>(observedToObservationFrom)) {
+                        throw std::runtime_error("InLink of observedTo is not observedFrom");
+                    }
+                    // Check if observedTo points back to dependency.
+                    if (std::get<QuantumCircuitComponent::Qubits::ObservedFrom>(observedToObservationFrom).q != currentQRef) {
+                        throw std::runtime_error("ObservedTo does not point back to dependency.");
+                    }
+
+                    // Check if inLink of unobservedTo is observation.
+                    if (!std::holds_alternative<QuantumCircuitComponent::Qubits::ObservationFromScheme>(unobservedToQComponent.inLink)) {
+                        throw std::runtime_error("InLink of unobserved is not observation");
+                    }
+                    const auto& unobservedToUnobservationFrom { std::get<QuantumCircuitComponent::Qubits::ObservationFromScheme>(unobservedToQComponent.inLink) };
+                    // Check if inLink of unobservedTo is observedFrom.
+                    if (!std::holds_alternative<QuantumCircuitComponent::Qubits::UnobservedFrom>(unobservedToUnobservationFrom)) {
+                        throw std::runtime_error("InLink of unobservedTo is not unobservedFrom");
+                    }
+                    // Check if unobservedTo points back to dependency.
+                    if (std::get<QuantumCircuitComponent::Qubits::UnobservedFrom>(unobservedToUnobservationFrom).q != currentQRef) {
+                        throw std::runtime_error("UnobservedTo does not point back to dependency.");
+                    }
+                    // Check nQubit
+                    if (qComponent.nQubit != observedToQComponent.nQubit + unobservedToQComponent.nQubit) {
+                        throw std::runtime_error("Partial measurement asserts that observed nQubit and unobserved nQubit to sum to original nQubit.");
+                    }
+                    
+                } else {
+                    // Error
+                    throw std::runtime_error("Observation type is invalid.");
+                }
+            }
+        }
+
+        exhausted.at(currentQRef) = true;
+    }
+}
+
 void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitState>* m) {
+    // Run sanity check.
+    check();
+
     // For debugging, this expression for GDB might be useful:
     // p *qComponent.boundQubits.value().stateVector.data()@(1<<qComponent.boundQubits.value().nQubit)
     std::vector<bool> exhausted(qubitSets.size(), false);
@@ -380,6 +526,7 @@ void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitStat
             // If entangled,
             // Check if dependencies all have been bound,
             // while computing entanglement.
+            // TODO: This check must be done after "default binding" of the initial qubits component!!!!!
             const auto& entangledFrom { std::get<std::vector<QuantumCircuit::QubitsRef>>(qComponent.inLink) };
             std::vector<Qubits> qbts {};
             qbts.reserve(entangledFrom.size());
