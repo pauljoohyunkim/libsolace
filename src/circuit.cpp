@@ -360,7 +360,60 @@ void QuantumCircuit::setQubitLabel(const QubitsRef qRef, const std::string& labe
     qubitSets.at(qRef).label = labelStr;
 }
 
+void QuantumCircuit::check() const {
+    // Visit qubit components in a similar fashion as the runInternal function without explicit computation.
+
+    // Tracks which qubits have been visited already.
+    // Since runInternal loops over each of the qubitSets, it should be set to true one after the other.
+    std::vector<bool> exhausted(qubitSets.size(), false);
+
+    // 1. Check entanglement logic
+    // 2. Check gate application
+    // 3. Check observation logic
+    for (QubitsRef currentQRef = 0; currentQRef < qubitSets.size(); currentQRef++) {
+        const auto& qComponent { qubitSets.at(currentQRef) };
+        // Entanglement check
+        {
+            if (std::holds_alternative<std::vector<QubitsRef>>(qComponent.inLink)) {
+                // inLink = Entanglement
+                const auto& entangledFromQRefs { std::get<std::vector<QubitsRef>>(qComponent.inLink) };
+
+                size_t nQubitFromDependencies { 0 };
+                for (const auto dependencyQRef : entangledFromQRefs) {
+                    const auto& dependencyComponent { qubitSets.at(dependencyQRef) };
+                    // Check if dependency is marked exhausted.
+                    if (!exhausted.at(dependencyQRef)) {
+                        throw std::runtime_error("Dependency is not computed for entanglement.");
+                    }
+                    // Check if outLink is entanglement.
+                    if (!std::holds_alternative<QubitsRef>(dependencyComponent.outLink)) {
+                        throw std::runtime_error("Entanglement expected from dependency.");
+                    }
+                    // Check if dependency outLink points to currentQRef.
+                    const auto dependencyPointToQRef { std::get<QubitsRef>(dependencyComponent.outLink) };
+                    if (dependencyPointToQRef != currentQRef) {
+                        throw std::runtime_error("Dependency does not entangle to its supposed output.");
+                    }
+                    nQubitFromDependencies += dependencyComponent.nQubit;
+                }
+                // Check if current nQubit corresponds to nQubit sum of dependencies.
+                if (nQubitFromDependencies != qComponent.nQubit) {
+                    throw std::runtime_error("Number of qubits for entangled component must be sum of number of qubits of dependencies.");
+                }
+            }
+        }
+
+        // TODO: Gate Application Check
+        // TODO: Observation Check
+
+        exhausted.at(currentQRef) = true;
+    }
+}
+
 void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitState>* m) {
+    // Run sanity check.
+    check();
+
     // For debugging, this expression for GDB might be useful:
     // p *qComponent.boundQubits.value().stateVector.data()@(1<<qComponent.boundQubits.value().nQubit)
     std::vector<bool> exhausted(qubitSets.size(), false);
@@ -380,6 +433,7 @@ void QuantumCircuit::runInternal(std::unordered_map<QubitsRef, ObservedQubitStat
             // If entangled,
             // Check if dependencies all have been bound,
             // while computing entanglement.
+            // TODO: This check must be done after "default binding" of the initial qubits component!!!!!
             const auto& entangledFrom { std::get<std::vector<QuantumCircuit::QubitsRef>>(qComponent.inLink) };
             std::vector<Qubits> qbts {};
             qbts.reserve(entangledFrom.size());

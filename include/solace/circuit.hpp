@@ -158,6 +158,14 @@ class QuantumCircuit {
         void setQuantumGateLabel(const QuantumGateRef gRef, const std::string& labelStr) { gates.at(gRef).label = labelStr; }
 
         /**
+         * @brief Check the QuantumCircuit object for (trivial) structural errors.
+         * Users might not need this, but this is provided in case there is some sort of memory corruption.
+         * Will throw if it detects error.
+         * 
+         */
+        void check() const;
+
+        /**
          * @brief Run the quantum circuit. If some initial qubits are left unbound, then they will be assigned default state vector |0...0>.
          * None of the observation results will be returned.
          * 
