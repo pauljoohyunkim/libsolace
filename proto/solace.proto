@@ -15,29 +15,98 @@ enum ObjectType {
     QUBITS = 0;
     QUANTUM_GATE = 1;
     SPARSE_QUANTUM_GATE = 2;
+    QUANTUM_CIRCUIT = 3;
 }
 
 message QuantumObject {
     ObjectType type = 1;
-    uint64 nQubit = 2;
     oneof object {
         Qubits qubits = 3;
         QuantumGate quantumGate = 4;
         SparseQuantumGate sparseQuantumGate = 5;
+        QuantumCircuit quantumCircuit = 6;
     }
 }
 
 message Qubits {
-    ComplexVector vector = 1;
+    uint32 nQubit = 1;
+    ComplexVector vector = 2;
 }
 
 message QuantumGate {
-    repeated ComplexVector matrix = 1;
+    uint32 nQubit = 1;
+    repeated ComplexVector matrix = 2;
+    string label = 3;
 }
 
 message SparseQuantumGate {
-    repeated uint32 rowIndices = 1;
-    repeated uint32 colIndices = 2;
-    ComplexVector nonZeroVals = 3;
+    uint32 nQubit = 1;
+    repeated uint32 rowIndices = 2;
+    repeated uint32 colIndices = 3;
+    ComplexVector nonZeroVals = 4;
+    string label = 5;
 }
 
+// This is only for circuits.
+message QuantumCircuitGate {
+    ObjectType type = 1;
+    oneof gate {
+        QuantumGate quantumGate = 2;
+        SparseQuantumGate sparseQuantumGate = 3;
+    }
+}
+
+enum LinkageType { 
+    NONE = 0;
+    ENTANGLEMENT = 1;
+    OBSERVATION = 2;
+}
+
+message QuantumCircuitEntangleFrom {
+    repeated uint32 entangledFrom = 30;
+}
+
+enum ObservationLinkageType {
+    LINK_BY_OBSERVATION = 0;
+    LINK_BY_UNOBSERVATION = 1;
+}
+
+message QuantumCircuitObservationFrom {
+    ObservationLinkageType observationFromType = 1;
+    oneof observationLink {
+        uint32 observationFrom = 2;
+        uint32 unobservationFrom = 3;
+    }
+}
+
+message QuantumCircuitQubitsObservationTo {
+    uint32 bitmask = 1;
+    uint32 observedTo = 2;
+    optional uint32 unobservedTo = 3;
+}
+
+message QuantumCircuitQubits {
+    uint32 nQubit = 1;
+    repeated uint32 appliedGates = 2;
+    /*
+        There are two types of nontrivial linkages: entanglement and observation.
+        Entanglement is many-to-one.
+        Observation is either one-to-one or one-to-two.
+    */
+    LinkageType inLinkageType = 3;
+    oneof inLinkage {
+        QuantumCircuitEntangleFrom entangledFrom = 30;
+        QuantumCircuitObservationFrom observationFrom = 31;
+    }
+    LinkageType outLinkageType = 4;
+    oneof outLinkage {
+        uint32 entangleTo = 40;
+        QuantumCircuitQubitsObservationTo observationScheme = 41;
+    }
+    string label = 5;
+}
+
+message QuantumCircuit {
+    repeated QuantumCircuitGate gate = 1;
+    repeated QuantumCircuitQubits qubitSet = 2;
+}

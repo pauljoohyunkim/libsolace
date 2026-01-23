@@ -6,6 +6,7 @@
 #define __SOLACE_HPP__
 
 #include <complex>
+#include <string>
 #include <vector>
 #include <variant>
 #include <utility>
@@ -13,11 +14,14 @@
 #include <filesystem>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include "solace.pb.h"
 
 namespace Solace {
     // Forward Declaration
+    namespace QuantumCircuitComponent { class Qubits; }
     class Qubits;
     class QuantumGate;
+    class QuantumCircuit;
     
     /**
      * @brief Represents what value can be observed from measurement. (Alias to unsigned int)
@@ -57,7 +61,7 @@ namespace Solace {
              * @brief Constructor of qubits. Initialized to the first entry in state vector being 1.
              * @param[in] n Number of qubits. Default is 1.
              */
-            Qubits(const int n=1) : stateVector(StateVector::Zero(1<<n)) { validateLength(); stateVector(0) = 1.0; }
+            Qubits(const size_t n=1) : stateVector(StateVector::Zero(1<<n)) { validateLength(); stateVector(0) = 1.0; }
 
             /**
              * @brief Constructor of qubits. Initialized to the entries given. Will be normalized.
@@ -139,12 +143,13 @@ namespace Solace {
             /**
              * @brief Compile the generated qubits to a file.
              * 
-             * @param[in] filepath 
+             * @param[in] filepath output Qubits file. (*.qbit)
              */
             void compile(const std::filesystem::path& filepath) const;
 
         private:
             friend class QuantumGate;
+            friend class QuantumCircuitComponent::Qubits;
             StateVector stateVector;
             size_t nQubit { 0 };
 
@@ -221,7 +226,7 @@ namespace Solace {
             /**
              * @brief Compile the generated quantum gate to a file.
              * 
-             * @param[in] filepath output quantum gate file.
+             * @param[in] filepath output quantum gate file. (*.qgate)
              */
             void compile(const std::filesystem::path& filepath) const;
 
@@ -237,18 +242,58 @@ namespace Solace {
              */
             QuantumGateTransformerFormat viewTransformer() const { return transformer; }
 #endif
+            /**
+             * @brief Optional label for the quantum gate. May be used for quantum circuits.
+             * 
+             */
+            std::string label {};
         protected:
+            friend class QuantumCircuit;
             bool isValidated { false };
             QuantumGateTransformerFormat transformer { std::monostate() };
             size_t nQubit { 0 };
 
             /**
+             * @brief Construct a new Quantum Gate object from QuantumGate protobuf object
+             * 
+             * @param[in] obj QuantumGate protobuf object
+             */
+            QuantumGate(const Compiled::QuantumGate& obj) { loadFromProto(obj); }
+
+            /**
+             * @brief Construct a new Quantum Gate object from SparseQuantumGate protobuf object
+             * 
+             * @param[in] obj SparseQuantumGate protobuf object
+             */
+            QuantumGate(const Compiled::SparseQuantumGate& obj) { loadFromProto(obj); }
+
+            /**
+             * @brief Build proto object from the class.
+             * 
+             * @return protobuf QuantumObject that can be serialized.
+             */
+            Compiled::QuantumObject buildProto() const;
+
+            /**
+             * @brief Load the object from protobuf QuantumGate object.
+             * 
+             * @param[in] obj QuantumGate protobuf object
+             */
+            void loadFromProto(const Compiled::QuantumGate& obj);
+
+            /**
+             * @brief Load the object from protobuf SparseQuantumGate object.
+             * 
+             * @param[in] obj SparseQuantumGate protobuf object
+             */
+            void loadFromProto(const Compiled::SparseQuantumGate& obj);
+
+            /**
              * @brief validates the quantum gate at initialization.
              */
             void validate();
-
-
     };
+
 }
 
 #endif  // __SOLACE_HPP__

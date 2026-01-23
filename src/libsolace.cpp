@@ -34,7 +34,7 @@ Qubits::Qubits(const std::filesystem::path& filepath) {
         throw std::runtime_error("Wrong type of object read.");
     }
 
-    stateVector = StateVector(1 << obj.nqubit());
+    stateVector = StateVector(1 << obj.qubits().nqubit());
     validateLength();
     for (auto i = 0; i < obj.qubits().vector().entry_size(); i++) {
         auto entry { obj.qubits().vector().entry(i) };
@@ -161,7 +161,7 @@ void Qubits::compile(const std::filesystem::path& filepath) const {
     Compiled::QuantumObject quantumObj;
 
     quantumObj.set_type(Compiled::ObjectType::QUBITS);
-    quantumObj.set_nqubit(nQubit);
+    quantumObj.mutable_qubits()->set_nqubit(nQubit);
     
     const auto qubitsV { quantumObj.mutable_qubits()->mutable_vector() };
     for (auto cs : stateVector) {
@@ -211,35 +211,11 @@ QuantumGate::QuantumGate(const std::filesystem::path& filepath) {
         throw std::runtime_error("Wrong type of object read.");
     }
 
-    const auto dim { 1 << obj.nqubit() };
     if (obj.type() == Compiled::ObjectType::QUANTUM_GATE) {
-        transformer = QuantumGateTransformer(dim, dim);
-        auto& t { std::get<QuantumGateTransformer>(transformer) };
-        for (auto i = 0; i < obj.quantumgate().matrix_size(); i++) {
-            for (auto j = 0; j < obj.quantumgate().matrix(i).entry_size(); j++) {
-                auto entry { obj.quantumgate().matrix(i).entry(j) };
-                std::complex<double> val { entry.real(), entry.imag() };
-                t(i, j) = val;
-            }
-        }
+        loadFromProto(obj.quantumgate());
     } else {
-        // Check if the number of row indices, column indices and nonzero vals are equal.
-        auto sparseQuantumGate { obj.sparsequantumgate() };
-        if (sparseQuantumGate.rowindices_size() != sparseQuantumGate.colindices_size() || sparseQuantumGate.colindices_size() != sparseQuantumGate.nonzerovals().entry_size()) {
-            throw std::runtime_error("Malformed sparse quantum gate object.");
-        }
-        const auto nNonZeroVals { sparseQuantumGate.nonzerovals().entry_size() };
-        transformer = SparseQuantumGateTransformer(dim, dim);
-        auto& t { std::get<SparseQuantumGateTransformer>(transformer) };
-        for (auto i = 0; i < nNonZeroVals; i++) {
-            const auto row { sparseQuantumGate.rowindices(i) };
-            const auto col { sparseQuantumGate.colindices(i) };
-            const auto val { sparseQuantumGate.nonzerovals().entry(i) };
-            t.insert(row, col) = std::complex<double>(val.real(), val.imag());
-        }
-        t.makeCompressed();
+        loadFromProto(obj.sparsequantumgate());
     }
-    validate();
 }
 
 QuantumGate QuantumGate::operator^(const QuantumGate& gate) const {
@@ -379,56 +355,17 @@ QuantumGate QuantumGate::operator*(const QuantumGate& gate) const {
 }
 
 void QuantumGate::compile(const std::filesystem::path& filepath) const {
-    int nRow;
-    int nCol;
     if (!isValidated) {
         throw std::runtime_error("Not validated for compilation");
     }
 
     std::ofstream outfile { filepath, std::ios::binary };
-    Compiled::QuantumObject quantumObj;
-
-    quantumObj.set_nqubit(nQubit);
-
-    if (std::holds_alternative<QuantumGateTransformer>(transformer)) {
-        quantumObj.set_type(Compiled::ObjectType::QUANTUM_GATE);
-        auto quantumGateM { quantumObj.mutable_quantumgate() };
-        const auto& t { std::get<QuantumGateTransformer>(transformer) };
-        nRow = t.rows();
-        nCol = t.cols();
-        for (auto i = 0; i < nRow; i++) {
-            auto row { quantumGateM->add_matrix() };
-            for (auto j = 0; j < nCol; j++) {
-                auto entry { row->add_entry() };
-                entry->set_real(t(i, j).real());
-                entry->set_imag(t(i, j).imag());
-            }
-        }
-    } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer)) {
-        quantumObj.set_type(Compiled::ObjectType::SPARSE_QUANTUM_GATE);
-        auto quantumGateM { quantumObj.mutable_sparsequantumgate() };
-        const auto& t { std::get<SparseQuantumGateTransformer>(transformer) };
-        for (auto k = 0; k < t.outerSize(); k++) {
-            for (SparseQuantumGateTransformer::InnerIterator it(t, k); it; ++it) {
-                const auto i { it.row() };
-                const auto j { it.col() };
-                const auto val { it.value() };
-                quantumGateM->add_rowindices(i);
-                quantumGateM->add_colindices(j);
-                auto entry { quantumGateM->mutable_nonzerovals()->add_entry() };
-                entry->set_real(val.real());
-                entry->set_imag(val.imag());
-            }
-        }
-    } else {
-        throw std::runtime_error("Gate is not filled for compilation.");
-    }
+    Compiled::QuantumObject quantumObj { buildProto() };
 
     outfile << quantumObj.SerializeAsString();
 }
 
 void QuantumGate::apply(Qubits& q) {
-    // TODO: Check the lengths.
     if (!isValidated) {
         throw std::runtime_error("Attempt to use invalid quantum gate.");
     }
@@ -443,6 +380,92 @@ void QuantumGate::apply(Qubits& q) {
         q.stateVector = std::get<SparseQuantumGateTransformer>(transformer) * q.stateVector;
     }
     q.stateVector.normalize();
+}
+
+Compiled::QuantumObject QuantumGate::buildProto() const {
+    if (!isValidated) {
+        throw std::runtime_error("Not validated for proto building");
+    }
+
+    Compiled::QuantumObject quantumObj;
+    int nRow;
+    int nCol;
+
+    if (std::holds_alternative<QuantumGateTransformer>(transformer)) {
+        quantumObj.set_type(Compiled::ObjectType::QUANTUM_GATE);
+        auto quantumGateM { quantumObj.mutable_quantumgate() };
+        quantumGateM->set_nqubit(nQubit);
+        quantumGateM->set_label(label);
+        const auto& t { std::get<QuantumGateTransformer>(transformer) };
+        nRow = t.rows();
+        nCol = t.cols();
+        for (auto i = 0; i < nRow; i++) {
+            auto row { quantumGateM->add_matrix() };
+            for (auto j = 0; j < nCol; j++) {
+                auto entry { row->add_entry() };
+                entry->set_real(t(i, j).real());
+                entry->set_imag(t(i, j).imag());
+            }
+        }
+    } else if (std::holds_alternative<SparseQuantumGateTransformer>(transformer)) {
+        quantumObj.set_type(Compiled::ObjectType::SPARSE_QUANTUM_GATE);
+        auto quantumGateM { quantumObj.mutable_sparsequantumgate() };
+        quantumGateM->set_nqubit(nQubit);
+        quantumGateM->set_label(label);
+        const auto& t { std::get<SparseQuantumGateTransformer>(transformer) };
+        for (auto k = 0; k < t.outerSize(); k++) {
+            for (SparseQuantumGateTransformer::InnerIterator it(t, k); it; ++it) {
+                const auto i { it.row() };
+                const auto j { it.col() };
+                const auto val { it.value() };
+                quantumGateM->add_rowindices(i);
+                quantumGateM->add_colindices(j);
+                auto entry { quantumGateM->mutable_nonzerovals()->add_entry() };
+                entry->set_real(val.real());
+                entry->set_imag(val.imag());
+            }
+        }
+    } else {
+        throw std::runtime_error("Gate is not filled for proto building / compilation.");
+    }
+
+    return quantumObj;
+}
+
+void QuantumGate::loadFromProto(const Compiled::QuantumGate& obj) {
+    const auto dim { 1 << obj.nqubit() };
+    transformer = QuantumGateTransformer(dim, dim);
+    auto& t { std::get<QuantumGateTransformer>(transformer) };
+    for (auto i = 0; i < obj.matrix_size(); i++) {
+        for (auto j = 0; j < obj.matrix(i).entry_size(); j++) {
+            auto entry { obj.matrix(i).entry(j) };
+            std::complex<double> val { entry.real(), entry.imag() };
+            t(i, j) = val;
+        }
+    }
+    label = obj.label();
+    validate();
+}
+
+void QuantumGate::loadFromProto(const Compiled::SparseQuantumGate& obj) {
+    // Check if the number of row indices, column indices and nonzero vals are equal.
+    const auto dim { 1 << obj.nqubit() };
+    auto sparseQuantumGate { obj };
+    if (sparseQuantumGate.rowindices_size() != sparseQuantumGate.colindices_size() || sparseQuantumGate.colindices_size() != sparseQuantumGate.nonzerovals().entry_size()) {
+        throw std::runtime_error("Malformed sparse quantum gate object.");
+    }
+    const auto nNonZeroVals { sparseQuantumGate.nonzerovals().entry_size() };
+    transformer = SparseQuantumGateTransformer(dim, dim);
+    auto& t { std::get<SparseQuantumGateTransformer>(transformer) };
+    for (auto i = 0; i < nNonZeroVals; i++) {
+        const auto row { sparseQuantumGate.rowindices(i) };
+        const auto col { sparseQuantumGate.colindices(i) };
+        const auto val { sparseQuantumGate.nonzerovals().entry(i) };
+        t.insert(row, col) = std::complex<double>(val.real(), val.imag());
+    }
+    t.makeCompressed();
+    label = obj.label();
+    validate();
 }
 
 void QuantumGate::validate() {
