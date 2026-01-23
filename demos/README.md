@@ -44,3 +44,5 @@ Think of them as tutorials.
     * Note that at the time of writing, VQE is not supported. (This may change later.)
 * [08_wstate_circuit.cpp](08_wstate_circuit.cpp)
     * This example is another circuit, but with partial observation.
+* [09_grover_circuit.cpp](09_grover_circuit.cpp)
+    * Another example of a circuit. Basically [04_grover.cpp](04_grover.cpp) wrapped in a circuit form.

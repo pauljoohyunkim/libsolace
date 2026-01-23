@@ -48,7 +48,7 @@ This is due to probablistic nature of observation in some of the tests.
 Run the unit test again and see if it happens again.
 
 ### Demos
-I provide you six demo codes in [demos](demos) directory.
+I provide you nine demo codes in [demos](demos) directory.
 The examples should serve as a series of short easy-to-follow tutorials.
 You can build them by running the following:
 ```

@@ -41,7 +41,8 @@ DEMO_BINS=$(DEMOS)/01_hadamard.bin \
 		  $(DEMOS)/05_grover2.bin \
 		  $(DEMOS)/06_wstate.bin \
 		  $(DEMOS)/07_bell_circuit.bin \
-		  $(DEMOS)/08_wstate_circuit.bin
+		  $(DEMOS)/08_wstate_circuit.bin \
+		  $(DEMOS)/09_grover_circuit.bin
 
 objs: $(OBJS)
 
