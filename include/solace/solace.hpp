@@ -235,13 +235,14 @@ namespace Solace {
              * @param[in] q the set of qubits to apply the quantum gate on
              */
             void apply(Qubits& q);
-#if defined(BE_A_QUANTUM_CHEATER)
+
             /**
-             * @brief get the transformer matrix of the quantum gate for debugging purposes.
+             * @brief Get the Transformer object
+             * 
              * @return transformer the unitary matrix that defines the gate.
              */
-            QuantumGateTransformerFormat viewTransformer() const { return transformer; }
-#endif
+            QuantumGateTransformerFormat getTransformer() const { return transformer; }
+
             /**
              * @brief Optional label for the quantum gate. May be used for quantum circuits.
              * 
