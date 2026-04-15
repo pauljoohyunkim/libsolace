@@ -7,7 +7,7 @@
 
 #include "solace.hpp"
 
-constexpr static std::complex<double> i { 0.0, 1.0 };
+constexpr static std::complex<double> imag { 0.0, 1.0 };
 
 namespace Solace::Gate {
     /**
@@ -56,8 +56,8 @@ namespace Solace::Gate {
             PauliY() : Solace::QuantumGate() {
                 transformer = Solace::SparseQuantumGateTransformer(2,2);
                 auto& t { std::get<Solace::SparseQuantumGateTransformer>(transformer) };
-                t.insert(0, 1) = -i;
-                t.insert(1, 0) = i;
+                t.insert(0, 1) = -imag;
+                t.insert(1, 0) = imag;
                 t.makeCompressed();
                 validate();
             }
@@ -152,7 +152,7 @@ namespace Solace::Gate {
                 transformer = Solace::SparseQuantumGateTransformer(2, 2);
                 auto& t { std::get<Solace::SparseQuantumGateTransformer>(transformer) };
                 t.insert(0, 0) = 1.0;
-                t.insert(1, 1) = std::exp(i * phi);
+                t.insert(1, 1) = std::polar(1.0, phi);
                 t.makeCompressed();
                 validate();
             }
@@ -216,8 +216,8 @@ namespace Solace::Gate {
                 t.setZero();
                 const double factor { 1 / double(n) };
 
-                for (int j = 0; j < N; j++) {
-                    for (int k = 0; k < N; k++) {
+                for (unsigned int j = 0; j < N; j++) {
+                    for (unsigned int k = 0; k < N; k++) {
                         const std::complex<double> w { std::polar(1.0, j * k * M_PI * 2.0 / N) };
                         t(j, k) = factor * w;
                     }
@@ -239,9 +239,9 @@ namespace Solace::Gate {
                 t.setZero();
                 const double factor { 1 / double(n) };
 
-                for (int j = 0; j < N; j++) {
-                    for (int k = 0; k < N; k++) {
-                        const std::complex<double> w { std::polar(1.0, -j * k * M_PI * 2.0 / N) };
+                for (unsigned int j = 0; j < N; j++) {
+                    for (unsigned int k = 0; k < N; k++) {
+                        const std::complex<double> w { std::polar(1.0, (int)j * (int)k * M_PI * (-2.0) / N) };
                         t(j, k) = factor * w;
                     }
                 }

@@ -114,9 +114,9 @@ TEST(CommonGate, QFT) {
 
     Solace::QuantumGateTransformer M(4,4);
     M << 1, 1, 1, 1,
-         1, i, -1, -i,
+         1, imag, -1, -imag,
          1, -1, 1, -1,
-         1, -i, -1, i;
+         1, -imag, -1, imag;
     M = M / 2;
     const auto diff { (M - std::get<Solace::QuantumGateTransformer>(qft.getTransformer())).squaredNorm() };
 
@@ -128,9 +128,9 @@ TEST(CommonGate, IQFT) {
 
     Solace::QuantumGateTransformer M(4,4);
     M << 1, 1, 1, 1,
-         1, -i, -1, i,
+         1, -imag, -1, imag,
          1, -1, 1, -1,
-         1, i, -1, -i;
+         1, imag, -1, -imag;
     M = M / 2;
     const auto diff { (M - std::get<Solace::QuantumGateTransformer>(iqft.getTransformer())).squaredNorm() };
 
