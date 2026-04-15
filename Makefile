@@ -20,19 +20,22 @@ PROTO=proto
 OBJS=$(OBJ)/solace_proto.o \
 	 $(OBJ)/libsolace.o \
 	 $(OBJ)/utility.o \
-	 $(OBJ)/circuit.o
+	 $(OBJ)/circuit.o \
+	 $(OBJ)/algorithm.o
 
 DBG_OBJS=$(OBJ)/solace_proto.o \
 		 $(OBJ)/unittest.o \
 		 $(OBJ)/libsolace_dbg.o \
 		 $(OBJ)/utility_dbg.o \
 		 $(OBJ)/circuit_dbg.o \
+		 $(OBJ)/algorithm.o \
 		 $(OBJ)/unittest_qubit.o \
 		 $(OBJ)/unittest_gate.o \
 		 $(OBJ)/unittest_common_gates.o \
 		 $(OBJ)/unittest_utility.o \
 		 $(OBJ)/unittest_compilation.o \
-		 $(OBJ)/unittest_circuit.o
+		 $(OBJ)/unittest_circuit.o \
+		 $(OBJ)/unittest_algorithm.o
 
 DEMO_BINS=$(DEMOS)/01_hadamard.bin \
 		  $(DEMOS)/02_hadamard2.bin \

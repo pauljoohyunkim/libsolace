@@ -28,6 +28,8 @@ namespace Solace {
      */
     using ObservedQubitState = unsigned int;
 
+    namespace Algorithm { ObservedQubitState quantum_phase_estimation(const QuantumGate& gate, const Qubits& q, unsigned int n); }
+
     /**
      * @brief Represents a state vector. (Alias to Eigen::VectorXcd from Eigen library)
      */
@@ -150,6 +152,7 @@ namespace Solace {
         private:
             friend class QuantumGate;
             friend class QuantumCircuitComponent::Qubits;
+            friend ObservedQubitState Algorithm::quantum_phase_estimation(const QuantumGate& gate, const Qubits& q, unsigned int n);
             StateVector stateVector;
             size_t nQubit { 0 };
 
