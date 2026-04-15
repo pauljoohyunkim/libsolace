@@ -202,6 +202,31 @@ namespace Solace::Gate {
                 validate();
             }
     };
+
+    /**
+     * @brief Quantum Fourier Transform as a gate.
+     * 
+     */
+    class QFT : public Solace::QuantumGate {
+        public:
+            QFT(const int n=2) : Solace::QuantumGate() {
+                const auto N { 1U << n };
+                transformer = Solace::QuantumGateTransformer(N, N);
+                auto& t { std::get<Solace::QuantumGateTransformer>(transformer) };
+                t.setZero();
+                const double factor { 1 / double(n) };
+
+                for (unsigned int i = 0; i < N; i++) {
+                    for (unsigned int j = 0; j < N; j++) {
+                        const std::complex<double> w_ijN { std::polar(1.0, i * j * M_PI * 2.0 / N) };
+                        t(i, j) = factor * w_ijN;
+                    }
+                }
+                std::cout << t << std::endl;
+                validate();
+            }
+
+    };
 }
 
 #endif  // __SOLACE_COMMON_GATES_HPP__

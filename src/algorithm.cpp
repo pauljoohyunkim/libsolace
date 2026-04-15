@@ -33,6 +33,7 @@ ObservedQubitState quantum_phase_estimation(const QuantumGate& gate, const Qubit
             }
         }
     }
+    augmented.normalizeStateVector();
 
     // iQFT here.
 
