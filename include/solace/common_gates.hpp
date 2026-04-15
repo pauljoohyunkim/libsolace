@@ -216,16 +216,37 @@ namespace Solace::Gate {
                 t.setZero();
                 const double factor { 1 / double(n) };
 
-                for (unsigned int i = 0; i < N; i++) {
-                    for (unsigned int j = 0; j < N; j++) {
-                        const std::complex<double> w_ijN { std::polar(1.0, i * j * M_PI * 2.0 / N) };
-                        t(i, j) = factor * w_ijN;
+                for (int j = 0; j < N; j++) {
+                    for (int k = 0; k < N; k++) {
+                        const std::complex<double> w { std::polar(1.0, j * k * M_PI * 2.0 / N) };
+                        t(j, k) = factor * w;
                     }
                 }
-                std::cout << t << std::endl;
                 validate();
             }
+    };
 
+    /**
+     * @brief Inverse Quantum Fourier Transform as a gate.
+     * 
+     */
+    class IQFT : public Solace::QuantumGate {
+        public:
+            IQFT(const int n=2) : Solace::QuantumGate() {
+                const auto N { 1U << n };
+                transformer = Solace::QuantumGateTransformer(N, N);
+                auto& t { std::get<Solace::QuantumGateTransformer>(transformer) };
+                t.setZero();
+                const double factor { 1 / double(n) };
+
+                for (int j = 0; j < N; j++) {
+                    for (int k = 0; k < N; k++) {
+                        const std::complex<double> w { std::polar(1.0, -j * k * M_PI * 2.0 / N) };
+                        t(j, k) = factor * w;
+                    }
+                }
+                validate();
+            }
     };
 }
 
