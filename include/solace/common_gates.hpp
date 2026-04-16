@@ -214,7 +214,7 @@ namespace Solace::Gate {
                 transformer = Solace::QuantumGateTransformer(N, N);
                 auto& t { std::get<Solace::QuantumGateTransformer>(transformer) };
                 t.setZero();
-                const double factor { 1 / double(n) };
+                const double factor { 1.0 / std::sqrt(N) };
 
                 for (unsigned int j = 0; j < N; j++) {
                     for (unsigned int k = 0; k < N; k++) {
@@ -237,7 +237,7 @@ namespace Solace::Gate {
                 transformer = Solace::QuantumGateTransformer(N, N);
                 auto& t { std::get<Solace::QuantumGateTransformer>(transformer) };
                 t.setZero();
-                const double factor { 1 / double(n) };
+                const double factor { 1.0 / std::sqrt(N) };
 
                 for (unsigned int j = 0; j < N; j++) {
                     for (unsigned int k = 0; k < N; k++) {
