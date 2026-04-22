@@ -237,7 +237,7 @@ namespace Solace {
              * @brief apply the quantum gate to a set of qubits
              * @param[in] q the set of qubits to apply the quantum gate on
              */
-            void apply(Qubits& q);
+            void apply(Qubits& q) const;
 
             /**
              * @brief Get the Transformer object

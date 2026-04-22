@@ -1,3 +1,4 @@
+#include "solace/common_gates.hpp"
 #include "solace/algorithm.hpp"
 
 namespace Solace {
@@ -35,10 +36,16 @@ ObservedQubitState quantum_phase_estimation(const QuantumGate& gate, const Qubit
     }
     augmented.normalizeStateVector();
 
-    // iQFT here.
+    // iQFT on the capture register, then measure only the capture register.
+    const Gate::IQFT iqft_capture { n };
+    const Gate::Identity identity_target { m };
+    const auto iqft_total { iqft_capture ^ identity_target };
 
-    throw std::runtime_error("Currently not done implementing iQFT.");
-    return 0U;
+    iqft_total.apply(augmented);
+
+    const unsigned int capture_mask = ((1U << n) - 1) << m;
+
+    return augmented.observe(capture_mask).first >> m;
 }
 
 }

@@ -365,7 +365,7 @@ void QuantumGate::compile(const std::filesystem::path& filepath) const {
     outfile << quantumObj.SerializeAsString();
 }
 
-void QuantumGate::apply(Qubits& q) {
+void QuantumGate::apply(Qubits& q) const {
     if (!isValidated) {
         throw std::runtime_error("Attempt to use invalid quantum gate.");
     }
