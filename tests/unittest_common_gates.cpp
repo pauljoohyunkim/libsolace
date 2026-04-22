@@ -108,3 +108,31 @@ TEST(CommonGate, ToffoliCCNOT) {
     Solace::Qubits q { 3 };
     H.apply(q);
 }
+
+TEST(CommonGate, QFT) {
+    Solace::Gate::QFT qft(2); // 4x4
+
+    Solace::QuantumGateTransformer M(4,4);
+    M << 1, 1, 1, 1,
+         1, imag, -1, -imag,
+         1, -1, 1, -1,
+         1, -imag, -1, imag;
+    M = M / 2;
+    const auto diff { (M - std::get<Solace::QuantumGateTransformer>(qft.getTransformer())).squaredNorm() };
+
+    ASSERT_TRUE(diff < 0.0001);
+}
+
+TEST(CommonGate, IQFT) {
+    Solace::Gate::IQFT iqft(2); // 4x4
+
+    Solace::QuantumGateTransformer M(4,4);
+    M << 1, 1, 1, 1,
+         1, -imag, -1, imag,
+         1, -1, 1, -1,
+         1, imag, -1, -imag;
+    M = M / 2;
+    const auto diff { (M - std::get<Solace::QuantumGateTransformer>(iqft.getTransformer())).squaredNorm() };
+
+    ASSERT_TRUE(diff < 0.0001);
+}
