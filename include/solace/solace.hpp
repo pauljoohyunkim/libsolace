@@ -28,6 +28,8 @@ namespace Solace {
      */
     using ObservedQubitState = unsigned int;
 
+    namespace Algorithm { ObservedQubitState quantum_phase_estimation(const QuantumGate& gate, const Qubits& q, unsigned int n); }
+
     /**
      * @brief Represents a state vector. (Alias to Eigen::VectorXcd from Eigen library)
      */
@@ -150,6 +152,7 @@ namespace Solace {
         private:
             friend class QuantumGate;
             friend class QuantumCircuitComponent::Qubits;
+            friend ObservedQubitState Algorithm::quantum_phase_estimation(const QuantumGate& gate, const Qubits& q, unsigned int n);
             StateVector stateVector;
             size_t nQubit { 0 };
 
@@ -234,14 +237,15 @@ namespace Solace {
              * @brief apply the quantum gate to a set of qubits
              * @param[in] q the set of qubits to apply the quantum gate on
              */
-            void apply(Qubits& q);
-#if defined(BE_A_QUANTUM_CHEATER)
+            void apply(Qubits& q) const;
+
             /**
-             * @brief get the transformer matrix of the quantum gate for debugging purposes.
+             * @brief Get the Transformer object
+             * 
              * @return transformer the unitary matrix that defines the gate.
              */
-            QuantumGateTransformerFormat viewTransformer() const { return transformer; }
-#endif
+            QuantumGateTransformerFormat getTransformer() const { return transformer; }
+
             /**
              * @brief Optional label for the quantum gate. May be used for quantum circuits.
              * 

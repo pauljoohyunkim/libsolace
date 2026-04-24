@@ -41,7 +41,7 @@ TEST(QuantumGate, Application_x) {
     q1.normalize();
 
     H.apply(q);
-    std::cout << std::get<Solace::QuantumGateTransformer>(H.viewTransformer()) << std::endl;
+    std::cout << std::get<Solace::QuantumGateTransformer>(H.getTransformer()) << std::endl;
     const auto sv { q.viewStateVector() };
     ASSERT_TRUE(std::abs(q1[0] - sv[0]) < 0.001);
     ASSERT_TRUE(std::abs(q1[1] - sv[1]) < 0.001);
@@ -119,7 +119,7 @@ TEST(QuantumGate, TensorProductSparseSparse) {
     gs_expected.makeCompressed();
 
     Solace::QuantumGate GS { G ^ S };
-    auto t_gs_maybe { GS.viewTransformer() };
+    auto t_gs_maybe { GS.getTransformer() };
     auto t_gs = std::get<Solace::SparseQuantumGateTransformer>(t_gs_maybe);
     auto diff { t_gs - gs_expected };
     ASSERT_TRUE(diff.norm() < 0.00001);
@@ -140,7 +140,7 @@ TEST(QuantumGate, TensorProductSparseDense) {
     Solace::QuantumGate G { t };
 
     Solace::QuantumGate GH { G ^ H };
-    auto t_gh_maybe { GH.viewTransformer() };
+    auto t_gh_maybe { GH.getTransformer() };
     auto t_gh = std::get<Solace::QuantumGateTransformer>(t_gh_maybe);
     std::cout << t_gh << std::endl;
 }
@@ -159,7 +159,7 @@ TEST(QuantumGate, TensorProductDenseSparse) {
     Solace::QuantumGate H { t };
 
     Solace::QuantumGate GH { G ^ H };
-    auto t_gh_maybe { GH.viewTransformer() };
+    auto t_gh_maybe { GH.getTransformer() };
     auto t_gh = std::get<Solace::QuantumGateTransformer>(t_gh_maybe);
     std::cout << t_gh << std::endl;
 }
@@ -172,7 +172,7 @@ TEST(QuantumGate, TensorProductDenseDense) {
     Solace::QuantumGate H { q1, q2 };
     
     Solace::QuantumGate H2 { H ^ H };
-    auto t_h2_maybe { H2.viewTransformer() };
+    auto t_h2_maybe { H2.getTransformer() };
     auto t_h2 = std::get<Solace::QuantumGateTransformer>(t_h2_maybe);
     std::cout << t_h2 << std::endl;
 }

@@ -45,12 +45,12 @@ TEST(Compilation, QuantumGate1) {
     q2 << std::complex<double>(-2,1)/3.0, 2.0/3.0;
     Solace::QuantumGate H { q1, q2 };
 
-    auto t { std::get<Solace::QuantumGateTransformer>(H.viewTransformer()) };
+    auto t { std::get<Solace::QuantumGateTransformer>(H.getTransformer()) };
     std::cout << t << std::endl;
     H.compile(filename);
 
     Solace::QuantumGate H_load { filename };
-    auto t_load { std::get<Solace::QuantumGateTransformer>(H_load.viewTransformer()) };
+    auto t_load { std::get<Solace::QuantumGateTransformer>(H_load.getTransformer()) };
     std::cout << t_load << std::endl;
 
     auto diff { t - t_load };
